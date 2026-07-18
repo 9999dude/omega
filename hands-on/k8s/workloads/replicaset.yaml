@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  annotations:
+    deployment.kubernetes.io/desired-replicas: "1"
+    deployment.kubernetes.io/max-replicas: "2"
+    deployment.kubernetes.io/revision: "1"
+  creationTimestamp: "2026-07-15T15:27:26Z"
+  generation: 1
+  labels:
+    app: kubernetes-bootcamp
+    pod-template-hash: 66d5c96cb
+  name: kubernetes-bootcamp-66d5c96cb
+  namespace: default
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Deployment
+    name: kubernetes-bootcamp
+    uid: 92588eaa-e58c-44a5-bc17-153040c68e33
+  resourceVersion: "2011"
+  uid: 42c7ce3a-efb2-4016-b2dd-6f75c4a9a13a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-bootcamp
+      pod-template-hash: 66d5c96cb
+  template:
+    metadata:
+      labels:
+        app: kubernetes-bootcamp
+        pod-template-hash: 66d5c96cb
+    spec:
+      containers:
+      - image: gcr.io/google-samples/kubernetes-bootcamp:v1
+        imagePullPolicy: IfNotPresent
+        name: kubernetes-bootcamp
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status:
+  availableReplicas: 1
+  fullyLabeledReplicas: 1
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  terminatingReplicas: 0

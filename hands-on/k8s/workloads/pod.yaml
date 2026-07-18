@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2026-07-15T15:27:26Z"
+  generateName: kubernetes-bootcamp-66d5c96cb-
+  generation: 1
+  labels:
+    app: kubernetes-bootcamp
+    pod-template-hash: 66d5c96cb
+  name: kubernetes-bootcamp-66d5c96cb-ndvsp
+  namespace: default
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: kubernetes-bootcamp-66d5c96cb
+    uid: 42c7ce3a-efb2-4016-b2dd-6f75c4a9a13a
+  resourceVersion: "2010"
+  uid: 9aae9c8b-69e8-425c-8472-9c980c99b618
+spec:
+  containers:
+  - image: gcr.io/google-samples/kubernetes-bootcamp:v1
+    imagePullPolicy: IfNotPresent
+    name: kubernetes-bootcamp
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-6z6x5
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: interview-k8s-worker2
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-6z6x5
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2026-07-15T15:27:27Z"
+    observedGeneration: 1
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2026-07-15T15:27:26Z"
+    observedGeneration: 1
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2026-07-15T15:27:39Z"
+    observedGeneration: 1
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2026-07-15T15:27:39Z"
+    observedGeneration: 1
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2026-07-15T15:27:26Z"
+    observedGeneration: 1
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://a246a543409094a03cabc5e2d12fbf02f880380d1f93075189c2487db6243ab6
+    image: gcr.io/google-samples/kubernetes-bootcamp:v1
+    imageID: gcr.io/google-samples/kubernetes-bootcamp@sha256:0d6b8ee63bb57c5f5b6156f446b3bc3b3c143d233037f3a2f00e279c8fcc64af
+    lastState: {}
+    name: kubernetes-bootcamp
+    ready: true
+    resources: {}
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2026-07-15T15:27:39Z"
+    user:
+      linux:
+        gid: 0
+        supplementalGroups:
+        - 0
+        uid: 0
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-6z6x5
+      readOnly: true
+      recursiveReadOnly: Disabled
+  hostIP: 172.18.0.2
+  hostIPs:
+  - ip: 172.18.0.2
+  observedGeneration: 1
+  phase: Running
+  podIP: 10.244.2.2
+  podIPs:
+  - ip: 10.244.2.2
+  qosClass: BestEffort
+  resources: {}
+  startTime: "2026-07-15T15:27:26Z"
