@@ -203,11 +203,20 @@
 
   const tocLinks = [...document.querySelectorAll(".toc nav a")];
   if (tocLinks.length) {
+    const toc = document.querySelector(".toc");
     const headings = tocLinks.map((link) => document.getElementById(decodeURIComponent(link.getAttribute("href").slice(1)))).filter(Boolean);
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
       if (!visible) return;
-      tocLinks.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${visible.target.id}`));
+      const activeLink = tocLinks.find((link) => link.getAttribute("href") === `#${visible.target.id}`);
+      tocLinks.forEach((link) => link.classList.toggle("active", link === activeLink));
+      if (activeLink && toc) {
+        const tocBounds = toc.getBoundingClientRect();
+        const linkBounds = activeLink.getBoundingClientRect();
+        if (linkBounds.top < tocBounds.top || linkBounds.bottom > tocBounds.bottom) {
+          toc.scrollTop += linkBounds.top - tocBounds.top - tocBounds.height / 2;
+        }
+      }
     }, { rootMargin: "-90px 0px -72% 0px" });
     headings.forEach((heading) => observer.observe(heading));
   }

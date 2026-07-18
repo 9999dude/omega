@@ -252,7 +252,7 @@ func (s *site) renderMarkdown(filePath string) (string, []tocItem, error) {
 			title := strings.TrimSpace(string(n.Text(source)))
 			id := uniqueID(slugify(title), ids)
 			n.SetAttributeString("id", []byte(id))
-			if n.Level >= 2 && n.Level <= 3 && len(toc) < 24 {
+			if n.Level >= 2 && n.Level <= 3 {
 				toc = append(toc, tocItem{Level: n.Level, Title: title, ID: id})
 			}
 		case *ast.Link:

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -52,6 +53,27 @@ func TestLoadArticles(t *testing.T) {
 	}
 }
 
+func TestLongArticleIncludesEveryHeadingInTOC(t *testing.T) {
+	var source strings.Builder
+	source.WriteString("# Long article\n\nAn article with many sections.\n\n")
+	for i := 1; i <= 30; i++ {
+		source.WriteString("## Section " + strconv.Itoa(i) + "\n\nContent.\n\n")
+	}
+	source.WriteString("#### Not included\n")
+
+	s, err := newSite(fstest.MapFS{"long.md": {Data: []byte(source.String())}})
+	if err != nil {
+		t.Fatalf("newSite() error = %v", err)
+	}
+	article := s.bySlug["long"]
+	if got, want := len(article.TOC), 30; got != want {
+		t.Fatalf("TOC length = %d, want %d", got, want)
+	}
+	if got, want := article.TOC[len(article.TOC)-1].ID, "section-30"; got != want {
+		t.Errorf("last TOC ID = %q, want %q", got, want)
+	}
+}
+
 func TestRoutes(t *testing.T) {
 	s := testSite(t)
 	tests := []struct {
@@ -60,7 +82,7 @@ func TestRoutes(t *testing.T) {
 		contains    string
 		contentType string
 	}{
-		{path: "/", status: http.StatusOK, contains: "app.js?v=gruvbox-soft-5", contentType: "text/html"},
+		{path: "/", status: http.StatusOK, contains: "app.js?v=gruvbox-soft-6", contentType: "text/html"},
 		{path: "/docs/systems/intro", status: http.StatusOK, contains: "Feedback loops", contentType: "text/html"},
 		{path: "/docs/missing", status: http.StatusNotFound, contains: "404 page not found", contentType: "text/plain"},
 		{path: "/healthz", status: http.StatusOK, contains: "ok", contentType: "text/plain"},
