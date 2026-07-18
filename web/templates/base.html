@@ -1,0 +1,101 @@
+{{define "base"}}<!doctype html>
+<html lang="en" data-theme="gruvbox-dark-soft">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{.Description}}">
+  <meta name="color-scheme" content="dark">
+  <title>{{.PageTitle}}</title>
+  <link rel="stylesheet" href="/assets/vendor/highlight-gruvbox-dark-soft.min.css?v=11.11.1">
+  <link rel="stylesheet" href="/assets/app.css?v=gruvbox-soft-4">
+  <script src="/assets/vendor/mermaid.min.js?v=11.16.0" defer></script>
+  <script src="/assets/vendor/highlight.min.js?v=11.11.1" defer></script>
+  <script src="/assets/app.js?v=gruvbox-soft-4" defer></script>
+</head>
+<body class="{{if .IsHome}}home-page{{else}}article-page{{end}}">
+  <div class="reading-progress" aria-hidden="true"><span></span></div>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Omega Learn home">
+      <span class="brand-mark">Ω</span>
+      <span><strong>Omega</strong><small>Learn deeply</small></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-trigger" type="button" data-search-open aria-label="Search the library">
+        <span class="search-icon" aria-hidden="true"></span>
+        <span>Search the library</span>
+        <kbd>⌘ K</kbd>
+      </button>
+      {{if not .IsHome}}<button class="icon-button menu-button" type="button" data-menu-toggle aria-label="Open navigation"><span aria-hidden="true">☰</span></button>{{end}}
+    </div>
+  </header>
+
+  {{if .IsHome}}
+    {{template "content" .}}
+  {{else}}
+  <div class="docs-shell">
+    <aside class="sidebar" data-sidebar>
+      <div class="sidebar-header">
+        <span>Library</span>
+        <span>{{.ArticleCount}} notes</span>
+      </div>
+      <nav aria-label="Documentation">
+        {{range .Sections}}
+        <details class="nav-group" open>
+          <summary><span>{{.Name}}</span><span>{{.Count}}</span></summary>
+          <div class="nav-items">
+            {{range .Docs}}
+            <a href="/docs/{{.Slug}}" {{if eq $.ActiveSlug .Slug}}aria-current="page"{{end}}>
+              {{if .Trail}}<small>{{.Trail}}</small>{{end}}
+              <span>{{.Title}}</span>
+            </a>
+            {{end}}
+          </div>
+        </details>
+        {{end}}
+      </nav>
+    </aside>
+    <div class="sidebar-scrim" data-sidebar-scrim></div>
+    {{template "content" .}}
+  </div>
+  {{end}}
+
+  <div class="search-dialog" data-search-dialog hidden>
+    <div class="search-backdrop" data-search-close></div>
+    <section class="search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
+      <h2 id="search-title" class="sr-only">Search Omega Learn</h2>
+      <div class="search-input-wrap">
+        <span class="search-icon" aria-hidden="true"></span>
+        <input type="search" data-search-input placeholder="Search concepts, patterns, and technologies…" autocomplete="off">
+        <button type="button" data-search-close aria-label="Close search">Esc</button>
+      </div>
+      <div class="search-results" data-search-results>
+        <div class="search-empty"><span>Ω</span><p>Start typing to explore the library.</p></div>
+      </div>
+      <footer><span>↑↓ navigate</span><span>↵ open</span><span>Esc close</span></footer>
+    </section>
+  </div>
+
+  <div class="diagram-dialog" data-diagram-dialog hidden>
+    <div class="diagram-backdrop" data-diagram-close></div>
+    <section class="diagram-panel" role="dialog" aria-modal="true" aria-labelledby="diagram-title">
+      <header class="diagram-toolbar">
+        <div>
+          <span class="diagram-toolbar-mark" aria-hidden="true">◇</span>
+          <h2 id="diagram-title">Diagram viewer</h2>
+        </div>
+        <div class="diagram-controls" aria-label="Diagram zoom controls">
+          <button type="button" data-diagram-zoom-out aria-label="Zoom out">−</button>
+          <output data-diagram-zoom aria-live="polite">100%</output>
+          <button type="button" data-diagram-zoom-in aria-label="Zoom in">+</button>
+          <button type="button" data-diagram-reset>Reset</button>
+          <button class="diagram-close" type="button" data-diagram-close aria-label="Close diagram">×</button>
+        </div>
+      </header>
+      <div class="diagram-viewport" data-diagram-viewport>
+        <div class="diagram-canvas" data-diagram-canvas></div>
+      </div>
+      <footer>Use the controls to zoom, then scroll to explore large diagrams. Press Esc to close.</footer>
+    </section>
+  </div>
+</body>
+</html>{{end}}

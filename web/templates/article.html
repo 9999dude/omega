@@ -1,0 +1,25 @@
+{{define "content"}}
+<main class="article-shell">
+  <article class="article">
+    <header class="article-header">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Library</a><span>/</span><span>{{.Article.SectionName}}</span>{{if .Article.Trail}}<span>/</span><span>{{.Article.Trail}}</span>{{end}}</nav>
+      <span class="article-kicker">{{.Article.SectionName}}</span>
+      <h1>{{.Article.Title}}</h1>
+      <p>{{.Article.Description}}</p>
+      <div class="article-meta"><span>{{.Article.ReadMinutes}} min read</span><span>{{.Article.WordCount}} words</span><span>Markdown source</span></div>
+    </header>
+    <div class="markdown-body">{{.Article.Content}}</div>
+    <nav class="article-pagination" aria-label="Article pagination">
+      {{with .Article.Previous}}<a href="/docs/{{.Slug}}"><small>← Previous</small><strong>{{.Title}}</strong></a>{{else}}<span></span>{{end}}
+      {{with .Article.Next}}<a class="next" href="/docs/{{.Slug}}"><small>Next →</small><strong>{{.Title}}</strong></a>{{end}}
+    </nav>
+  </article>
+  {{if .Article.TOC}}
+  <aside class="toc" aria-label="On this page">
+    <p>On this page</p>
+    <nav>{{range .Article.TOC}}<a class="toc-level-{{.Level}}" href="#{{.ID}}">{{.Title}}</a>{{end}}</nav>
+    <a class="back-to-top" href="#">Back to top ↑</a>
+  </aside>
+  {{end}}
+</main>
+{{end}}

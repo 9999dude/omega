@@ -1,0 +1,45 @@
+{{define "content"}}
+<main class="home-main">
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow"><span></span> PERSONAL TECHNICAL FIELD GUIDE</p>
+      <h1>Learn the systems.<br><em>Keep the mental models.</em></h1>
+      <p class="hero-lede">A growing collection of practical explanations, interview guides, and hands-on labs—organized for the moment you need them.</p>
+      <div class="hero-actions">
+        <button class="primary-button" type="button" data-search-open>Explore the library <span>→</span></button>
+        {{with index .Articles 0}}<a class="text-link" href="/docs/{{.Slug}}">Start with {{.SectionName}}</a>{{end}}
+      </div>
+    </div>
+    <div class="hero-orbit" aria-hidden="true">
+      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+      <div class="omega-glyph">Ω</div>
+      <span class="orbit-label label-one">BUILD</span><span class="orbit-label label-two">UNDERSTAND</span><span class="orbit-label label-three">RECALL</span>
+    </div>
+  </section>
+
+  <section class="library-section" id="library">
+    <div class="section-heading">
+      <div><p class="eyebrow">THE LIBRARY</p><h2>Choose a path</h2></div>
+      <p>{{.ArticleCount}} focused notes across {{len .Sections}} fields, with more added as the learning continues.</p>
+    </div>
+    <div class="topic-grid">
+      {{range .Sections}}
+      <article class="topic-card">
+        <div class="topic-card-top"><span class="topic-initial">{{initial .Name}}</span><span>{{.Count}} notes</span></div>
+        <h3>{{.Name}}</h3>
+        <ul>
+          {{range .Docs}}<li><a href="/docs/{{.Slug}}">{{.Title}} <span>↗</span></a></li>{{end}}
+        </ul>
+      </article>
+      {{end}}
+    </div>
+  </section>
+
+  <section class="home-footer-cta">
+    <span class="large-omega" aria-hidden="true">Ω</span>
+    <div><p class="eyebrow">A LIVING KNOWLEDGE BASE</p><h2>Built to grow with every thing you learn.</h2></div>
+    <button class="secondary-button" type="button" data-search-open>Find a topic <span>⌘K</span></button>
+  </section>
+  <footer class="site-footer"><a class="brand" href="/"><span class="brand-mark">Ω</span><strong>Omega Learn</strong></a><p>{{.WordCount}} words of hard-won understanding.</p></footer>
+</main>
+{{end}}

@@ -1,3 +1,5 @@
 module datastructure-algo
 
-go 1.23.4
+go 1.26.5
+
+require github.com/yuin/goldmark v1.8.4
