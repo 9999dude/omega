@@ -6,6 +6,12 @@
   sidebar?.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeSidebar));
 
   document.querySelectorAll(".markdown-body table").forEach((table) => {
+    const headers = [...table.querySelectorAll("thead th")];
+    const scopeColumn = headers.findIndex((header) => header.textContent.trim().toLowerCase() === "scope");
+    if (scopeColumn !== -1) {
+      table.querySelectorAll("tr").forEach((row) => row.children[scopeColumn]?.classList.add("table-scope-column"));
+    }
+
     const wrapper = document.createElement("div");
     wrapper.className = "table-wrapper";
     table.parentNode.insertBefore(wrapper, table);

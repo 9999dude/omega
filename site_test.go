@@ -60,7 +60,7 @@ func TestRoutes(t *testing.T) {
 		contains    string
 		contentType string
 	}{
-		{path: "/", status: http.StatusOK, contains: "highlight.min.js?v=11.11.1", contentType: "text/html"},
+		{path: "/", status: http.StatusOK, contains: "app.js?v=gruvbox-soft-5", contentType: "text/html"},
 		{path: "/docs/systems/intro", status: http.StatusOK, contains: "Feedback loops", contentType: "text/html"},
 		{path: "/docs/missing", status: http.StatusNotFound, contains: "404 page not found", contentType: "text/plain"},
 		{path: "/healthz", status: http.StatusOK, contains: "ok", contentType: "text/plain"},
