@@ -318,6 +318,23 @@ Schedulers should not synchronously query thousands of clusters for every schedu
 A snapshot includes:
 
 ```go
+// Exact question: How does this Go example demonstrate Cluster snapshot service?
+//
+// Possible answer: Use the fragment to declare the types or values required by the surrounding implementation.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 type ClusterSnapshot struct {
     ClusterID string
 
@@ -336,6 +353,9 @@ type ClusterSnapshot struct {
     ObservedAt time.Time
     Version    uint64
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Effective free capacity is:

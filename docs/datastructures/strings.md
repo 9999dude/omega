@@ -1,503 +1,202 @@
-# Strings — Explained Like You Are Five
+# Strings in Go — A Compact Interview Guide
 
-Imagine you have letter blocks:
+A Go string is an immutable sequence of bytes, usually containing UTF-8 text. Interview solutions must deliberately choose byte indexing or rune processing.
 
-```text
-H  E  L  L  O
-```
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 String Interview Questions](#top-10-string-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-When you arrange these blocks in a line, you get a **string**:
-
-```text
-"HELLO"
-```
-
-A string is simply an **ordered sequence of characters**.
-
-Characters can include:
-
-```text
-Letters:      a b c A B C
-Numbers:      1 2 3
-Symbols:      @ # $
-Whitespace:   space, tab, newline
-Unicode:      中 é 😀
-```
+> **Baby analogy:** Imagine letter tiles laid in a row. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
 
-## 1. What Is a String?
-
-Consider:
-
-```text
-"APPLE"
-```
-
-You can imagine it as an array of characters:
-
-```text
-Index:       0    1    2    3    4
-Character:   A    P    P    L    E
-```
-
-```mermaid
-flowchart LR
-    S["String: APPLE"]
-
-    S --> C0["Index 0<br/>A"]
-    S --> C1["Index 1<br/>P"]
-    S --> C2["Index 2<br/>P"]
-    S --> C3["Index 3<br/>L"]
-    S --> C4["Index 4<br/>E"]
-```
-
-Like arrays:
-
-* Characters have positions.
-* Positions usually start at `0`.
-* You can scan from left to right.
-* You can use two pointers.
-* You can use sliding windows.
-
-Unlike normal arrays, strings are often **immutable**.
-
-Immutable means:
-
-> Once created, the original string cannot be changed directly.
-
-For example, in Go:
-
-```go
-s := "cat"
-
-// This is not allowed:
-// s[0] = 'b'
-```
-
-To produce `"bat"`, you create a new value.
-
----
-
-# 2. Why Do We Need Strings?
-
-Computers need strings to represent text:
-
-```text
-Username:       "abhishek"
-Email:          "user@example.com"
-Password:       "secret123"
-URL:            "https://example.com"
-Search query:   "kubernetes interview"
-File name:      "resume.pdf"
-Log message:    "server failed"
-```
-
-String problems test whether you understand:
-
-* Arrays
-* Hash maps
-* Two pointers
-* Sliding windows
-* Sorting
-* Recursion
-* Dynamic programming
-* Tries
-
-That is why strings are common in coding interviews.
-
----
-
-# 3. The Basic Mental Model
-
-Think of a string as a **train of character compartments**.
-
-```text
-┌───┬───┬───┬───┬───┐
-│ H │ E │ L │ L │ O │
-└───┴───┴───┴───┴───┘
-  0   1   2   3   4
-```
-
-You can:
-
-* Look inside a compartment.
-* Move from one compartment to another.
-* Compare two compartments.
-* Count what is inside.
-* Examine a continuous group of compartments.
-
-But you often cannot replace a compartment directly because strings are immutable.
-
----
-
-# 4. How Strings Are Stored
-
-A computer does not really store `"ABC"` as visual letters. It stores numbers representing those characters.
-
-For ASCII:
-
-```text
-A → 65
-B → 66
-C → 67
-```
-
-Conceptually:
-
-```mermaid
-flowchart LR
-    A["String: ABC"] --> B["A"]
-    A --> C["B"]
-    A --> D["C"]
-
-    B --> B1["ASCII 65"]
-    C --> C1["ASCII 66"]
-    D --> D1["ASCII 67"]
-```
-
-## ASCII versus Unicode
-
-ASCII handles basic English characters.
-
-Unicode handles characters from many languages and symbols:
-
-```text
-A
-é
-中
-ह
-😀
-```
-
-This matters especially in Go.
-
-## Go-specific rule: bytes versus runes
-
-Go strings contain bytes, usually UTF-8 encoded.
-
-```go
-s := "hello"
-
-fmt.Println(len(s)) // 5 bytes
-fmt.Println(s[0])   // 104, the byte value for 'h'
-```
-
-But Unicode characters can use multiple bytes:
-
-```go
-s := "é"
-
-fmt.Println(len(s))         // 2 bytes
-fmt.Println(len([]rune(s))) // 1 character
-```
-
-Mental model:
-
-```text
-byte  = one stored unit
-rune  = one Unicode code point
-```
-
-For most coding interview questions, the interviewer assumes:
-
-```text
-lowercase English letters: a-z
-```
-
-Confirm that assumption before coding.
-
----
-
-# 5. String Time Complexity
-
-Let `n` be the number of characters in the string.
-
-| Operation                      |       Typical complexity |
-| ------------------------------ | -----------------------: |
-| Access a byte by index         |                   `O(1)` |
-| Scan the whole string          |                   `O(n)` |
-| Compare two strings            |                   `O(n)` |
-| Search for one character       |                   `O(n)` |
-| Create a frequency map         |                   `O(n)` |
-| Reverse a string               |                   `O(n)` |
-| Concatenate strings            |       Usually `O(n + m)` |
-| Sort characters                |             `O(n log n)` |
-| Check palindrome               |                   `O(n)` |
-| Generate every substring       |       `O(n²)` substrings |
-| Copy every generated substring | Up to `O(n³)` total work |
-
-## Why is scanning `O(n)`?
-
-For:
-
-```text
-"HELLO"
-```
-
-You inspect each character once:
-
-```text
-H → E → L → L → O
-```
-
-For `n` characters, you perform approximately `n` operations.
-
-Therefore:
-
-```text
-Time = O(n)
-```
-
-## Why can repeated concatenation become expensive?
-
-Consider:
-
-```go
-result := ""
-
-for _, word := range words {
-    result += word
-}
-```
-
-Strings are immutable. Each concatenation may create a new string and copy the old content.
-
-Conceptually:
-
-```text
-""
-"A"
-"AB"
-"ABC"
-"ABCD"
-```
-
-The copying work becomes:
-
-```text
-1 + 2 + 3 + ... + n
-```
-
-That is approximately:
-
-```text
-n² / 2
-```
-
-Therefore, repeated concatenation can become:
-
-```text
-O(n²)
-```
-
-Use `strings.Builder` instead.
-
-```go
-var builder strings.Builder
-
-for _, word := range words {
-    builder.WriteString(word)
-}
-
-result := builder.String()
-```
-
-This is usually close to:
-
-```text
-O(n)
-```
-
----
-
-# 6. The Six Most Important String Patterns
+## Mental model
+
+Indexes into a string are byte offsets. Range iteration decodes runes. The correct unit depends on whether the problem promises ASCII or accepts general Unicode text.
+
+| Real system | How the topic appears |
+| --- | --- |
+| Search | Queries, tokens, prefixes, and matching |
+| Compilers | Source text becomes tokens and syntax |
+| Protocols | Messages are parsed from byte sequences |
+| Internationalized UI | UTF-8 text contains variable-width characters |
 
 ```mermaid
 flowchart TD
-    Q["String problem"]
-
-    Q --> A{"Need counts or duplicates?"}
-    A -->|Yes| F["Frequency map"]
-
-    Q --> B{"Need compare both ends?"}
-    B -->|Yes| T["Two pointers"]
-
-    Q --> C{"Need longest/shortest substring?"}
-    C -->|Yes| W["Sliding window"]
-
-    Q --> D{"Need build output?"}
-    D -->|Yes| SB["String builder"]
-
-    Q --> E{"Need prefix search?"}
-    E -->|Yes| TR["Trie"]
-
-    Q --> G{"Need longest palindrome?"}
-    G -->|Yes| EX["Expand around center<br/>or dynamic programming"]
+    T["Strings"]
+    T --> R0["string"]
+    T --> R1["byte"]
+    T --> R2["rune"]
+    T --> R3["rune or byte"]
 ```
 
-The most important mental associations are:
-
-| Clue in question                 | Think about                    |
-| -------------------------------- | ------------------------------ |
-| Anagram, counts, duplicates      | Frequency map                  |
-| Palindrome                       | Two pointers                   |
-| Longest/shortest substring       | Sliding window                 |
-| Many concatenations              | String builder                 |
-| Prefix, dictionary, autocomplete | Trie                           |
-| Palindromic substring            | Expand around center           |
-| Group strings by characters      | Frequency signature or sorting |
+> **Baby analogy:** Imagine letter tiles laid in a row. A byte is one tiny tile; some Unicode letters need several byte tiles but become one rune card.
 
 ---
 
-# 7. Pattern 1: Character Frequency
+## Representation and core operations
 
-Suppose you have:
+State whether positions are byte offsets or rune positions. A rune is not always a complete user-perceived character, but it is safer than bytes for code-point logic.
 
-```text
-"banana"
-```
+| Representation | Role |
+| --- | --- |
+| string | Immutable byte sequence |
+| byte | One raw octet; suitable for ASCII constraints |
+| rune | One Unicode code point |
+| []rune or []byte | Mutable indexed working representation |
 
-Count each character:
-
-```text
-b → 1
-a → 3
-n → 2
-```
-
-This is called a **frequency map**.
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Byte access | O(1) | Read one byte offset |
+| Rune conversion | O(n) | Decode the full string |
+| Substring scan | O(length) | Inspect selected bytes |
+| Builder append | Amortized O(1) | Accumulate output efficiently |
+| Repeated concatenation | Can reach O(n²) | Copy growing prefixes repeatedly |
 
 ```mermaid
 flowchart LR
-    S["banana"] --> B["b: 1"]
-    S --> A["a: 3"]
-    S --> N["n: 2"]
+    A0["Byte access"]
+    A0 --> A1["Rune conversion"]
+    A1 --> A2["Substring scan"]
+    A2 --> A3["Builder append"]
+    A3 --> A4["Repeated concatenation"]
 ```
 
-## Mental model: Inventory
-
-Imagine a shopkeeper counting products:
-
-```text
-Apple  → 3
-Banana → 2
-Orange → 1
-```
-
-For strings, the products are characters.
-
-```text
-a → 3
-b → 2
-c → 1
-```
-
-## When to use it
-
-Use frequency counting for:
-
-* Anagrams
-* Duplicate characters
-* First unique character
-* Character replacement
-* Grouping anagrams
-* Minimum window substring
-
-## Go example
-
-```go
-func countCharacters(s string) map[rune]int {
-    frequency := make(map[rune]int)
-
-    for _, ch := range s {
-        frequency[ch]++
-    }
-
-    return frequency
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(k)
-```
-
-Where `k` is the number of distinct characters.
-
-For lowercase English letters, `k ≤ 26`, so the auxiliary space may be considered `O(1)`.
+> **Baby analogy:** Imagine letter tiles laid in a row. Reading a known byte tile is immediate, while rebuilding a growing word repeatedly copies earlier tiles.
 
 ---
 
-# 8. Valid Anagram
+## Interview patterns and complexity
 
-Two strings are anagrams when they contain the same characters with the same frequencies.
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Palindrome or ordered comparison | Two pointers or center expansion | [Valid Palindrome](#valid-palindrome), [Longest Palindromic Substring](#longest-palindromic-substring), [Is Subsequence](#is-subsequence) |
+| Longest or smallest valid substring | Sliding window | [Longest Substring Without Repeating Characters](#longest-substring-without-repeating-characters), [Minimum Window Substring](#minimum-window-substring) |
+| Character counts | Frequency array or map | [Valid Anagram](#valid-anagram) |
+| Equivalent groups | Canonical signature | [Group Anagrams](#group-anagrams) |
+| Mutable output | Read and write indexes | [String Compression](#string-compression), [Reverse a String](#reverse-a-string) |
+| Unicode-safe character work | Rune conversion | [Rune-Safe Character Access](#rune-safe-character-access) |
 
-```text
-"listen"
-"silent"
-```
-
-Both contain:
-
-```text
-l:1
-i:1
-s:1
-t:1
-e:1
-n:1
-```
-
-## Approach 1: Sort both strings
-
-```text
-listen → eilnst
-silent → eilnst
-```
-
-If the sorted versions match, they are anagrams.
-
-Complexity:
-
-```text
-Time:  O(n log n)
-Space: depends on sorting implementation
-```
-
-## Approach 2: Count characters
-
-For every character in `s`:
-
-```text
-count++
-```
-
-For every character in `t`:
-
-```text
-count--
-```
-
-At the end, every count must be zero.
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Full scan | O(n) | Inspect each byte or rune |
+| Fixed alphabet counts | O(1) auxiliary | Array size is constant |
+| Unicode frequency map | O(k) | One key per distinct rune |
+| Returned text | O(n) | Output contains copied bytes |
 
 ```mermaid
 flowchart TD
-    A["s = anagram<br/>t = nagaram"] --> B["Check equal lengths"]
-    B --> C["Increment counts using s"]
-    C --> D["Decrement counts using t"]
-    D --> E{"Are all counts zero?"}
-    E -->|Yes| F["Valid anagram"]
-    E -->|No| G["Not an anagram"]
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Palindrome or ordered comparison"| P0["Two pointers"]
+    Q -->|"Longest valid substring"| P1["Sliding window"]
+    Q -->|"Character counts"| P2["Frequency array or map"]
+    Q -->|"Equivalent groups"| P3["Canonical signature"]
+    Q -->|"Prefix lookup"| P4["Trie or string matching"]
 ```
 
-## Go solution
+> **Baby analogy:** Imagine letter tiles laid in a row. Use two hands from the ends, a moving frame for substrings, or labeled cups for character counts.
 
-Assumption: lowercase English letters.
+---
+
+## Problem-solving checklist and common mistakes
+
+Before coding:
+
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
+
+Common mistakes:
+- Treating byte indexes as character indexes for Unicode.
+- Trying to mutate a Go string directly.
+- Moving a sliding-window left pointer backward.
+- Using repeated concatenation for large output.
+- Forgetting to remove counts as a window shrinks.
+- Calling nested-looking two-pointer work O(n²) without counting pointer movement.
+
+```mermaid
+flowchart LR
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
+```
+
+> **Baby analogy:** Imagine letter tiles laid in a row. First decide whether the game counts tiny byte tiles or complete rune cards.
+
+---
+
+## Top 10 String Interview Questions
+
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
+
+```mermaid
+flowchart LR
+    Q0["Valid Anagram"]
+    Q0 --> Q1["Valid Palindrome"]
+    Q1 --> Q2["Longest Substring Without Repeating Characters"]
+    Q2 --> Q3["Minimum Window Substring"]
+    Q3 --> Q4["Group Anagrams"]
+```
+
+> **Baby analogy:** Imagine letter tiles laid in a row. These ten puzzles are practice cards; each card teaches one reusable move.
+
+### Valid Anagram
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>s</strong> , <strong>t</strong>"]
+    B["Boundary checks<br/>len(<strong>s</strong>) not equal to len(<strong>t</strong>) decides whether the branch or loop should continue for the current input.<br/>count not equal to 0 decides whether the branch or loop should continue for the current input."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Reject unequal lengths, increment counts for the first string, decrement for the second"]
+        S1["require every final count to be zero"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return a <strong>bool</strong> value from <strong>isAnagram</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Search systems normalize and compare letter inventories.
+- Word games validate rearrangements.
 
 ```go
+// Exact question: Given two strings, return whether one is an anagram of the other with identical byte frequencies.
+//
+// Example: Input first = anagram and second = nagaram -> output true.
+//
+// Possible answer: Reject unequal lengths, increment counts for the first string, decrement for the second, and require every final count to be zero.
+//
+// Output format: Return a `bool` value from `isAnagram`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `s` is the string input used by this example.
+// - `t` is the string input used by this example.
+//
+// Boundary checks:
+// - `len(s) != len(t)` decides whether the branch or loop should continue for the current input.
+// - `count != 0` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `s` is the string input used by this example.
+// - `t` is the string input used by this example.
+// - `counts[letter-'a']` stores the net frequency difference for one lowercase English letter.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
+// 2. Return the value produced after the state updates are complete.
 func isAnagram(s, t string) bool {
     if len(s) != len(t) {
         return false
@@ -518,185 +217,65 @@ func isAnagram(s, t string) bool {
 
     return true
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Valid Anagram" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(1)
-```
-
----
-
-# 9. Pattern 2: String Scanning
-
-String scanning means checking characters one by one.
-
-```text
-"interview"
-```
-
-```text
-i → n → t → e → r → v → i → e → w
-```
-
-## Example: Find the first occurrence of a character
-
-```go
-func findCharacter(s string, target byte) int {
-    for i := 0; i < len(s); i++ {
-        if s[i] == target {
-            return i
-        }
-    }
-
-    return -1
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-## Substring search
-
-Suppose:
-
-```text
-Text:    "hello world"
-Pattern: "world"
-```
-
-You want to find where `"world"` starts.
-
-### Naive approach
-
-Try matching the pattern at every possible starting position.
-
-```text
-hello world
-world
- ^ no
-
-hello world
- world
-  ^ no
-
-...
-
-hello world
-      world
-      ^ match
-```
-
-If text length is `n` and pattern length is `m`:
-
-```text
-Time: O(n × m)
-```
-
-Advanced algorithms include:
-
-* KMP: `O(n + m)`
-* Rabin–Karp: average `O(n + m)`
-* Z algorithm: `O(n + m)`
-
-For most general interviews, understand the naive method first. Learn KMP when advanced substring matching is part of the expected syllabus.
-
----
-
-# 10. Pattern 3: Two Pointers
-
-Two pointers means maintaining two positions.
-
-For palindrome problems:
-
-* One pointer starts at the beginning.
-* One pointer starts at the end.
-* They move toward each other.
-
-```text
-R A C E C A R
-↑           ↑
-L           R
-```
-
-Compare:
-
-```text
-R == R
-A == A
-C == C
-E is the middle
-```
-
-Therefore, it is a palindrome.
+### Valid Palindrome
 
 ```mermaid
-flowchart LR
-    A["R"] --> B["A"]
-    B --> C["C"]
-    C --> D["E"]
-    D --> E["C"]
-    E --> F["A"]
-    F --> G["R"]
+flowchart TD
+    I["Inputs and starting state: <strong>s</strong> , <strong>left</strong> , <strong>right</strong>"]
+    B["Boundary checks<br/><strong>left</strong> less than <strong>right</strong> keeps indexes or pointers within the portion of the input still being processed."]
+    I --> B
 
-    L["Left pointer"] -.-> A
-    R["Right pointer"] -.-> G
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Move pointers inward, skip non-alphanumeric bytes, normalize ASCII case"]
+        S1["fail on the first unequal pair"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return a <strong>bool</strong> value from <strong>isPalindrome</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## Mental model: Two guards
+**Where it is used in real life:**
 
-Imagine two guards checking a hallway:
-
-* One starts at the left door.
-* One starts at the right door.
-* They compare what they see.
-* Both walk toward the middle.
-
-If every pair matches, the string is symmetrical.
-
----
-
-# 11. Valid Palindrome
-
-A palindrome reads the same forward and backward.
-
-```text
-"racecar"
-"madam"
-"level"
-```
-
-The interview problem often says:
-
-* Ignore punctuation.
-* Ignore spaces.
-* Ignore uppercase/lowercase differences.
-
-Example:
-
-```text
-"A man, a plan, a canal: Panama"
-```
-
-After cleaning:
-
-```text
-amanaplanacanalpanama
-```
-
-This is a palindrome.
-
-## Go solution
-
-This version assumes ASCII input.
+- Data cleaning recognizes mirrored identifiers after normalization.
+- Sequence validation checks symmetric tokens.
 
 ```go
+// Exact question: Return whether a string reads the same forward and backward after ignoring non-alphanumeric bytes and ASCII letter case.
+//
+// Example: Input A man, a plan, a canal: Panama -> output true after filtering and case folding.
+//
+// Possible answer: Move pointers inward, skip non-alphanumeric bytes, normalize ASCII case, and fail on the first unequal pair.
+//
+// Output format: Return a `bool` value from `isPalindrome`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `s` is the string input used by this example.
+//
+// Boundary checks:
+// - `left < right` keeps indexes or pointers within the portion of the input still being processed.
+// - `left < right && !isAlphaNumeric(s[left])` keeps indexes or pointers within the portion of the input still being processed.
+// - `left < right && !isAlphaNumeric(s[right])` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `s` is the string input used by this example.
+// - `left` marks the current left boundary or left-side value.
+// - `right` marks the current right boundary or right-side value.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Return the value produced after the state updates are complete.
 func isPalindrome(s string) bool {
     left := 0
     right := len(s) - 1
@@ -734,179 +313,65 @@ func toLower(ch byte) byte {
 
     return ch
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Valid Palindrome" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-Notice that we do not need to construct a cleaned string.
-
-That saves additional memory.
-
----
-
-# 12. Pattern 4: Sliding Window
-
-Sliding window is the most important string interview pattern.
-
-Use it when the question asks about a:
-
-* Substring
-* Contiguous section
-* Longest substring
-* Shortest substring
-* Window satisfying a condition
-
-## Mental model: Camera frame
-
-Imagine placing a camera frame over part of a string.
-
-```text
-a b c a b c b b
-└─────┘
- window
-```
-
-You can:
-
-* Expand the right side.
-* Shrink the left side.
-* Track information inside the frame.
+### Longest Substring Without Repeating Characters
 
 ```mermaid
-flowchart LR
-    A["Expand right pointer"] --> B["Add new character"]
-    B --> C{"Is window valid?"}
-    C -->|Yes| D["Record answer"]
-    C -->|No| E["Move left pointer"]
-    E --> F["Remove left character"]
-    F --> C
-    D --> A
-```
+flowchart TD
+    I["Inputs and starting state: <strong>s</strong> , <strong>lastSeen</strong> , <strong>left</strong> , <strong>best</strong>"]
+    B["Boundary checks<br/>windowLength greater than <strong>best</strong> decides whether the branch or loop should continue for the current input."]
+    I --> B
 
-## Generic sliding-window template
-
-```go
-left := 0
-
-for right := 0; right < len(s); right++ {
-    // Add s[right] to the window.
-
-    for windowIsInvalid {
-        // Remove s[left] from the window.
-        left++
-    }
-
-    // Update the answer.
-}
-```
-
-The difficult part is defining:
-
-```text
-What makes the window valid or invalid?
-```
-
----
-
-# 13. Longest Substring Without Repeating Characters
-
-Input:
-
-```text
-"abcabcbb"
-```
-
-The longest substring without repetition is:
-
-```text
-"abc"
-```
-
-Answer:
-
-```text
-3
-```
-
-## Brute force
-
-Generate every substring and check whether it contains duplicate characters.
-
-Number of substrings:
-
-```text
-O(n²)
-```
-
-Checking each substring can take `O(n)`.
-
-Total:
-
-```text
-O(n³)
-```
-
-This is too slow.
-
-## Sliding-window solution
-
-Start with an empty window:
-
-```text
-a b c a b c b b
-↑
-L,R
-```
-
-Expand right:
-
-```text
-[a]
-[a b]
-[a b c]
-```
-
-When another `a` arrives:
-
-```text
-[a b c a]
-```
-
-The window is invalid because `a` appears twice.
-
-Move `left` past the previous `a`:
-
-```text
-a [b c a]
-```
-
-Now the window is valid again.
-
-```mermaid
-sequenceDiagram
-    participant L as Left pointer
-    participant R as Right pointer
-    participant M as Last-seen map
-
-    R->>M: Read character
-    alt Character not in current window
-        R->>R: Expand window
-    else Character already in window
-        M->>L: Move left after old position
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Maintain a sliding window and the last index of each byte"]
+        S1["move the <strong>left</strong> boundary past a repeated byte when necessary"]
+        S0 --> S1
     end
-    R->>M: Update latest position
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>lengthOfLongestSubstring</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## Go solution
+**Where it is used in real life:**
 
-Assumption: ASCII characters.
+- Session analysis finds the longest span without repeated events.
+- Text analysis finds maximal unique-character windows.
 
 ```go
+// Exact question: Return the length of the longest contiguous substring containing no repeated byte.
+//
+// Example: Input text = abcabcbb -> output 3 for abc.
+//
+// Possible answer: Maintain a sliding window and the last index of each byte; move the left boundary past a repeated byte when necessary.
+//
+// Output format: Return an `int` value from `lengthOfLongestSubstring`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `s` is the string input used by this example.
+//
+// Boundary checks:
+// - `windowLength > best` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `s` is the string input used by this example.
+// - `lastSeen` maps each byte key to the latest input index where that byte occurred.
+// - `left` marks the current left boundary or left-side value.
+// - `best` holds the intermediate value produced by `0`.
+// - `ch` holds the intermediate value produced by `s[right]`.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func lengthOfLongestSubstring(s string) int {
     lastSeen := make(map[byte]int)
 
@@ -931,151 +396,67 @@ func lengthOfLongestSubstring(s string) int {
 
     return best
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the frequency map can store up to one entry for each distinct character in the input.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Longest Substring Without Repeating Characters" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(k)
-```
-
-## Why is this `O(n)` and not `O(n²)`?
-
-There are two pointers, but neither pointer moves backward.
-
-```text
-right moves at most n times
-left moves at most n times
-```
-
-Therefore, total pointer movement is at most approximately:
-
-```text
-2n
-```
-
-Ignore the constant:
-
-```text
-O(2n) = O(n)
-```
-
-This is a major interview concept:
-
-> Nested-looking pointer movement does not automatically mean `O(n²)`.
-
----
-
-# 14. Fixed-Size versus Variable-Size Sliding Window
-
-## Fixed-size window
-
-Example:
-
-> Find the maximum number of vowels in any substring of length `k`.
-
-Window size always stays `k`.
-
-```text
-a b c i i d e
-└─────┘
-  k = 3
-```
-
-Typical template:
-
-```go
-for right := 0; right < len(s); right++ {
-    add(s[right])
-
-    if right-left+1 > k {
-        remove(s[left])
-        left++
-    }
-
-    if right-left+1 == k {
-        updateAnswer()
-    }
-}
-```
-
-## Variable-size window
-
-Example:
-
-> Find the longest substring without repeated characters.
-
-The window grows and shrinks depending on validity.
-
-```go
-for right := 0; right < len(s); right++ {
-    add(s[right])
-
-    for windowIsInvalid {
-        remove(s[left])
-        left++
-    }
-
-    updateAnswer()
-}
-```
-
----
-
-# 15. Minimum Window Substring
-
-Given:
-
-```text
-s = "ADOBECODEBANC"
-t = "ABC"
-```
-
-Find the shortest substring of `s` containing all characters from `t`.
-
-Answer:
-
-```text
-"BANC"
-```
-
-## Mental model: Shopping list
-
-You need:
-
-```text
-A × 1
-B × 1
-C × 1
-```
-
-You walk through the string, adding characters to your basket.
-
-Once the basket contains everything:
-
-1. Record the current window.
-2. Remove characters from the left.
-3. Continue shrinking until an important character is lost.
-4. Expand again.
+### Minimum Window Substring
 
 ```mermaid
 flowchart TD
-    A["Build required-frequency map"] --> B["Expand right pointer"]
-    B --> C["Add character to window"]
-    C --> D{"Does window contain everything?"}
-    D -->|No| B
-    D -->|Yes| E["Record smallest window"]
-    E --> F["Remove left character"]
-    F --> G["Move left pointer"]
-    G --> D
+    I["Inputs and starting state: <strong>s</strong> , <strong>t</strong> , <strong>remaining</strong> , <strong>left</strong>"]
+    B["Boundary checks<br/>len(<strong>t</strong>) equals 0 or len(<strong>s</strong>) less than len(<strong>t</strong>) handles empty input before any element is accessed."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the <strong>remaining</strong> input state"]
+        direction TD
+        S0["Expand a counted sliding window until all <strong>target</strong> requirements are met"]
+        S1["shrink from the <strong>left</strong> while recording the shortest valid range"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return a <strong>string</strong> value from <strong>minWindow</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## Go solution
+**Where it is used in real life:**
 
-Assumption: byte-based input.
+- Log analysis finds the smallest interval containing all required markers.
+- Document search finds the tightest passage covering query terms.
 
 ```go
+// Exact question: Given strings `source` and `target`, return the shortest source substring containing every target byte with its required multiplicity.
+//
+// Example: Input source = ADOBECODEBANC and target = ABC -> output BANC.
+//
+// Possible answer: Expand a counted sliding window until all target requirements are met, then shrink from the left while recording the shortest valid range.
+//
+// Output format: Return a `string` value from `minWindow`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `s` is the string input used by this example.
+// - `t` is the string input used by this example.
+//
+// Boundary checks:
+// - `len(t) == 0 || len(s) < len(t)` handles empty input before any element is accessed.
+// - `required[rightCharacter] > 0` decides whether the branch or loop should continue for the current input.
+// - `remaining == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `s` is the string input used by this example.
+// - `t` is the string input used by this example.
+// - `required[byteValue]` stores how many more copies the current window still needs; negative values are surplus copies.
+// - `remaining` counts target bytes not yet satisfied by the current window.
+// - `left` marks the current left boundary or left-side value.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
+// 2. Return the value produced after the state updates are complete.
 func minWindow(s, t string) string {
     if len(t) == 0 || len(s) < len(t) {
         return ""
@@ -1127,217 +508,62 @@ func minWindow(s, t string) string {
 
     return s[bestStart : bestStart+bestLength]
 }
+
+// time complexity: O(n + m) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Minimum Window Substring" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n + m)
-Space: O(1) for a fixed 256-byte alphabet
-```
-
-This is considered a difficult sliding-window problem.
-
----
-
-# 16. Pattern 5: Efficient String Construction
-
-Suppose you want to combine:
-
-```text
-["hello", " ", "world"]
-```
-
-Avoid repeatedly doing:
-
-```go
-result := ""
-
-for _, part := range parts {
-    result += part
-}
-```
-
-Use `strings.Builder`.
-
-```go
-func joinParts(parts []string) string {
-    var builder strings.Builder
-
-    for _, part := range parts {
-        builder.WriteString(part)
-    }
-
-    return builder.String()
-}
-```
-
-## Mental model: Construction tray
-
-Repeated concatenation is like:
-
-1. Building a small house.
-2. Destroying it.
-3. Building a slightly larger house.
-4. Destroying it again.
-5. Repeating this process.
-
-A builder is like preparing one construction area and adding materials to it.
-
-```mermaid
-flowchart LR
-    A["Write hello"] --> B["Builder: hello"]
-    B --> C["Write space"]
-    C --> D["Builder: hello "]
-    D --> E["Write world"]
-    E --> F["Final string: hello world"]
-```
-
-Useful Go methods:
-
-```go
-var builder strings.Builder
-
-builder.Grow(100)
-builder.WriteByte('A')
-builder.WriteRune('界')
-builder.WriteString("hello")
-
-result := builder.String()
-```
-
----
-
-# 17. String Compression
-
-Input:
-
-```text
-a a b b c c c
-```
-
-Compressed result:
-
-```text
-a 2 b 2 c 3
-```
-
-Mental process:
-
-1. Find a group of identical characters.
-2. Count the group.
-3. Write the character.
-4. Write the count when the count is greater than `1`.
-
-Use two pointers:
-
-```text
-read  → examines input
-write → writes compressed output
-```
+### Group Anagrams
 
 ```mermaid
 flowchart TD
-    A["Read start of group"] --> B["Move until character changes"]
-    B --> C["Calculate group count"]
-    C --> D["Write character"]
-    D --> E{"Count greater than 1?"}
-    E -->|Yes| F["Write count digits"]
-    E -->|No| G["Continue"]
-    F --> G
-    G --> A
+    I["Inputs and starting state: <strong>words</strong> , <strong>groups</strong> , <strong>result</strong>"]
+    B["Boundary checks<br/>No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Use a fixed 26-count array as the comparable map key and append each word to the slice stored under its signature"]
+    end
+
+    B --> S0
+    S0 --> O["Return the [][]string value from <strong>groupAnagrams</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## Go solution
+**Where it is used in real life:**
+
+- Search indexing groups terms with the same character signature.
+- Puzzle systems cluster letter rearrangements.
 
 ```go
-func compress(chars []byte) int {
-    write := 0
-    read := 0
-
-    for read < len(chars) {
-        current := chars[read]
-        groupStart := read
-
-        for read < len(chars) && chars[read] == current {
-            read++
-        }
-
-        count := read - groupStart
-
-        chars[write] = current
-        write++
-
-        if count > 1 {
-            countString := strconv.Itoa(count)
-
-            for i := 0; i < len(countString); i++ {
-                chars[write] = countString[i]
-                write++
-            }
-        }
-    }
-
-    return write
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1), excluding temporary count conversion
-```
-
----
-
-# 18. Pattern 6: Grouping Strings by Signature
-
-Consider:
-
-```text
-["eat", "tea", "tan", "ate", "nat", "bat"]
-```
-
-Anagram groups are:
-
-```text
-["eat", "tea", "ate"]
-["tan", "nat"]
-["bat"]
-```
-
-We need a common **signature** for all anagrams.
-
-## Signature option 1: Sorted characters
-
-```text
-eat → aet
-tea → aet
-ate → aet
-```
-
-Group by the sorted result.
-
-Complexity for `m` strings of average length `k`:
-
-```text
-O(m × k log k)
-```
-
-## Signature option 2: Character counts
-
-```text
-eat → a:1, e:1, t:1
-tea → a:1, e:1, t:1
-ate → a:1, e:1, t:1
-```
-
-For lowercase English letters, use a `[26]int` array as a map key.
-
-## Go solution
-
-```go
+// Exact question: Group strings whose lowercase English letters have identical frequencies.
+//
+// Example: Input words = [eat, tea, tan, ate, nat, bat] -> return three anagram groups.
+//
+// Possible answer: Use a fixed 26-count array as the comparable map key and append each word to the slice stored under its signature.
+//
+// Output format: Return the `[][]string` value from `groupAnagrams`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `words` is a slice: the index identifies an element or state, and the stored item has type string.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `words` is a slice: the index identifies an element or state, and the stored item has type string.
+// - `groups` maps a comparable `[26]int` frequency-signature key to the words sharing that signature.
+// - `result` stores the grouped word slices; group order is unspecified because map iteration is unordered.
+// - `signature[letter-'a']` stores one word's frequency for that lowercase English letter.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Create or use a slice so indexes identify positions and elements store their data or state.
+// 3. Iterate through the required elements or states in the order shown.
 func groupAnagrams(words []string) [][]string {
     groups := make(map[[26]int][]string)
 
@@ -1359,103 +585,63 @@ func groupAnagrams(words []string) [][]string {
 
     return result
 }
+
+// time complexity: O(m * k) -> the algorithm combines work across each dimension or choice represented in the product.
+// space complexity: O(m * k) -> the auxiliary storage grows according to this bound.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Group Anagrams" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(m × k)
-Space: O(m × k)
-```
-
-This solution assumes lowercase English letters.
-
----
-
-# 19. Longest Palindromic Substring
-
-Input:
-
-```text
-"babad"
-```
-
-Possible answer:
-
-```text
-"bab"
-```
-
-Another valid answer:
-
-```text
-"aba"
-```
-
-## Important distinction
-
-### Subsequence
-
-Characters do not need to be next to one another.
-
-```text
-"abcde"
-"a  c  e"
-```
-
-### Substring
-
-Characters must be continuous.
-
-```text
-"abcde"
- "bcd"
-```
-
-This problem asks for a **substring**.
-
----
-
-## Expand Around Center
-
-Every palindrome has a center.
-
-Odd-length palindrome:
-
-```text
-r a c e c a r
-      ↑
-    center
-```
-
-Even-length palindrome:
-
-```text
-a b b a
-   ↑
- center gap
-```
-
-For every index, try:
-
-1. Odd center: `(i, i)`
-2. Even center: `(i, i+1)`
-
-Expand while both characters match.
+### Longest Palindromic Substring
 
 ```mermaid
 flowchart TD
-    A["Choose center"] --> B["Compare left and right"]
-    B --> C{"Characters equal?"}
-    C -->|Yes| D["Move left outward<br/>Move right outward"]
-    D --> B
-    C -->|No| E["Record palindrome length"]
-    E --> F["Try next center"]
+    I["Inputs and starting state: <strong>s</strong> , <strong>bestStart</strong> , <strong>bestEnd</strong> , <strong>expand</strong>"]
+    B["Boundary checks<br/>len(<strong>s</strong>) less than 2 decides whether the branch or loop should continue for the current input."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Expand around every odd and even center, retaining the widest matching byte range"]
+    end
+
+    B --> S0
+    S0 --> O["Return a <strong>string</strong> value from <strong>longestPalindrome</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## Go solution
+**Where it is used in real life:**
+
+- DNA and sequence tools find symmetric regions.
+- Text tools identify the longest mirrored segment.
 
 ```go
+// Exact question: Given a string, return its longest contiguous palindromic substring.
+//
+// Example: Input text = cbbd -> output bb.
+//
+// Possible answer: Expand around every odd and even center, retaining the widest matching byte range.
+//
+// Output format: Return a `string` value from `longestPalindrome`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `s` is the string input used by this example.
+//
+// Boundary checks:
+// - `len(s) < 2` decides whether the branch or loop should continue for the current input.
+// - `oddEnd-oddStart > bestEnd-bestStart` decides whether the branch or loop should continue for the current input.
+// - `evenEnd-evenStart > bestEnd-bestStart` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `s` is the string input used by this example.
+// - `bestStart` holds the intermediate value produced by `0`.
+// - `bestEnd` holds the intermediate value produced by `0`.
+// - `expand` holds the intermediate value produced by `func(left, right int) (int, int)`.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
+// 2. Return the value produced after the state updates are complete.
 func longestPalindrome(s string) string {
     if len(s) < 2 {
         return s
@@ -1493,538 +679,220 @@ func longestPalindrome(s string) string {
 
     return s[bestStart : bestEnd+1]
 }
+
+// time complexity: O(n^2) -> nested traversal can compare or process every pair of input elements.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Longest Palindromic Substring" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n²)
-Space: O(1)
-```
-
-Why `O(n²)`?
-
-* There are `n` possible centers.
-* Expansion from each center can take up to `n` comparisons.
-
-Therefore:
-
-```text
-n × n = O(n²)
-```
-
----
-
-# 20. Trie Basics
-
-A trie is a tree designed for strings and prefixes.
-
-Suppose we store:
-
-```text
-cat
-car
-care
-dog
-```
+### String Compression
 
 ```mermaid
 flowchart TD
-    ROOT["root"]
+    I["Inputs and starting state: <strong>chars</strong> , <strong>write</strong> , <strong>read</strong> , <strong>current</strong>"]
+    B["Boundary checks<br/><strong>read</strong> less than len(<strong>chars</strong>) decides whether the branch or loop should continue for the <strong>current</strong> input."]
+    I --> B
 
-    ROOT --> C["c"]
-    C --> A["a"]
-    A --> T["t ✓"]
-    A --> R["r ✓"]
-    R --> E["e ✓"]
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Read one run at a time, <strong>write</strong> its character"]
+        S1["<strong>write</strong> the count digits only for runs longer than one"]
+        S0 --> S1
+    end
 
-    ROOT --> D["d"]
-    D --> O["o"]
-    O --> G["g ✓"]
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>compress</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-The checkmark means:
+**Where it is used in real life:**
 
-```text
-A complete word ends here.
-```
-
-## Mental model: Dictionary corridors
-
-Imagine walking through corridors:
-
-```text
-root → c → a
-```
-
-From `"ca"`, you can continue to:
-
-```text
-cat
-car
-care
-```
-
-This makes tries useful for:
-
-* Autocomplete
-* Prefix search
-* Dictionaries
-* Spell checking
-* Search suggestions
-* Word games
-* IP routing concepts
-
-## Trie complexity
-
-For a word of length `L`:
-
-| Operation        | Complexity |
-| ---------------- | ---------: |
-| Insert           |     `O(L)` |
-| Search full word |     `O(L)` |
-| Check prefix     |     `O(L)` |
-
-The downside is memory consumption because every node stores child references.
-
-## Go implementation
-
-Assumption: lowercase English letters.
+- Telemetry reduces repeated-symbol runs.
+- Storage formats encode consecutive repeated values compactly.
 
 ```go
-type TrieNode struct {
-    children [26]*TrieNode
-    isWord   bool
-}
+// Exact question: Compress consecutive character runs in place as the character followed by its decimal count when the count exceeds one, and return the new length.
+//
+// Example: Input characters = [a,a,b,b,c,c,c] -> new length 6 and written prefix [a,2,b,2,c,3].
+//
+// Possible answer: Read one run at a time, write its character, and write the count digits only for runs longer than one.
+//
+// Output format: Return an `int` value from `compress`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `chars` is a slice: the index identifies an element or state, and the stored item has type byte.
+//
+// Boundary checks:
+// - `read < len(chars)` decides whether the branch or loop should continue for the current input.
+// - `read < len(chars) && chars[read] == current` decides whether the branch or loop should continue for the current input.
+// - `count > 1` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `chars` is a slice: the index identifies an element or state, and the stored item has type byte.
+// - `write` holds the intermediate value produced by `0`.
+// - `read` holds the intermediate value produced by `0`.
+// - `current` holds the value for the state currently being calculated.
+// - `groupStart` holds the intermediate value produced by `read`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
+package main
 
-type Trie struct {
-    root *TrieNode
-}
+import "strconv"
 
-func NewTrie() *Trie {
-    return &Trie{
-        root: &TrieNode{},
-    }
-}
+func compress(chars []byte) int {
+    write := 0
+    read := 0
 
-func (t *Trie) Insert(word string) {
-    current := t.root
+    for read < len(chars) {
+        current := chars[read]
+        groupStart := read
 
-    for i := 0; i < len(word); i++ {
-        index := word[i] - 'a'
-
-        if current.children[index] == nil {
-            current.children[index] = &TrieNode{}
+        for read < len(chars) && chars[read] == current {
+            read++
         }
 
-        current = current.children[index]
-    }
+        count := read - groupStart
 
-    current.isWord = true
-}
+        chars[write] = current
+        write++
 
-func (t *Trie) Search(word string) bool {
-    node := t.findNode(word)
-    return node != nil && node.isWord
-}
+        if count > 1 {
+            countString := strconv.Itoa(count)
 
-func (t *Trie) StartsWith(prefix string) bool {
-    return t.findNode(prefix) != nil
-}
-
-func (t *Trie) findNode(text string) *TrieNode {
-    current := t.root
-
-    for i := 0; i < len(text); i++ {
-        index := text[i] - 'a'
-
-        if current.children[index] == nil {
-            return nil
+            for i := 0; i < len(countString); i++ {
+                chars[write] = countString[i]
+                write++
+            }
         }
-
-        current = current.children[index]
     }
 
-    return current
+    return write
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
----
+> **Baby analogy:** Imagine letter tiles laid in a row. "String Compression" is one small game played with the same pieces and rules.
 
-# 21. Common String Problem Decision Tree
+### Is Subsequence
 
 ```mermaid
 flowchart TD
-    A["Read the question"] --> B{"Does it ask about a substring?"}
+    I["Inputs and starting state: <strong>needed</strong> , <strong>matched</strong> , <strong>text</strong>"]
+    B["Boundary checks<br/>An empty <strong>candidate</strong> is a subsequence of every <strong>text</strong>.<br/>A non-empty <strong>candidate</strong> cannot match after the <strong>text</strong> scan ends with unmatched runes."]
+    I --> B
 
-    B -->|Yes| C{"Longest or shortest valid substring?"}
-    C -->|Yes| D["Sliding window"]
-    C -->|No| E{"Palindrome substring?"}
-    E -->|Yes| F["Expand around center or DP"]
-    E -->|No| G["Scanning or pattern matching"]
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Scan <strong>text</strong> left to right and advance only when the next required rune matches."]
+    end
 
-    B -->|No| H{"Same characters or duplicates?"}
-    H -->|Yes| I["Frequency map or sorting"]
-    H -->|No| J{"Compare from both ends?"}
-    J -->|Yes| K["Two pointers"]
-    J -->|No| L{"Prefix search?"}
-    L -->|Yes| M["Trie"]
-    L -->|No| N{"Constructing output repeatedly?"}
-    N -->|Yes| O["String builder"]
-    N -->|No| P["Consider stack, DP or recursion"]
+    B --> S0
+    S0 --> O["Return <strong>true</strong> when all <strong>candidate</strong> runes occur in order, even if they are not contiguous."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-# 22. Important Interview Vocabulary
-
-## Character
-
-One logical text symbol:
-
-```text
-a
-7
-@
-中
-```
-
-## String
-
-A sequence of characters:
-
-```text
-"interview"
-```
-
-## Prefix
-
-Starts from the beginning.
-
-For `"coding"`:
-
-```text
-"c"
-"co"
-"cod"
-"codi"
-```
-
-## Suffix
-
-Ends at the end.
-
-```text
-"g"
-"ng"
-"ing"
-"ding"
-```
-
-## Substring
-
-A continuous section.
-
-```text
-"coding"
- "odi"
-```
-
-## Subsequence
-
-Characters remain in order but do not have to be continuous.
-
-```text
-"coding"
- c d n
-```
-
-## Anagram
-
-Same characters with the same frequencies, possibly in a different order.
-
-```text
-"eat"
-"tea"
-```
-
-## Palindrome
-
-Same forward and backward.
-
-```text
-"racecar"
-```
-
----
-
-# 23. Common Mistakes
-
-## Mistake 1: Confusing substring and subsequence
-
-```text
-String:      abcde
-Substring:   bcd
-Subsequence: ace
-```
-
-Sliding window is mainly for **contiguous substrings**, not general subsequences.
-
----
-
-## Mistake 2: Forgetting duplicate counts
-
-These are not anagrams:
-
-```text
-"aab"
-"abb"
-```
-
-Both use the same distinct characters, but the counts differ.
-
-```text
-First:  a:2, b:1
-Second: a:1, b:2
-```
-
-A set is not enough. You need a frequency map.
-
----
-
-## Mistake 3: Moving the left pointer backward
-
-For longest substring without repetition:
+- Diff tools check whether an ordered sequence was preserved.
+- Workflow auditing checks whether required events occurred in order.
 
 ```go
-left = previousIndex + 1
-```
-
-Only do this when:
-
-```go
-previousIndex >= left
-```
-
-Otherwise, you may accidentally move `left` backward.
-
-Correct:
-
-```go
-if previousIndex, found := lastSeen[ch];
-    found && previousIndex >= left {
-    left = previousIndex + 1
+// Exact question: Is `candidate` a subsequence of `text`?
+//
+// Example: Input candidate = ace and text = abcde -> output true.
+//
+// Possible answer: Advance a candidate pointer whenever the next required rune appears while scanning the text.
+//
+// Output format: Return `true` when all candidate runes occur in order, even if they are not contiguous.
+//
+// Inline descriptions:
+// - A subsequence preserves order but may skip positions; a substring may not skip positions.
+//
+// Boundary checks:
+// - An empty candidate is a subsequence of every text.
+// - A non-empty candidate cannot match after the text scan ends with unmatched runes.
+//
+// Key variables:
+// - `needed` is a rune slice whose indexes are required subsequence positions and whose elements are candidate runes.
+// - `matched` is the index of the next needed rune.
+// - `text` supplies scanned runes in their original order.
+//
+// Logic:
+// 1. Scan text left to right and advance only when the next required rune matches.
+func isSubsequence(candidate, text string) bool {
+	needed := []rune(candidate)
+	matched := 0
+	for _, character := range text {
+		if matched < len(needed) && needed[matched] == character {
+			matched++
+		}
+	}
+	return matched == len(needed)
 }
+
+// time complexity: O(n + m) -> `n` text bytes and `m` candidate bytes are decoded and scanned.
+// space complexity: O(m) -> the candidate's decoded rune slice is stored.
 ```
 
----
+> **Baby analogy:** Imagine letter tiles laid in a row. "Is Subsequence" is one small game played with the same pieces and rules.
 
-## Mistake 4: Using repeated string concatenation
+### Reverse a String
 
-Potentially inefficient:
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>s</strong> , <strong>characters</strong> , <strong>left</strong> , <strong>right</strong>"]
+    B["Boundary checks<br/><strong>left</strong> less than <strong>right</strong> keeps indexes or pointers within the portion of the input still being processed."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Swap the leftmost and rightmost remaining bytes while moving both pointers toward the center"]
+    end
+
+    B --> S0
+    S0 --> O["Return a <strong>string</strong> value from <strong>reverseString</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Text transformations reverse token or rune order.
+- Education tools demonstrate mutable rune buffers.
 
 ```go
-result += part
-```
-
-Inside a large loop, prefer:
-
-```go
-strings.Builder
-```
-
----
-
-## Mistake 5: Ignoring Unicode
-
-In Go:
-
-```go
-s[i]
-```
-
-returns a byte, not necessarily a complete Unicode character.
-
-Use:
-
-```go
-for _, r := range s
-```
-
-when logical Unicode characters matter.
-
----
-
-## Mistake 6: Modifying a string directly
-
-Go strings are immutable.
-
-Convert to bytes or runes:
-
-```go
-characters := []byte(s)
-characters[0] = 'B'
-result := string(characters)
-```
-
-For Unicode:
-
-```go
-characters := []rune(s)
-```
-
----
-
-## Mistake 7: Calling every nested loop `O(n²)`
-
-Sliding-window code may contain:
-
-```go
-for right < n {
-    for windowInvalid {
-        left++
-    }
-}
-```
-
-But if `left` and `right` each move at most `n` times, total complexity remains:
-
-```text
-O(n)
-```
-
----
-
-# 24. Complexity Cheat Sheet
-
-Assume:
-
-```text
-n = string length
-m = number of strings
-k = average string length
-```
-
-| Problem                          | Typical approach         |          Time |            Space |
-| -------------------------------- | ------------------------ | ------------: | ---------------: |
-| Valid Anagram                    | Frequency array          |        `O(n)` |           `O(1)` |
-| Valid Palindrome                 | Two pointers             |        `O(n)` |           `O(1)` |
-| Longest substring without repeat | Sliding window           |        `O(n)` |           `O(k)` |
-| Group Anagrams                   | Frequency signature      |       `O(mk)` |          `O(mk)` |
-| Group Anagrams                   | Sorted signature         | `O(mk log k)` |          `O(mk)` |
-| Longest Palindromic Substring    | Expand around center     |       `O(n²)` |           `O(1)` |
-| Minimum Window Substring         | Sliding window           |    `O(n + m)` |           `O(k)` |
-| String Compression               | Read/write pointers      |        `O(n)` |           `O(1)` |
-| Trie insert/search               | Trie traversal           |        `O(L)` | Depends on nodes |
-| Naive substring search           | Compare at each position |       `O(nm)` |           `O(1)` |
-
----
-
-# 25. How to Solve a String Problem in an Interview
-
-Use this sequence.
-
-## Step 1: Clarify the input
-
-Ask:
-
-* Is the input ASCII or Unicode?
-* Is it only lowercase English?
-* Should matching be case-sensitive?
-* Should spaces and punctuation be ignored?
-* Can the string be empty?
-* Can characters repeat?
-
-## Step 2: Identify the keyword
-
-```text
-anagram       → frequency count
-palindrome    → two pointers
-substring     → sliding window
-prefix        → trie
-construct     → string builder
-groups        → signature + hash map
-```
-
-## Step 3: Explain brute force
-
-Even when inefficient, explain it.
-
-Example:
-
-> I could generate all substrings in `O(n²)` and check each one, but that would be too expensive.
-
-## Step 4: Identify repeated work
-
-Ask:
-
-> What information am I repeatedly recalculating?
-
-Possible answers:
-
-* Character counts
-* Duplicate status
-* Window validity
-* Last-seen positions
-* Prefix structure
-
-Store this information incrementally.
-
-## Step 5: State invariants
-
-An invariant is something that remains true during the algorithm.
-
-For longest substring without repeating characters:
-
-```text
-The current window always contains unique characters.
-```
-
-For minimum window substring:
-
-```text
-When remaining == 0, the window contains every required character.
-```
-
-Interviewers value clear invariants.
-
-## Step 6: Calculate complexity
-
-Do not merely say `O(n)`. Explain why:
-
-> The right pointer visits every character once, and the left pointer also moves forward at most `n` times. Therefore, total time is `O(n)`.
-
----
-
-# 26. Mock Interview Questions
-
-## Question 1: Reverse a string
-
-Input:
-
-```text
-"hello"
-```
-
-Output:
-
-```text
-"olleh"
-```
-
-### Expected pattern
-
-Two pointers or reverse traversal.
-
-### Follow-up
-
-How would you reverse Unicode text safely in Go?
-
-### Answer
-
-Use `[]rune`, not `[]byte`.
-
-```go
+// Exact question: Reverse a mutable byte slice in place.
+//
+// Example: Input bytes = [h,e,l,l,o] -> mutate them to [o,l,l,e,h].
+//
+// Possible answer: Swap the leftmost and rightmost remaining bytes while moving both pointers toward the center.
+//
+// Output format: Return a `string` value from `reverseString`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `s` is the string input used by this example.
+//
+// Boundary checks:
+// - `left < right` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `s` is the string input used by this example.
+// - `characters` is the mutable byte slice; its indexes are byte positions and its elements are swapped in place.
+// - `left` marks the current left boundary or left-side value.
+// - `right` marks the current right boundary or right-side value.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func reverseString(s string) string {
     characters := []rune(s)
 
@@ -2041,425 +909,115 @@ func reverseString(s string) string {
 
     return string(characters)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine letter tiles laid in a row. "Reverse a String" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(n)
+### Rune-Safe Character Access
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>text</strong> , <strong>characters</strong> , <strong>index</strong>"]
+    B["Boundary checks<br/>Negative and out-of-range rune indexes return 0, false."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Decode the <strong>text</strong> into runes."]
+        S1["Validate and return the requested character position."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the Unicode code point at a rune <strong>index</strong> and whether that <strong>index</strong> exists."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Question 2: Find the first non-repeating character
-
-Input:
-
-```text
-"leetcode"
-```
-
-Output:
-
-```text
-0
-```
-
-Because `l` appears only once.
-
-### Expected pattern
-
-Two-pass frequency counting.
-
-1. Count every character.
-2. Scan again and return the first character with count `1`.
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(k)
-```
-
----
-
-## Question 3: Check whether two strings are anagrams
-
-Input:
-
-```text
-"listen", "silent"
-```
-
-Expected answer:
-
-```text
-true
-```
-
-### Expected pattern
-
-Frequency counting.
-
-### Follow-up questions
-
-* What if the input contains Unicode?
-* What if there are millions of possible characters?
-* What if strings arrive as streams?
-
----
-
-## Question 4: Longest substring without repeating characters
-
-Input:
-
-```text
-"pwwkew"
-```
-
-Output:
-
-```text
-3
-```
-
-The substring is:
-
-```text
-"wke"
-```
-
-### Expected pattern
-
-Variable-size sliding window.
-
-### Interview invariant
-
-```text
-The current window contains no duplicate characters.
-```
-
----
-
-## Question 5: Valid palindrome
-
-Input:
-
-```text
-"A man, a plan, a canal: Panama"
-```
-
-Output:
-
-```text
-true
-```
-
-### Expected pattern
-
-Two pointers.
-
-### Important constraint
-
-Do not create a cleaned copy unless necessary.
-
----
-
-## Question 6: Group anagrams
-
-Input:
-
-```text
-["eat", "tea", "tan", "ate", "nat", "bat"]
-```
-
-Output:
-
-```text
-[
-  ["eat", "tea", "ate"],
-  ["tan", "nat"],
-  ["bat"]
-]
-```
-
-### Expected pattern
-
-Hash map using:
-
-* Sorted string key, or
-* Frequency-array key
-
----
-
-## Question 7: Longest palindromic substring
-
-Input:
-
-```text
-"cbbd"
-```
-
-Output:
-
-```text
-"bb"
-```
-
-### Expected pattern
-
-Expand around center.
-
-### Follow-up
-
-Can you solve it using dynamic programming?
-
-DP complexity:
-
-```text
-Time:  O(n²)
-Space: O(n²)
-```
-
-Expand-around-center usually has the same time but better space:
-
-```text
-Time:  O(n²)
-Space: O(1)
-```
-
----
-
-## Question 8: Minimum window substring
-
-Input:
-
-```text
-s = "ADOBECODEBANC"
-t = "ABC"
-```
-
-Output:
-
-```text
-"BANC"
-```
-
-### Expected pattern
-
-Sliding window with required-frequency counts.
-
-### Main difficulty
-
-Distinguishing between:
-
-```text
-A character appearing in the window
-```
-
-and:
-
-```text
-The required number of copies appearing in the window
-```
-
----
-
-## Question 9: String compression
-
-Input:
-
-```text
-["a","a","b","b","c","c","c"]
-```
-
-Output:
-
-```text
-["a","2","b","2","c","3"]
-```
-
-Return:
-
-```text
-6
-```
-
-### Expected pattern
-
-Read pointer and write pointer.
-
----
-
-## Question 10: Implement a trie
-
-Required methods:
-
-```text
-Insert(word)
-Search(word)
-StartsWith(prefix)
-```
-
-### Expected knowledge
-
-* Trie nodes
-* Child references
-* End-of-word marker
-* `O(L)` operations
-
----
-
-# 27. Frequently Asked Conceptual Interview Questions
-
-## Are strings arrays?
-
-Conceptually, a string behaves like an array of characters. Internally, the exact representation depends on the language and encoding.
-
-In Go, a string is an immutable sequence of bytes.
-
----
-
-## Why are strings immutable?
-
-Immutability provides benefits:
-
-* Safer sharing between functions
-* Easier concurrency
-* Predictable hash values
-* Prevents accidental modification
-* Allows some runtime optimizations
-
-The trade-off is that modification creates new values.
-
----
-
-## What is the difference between `byte` and `rune` in Go?
-
-```text
-byte = uint8
-rune = int32
-```
-
-A byte represents raw UTF-8 storage.
-
-A rune represents a Unicode code point.
+- Internationalized applications retrieve code points safely.
+- Text editors distinguish rune positions from UTF-8 byte offsets.
 
 ```go
-for i := 0; i < len(s); i++ {
-    // Iterates through bytes.
+// Exact question: How can Go expose the character positions of UTF-8 text safely?
+//
+// Example: Input text = A🙂B and rune index = 1 -> output the rune 🙂 and true.
+//
+// Possible answer: Convert the string to runes before indexing human-readable Unicode code points.
+//
+// Output format: Return the Unicode code point at a rune index and whether that index exists.
+//
+// Inline descriptions:
+// - Byte indexes and rune indexes differ when a character uses multiple UTF-8 bytes.
+//
+// Boundary checks:
+// - Negative and out-of-range rune indexes return `0, false`.
+//
+// Key variables:
+// - `text` stores UTF-8 bytes.
+// - `characters` is a rune slice whose indexes are code-point positions and whose elements are Unicode values.
+// - `index` is a rune position, not a byte offset.
+//
+// Logic:
+// 1. Decode the text into runes.
+// 2. Validate and return the requested character position.
+func runeAt(text string, index int) (rune, bool) {
+	characters := []rune(text)
+	if index < 0 || index >= len(characters) {
+		return 0, false
+	}
+	return characters[index], true
 }
 
-for _, r := range s {
-    // Iterates through decoded runes.
-}
+// time complexity: O(n) -> converting the string decodes all `n` bytes.
+// space complexity: O(r) -> `r` decoded runes are stored.
 ```
+
+> **Baby analogy:** Imagine letter tiles laid in a row. "Rune-Safe Character Access" is one small game played with the same pieces and rules.
 
 ---
 
-## Why use a frequency array instead of a map?
+## Interview checklist and next steps
 
-For a small fixed alphabet such as `a-z`:
+Use this answer order during an interview:
 
-```go
-counts := [26]int{}
-```
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
 
-Advantages:
+Recommended practice order:
+1. [Valid Anagram](#valid-anagram)
+2. [Valid Palindrome](#valid-palindrome)
+3. [Longest Substring Without Repeating Characters](#longest-substring-without-repeating-characters)
+4. [Minimum Window Substring](#minimum-window-substring)
+5. [Group Anagrams](#group-anagrams)
+6. [Longest Palindromic Substring](#longest-palindromic-substring)
+7. [String Compression](#string-compression)
+8. [Is Subsequence](#is-subsequence)
+9. [Reverse a String](#reverse-a-string)
+10. [Rune-Safe Character Access](#rune-safe-character-access)
 
-* Less memory overhead
-* Faster access
-* No hashing
-* Simple fixed-size storage
-
-Use a map when the character set is large or unknown.
-
----
-
-## What is the difference between a trie and a hash map?
-
-A hash map efficiently checks complete keys:
-
-```text
-Does "apple" exist?
-```
-
-A trie efficiently works with prefixes:
-
-```text
-Which words begin with "app"?
-```
-
-A hash map may be simpler for exact lookup. A trie is stronger for prefix-based operations.
-
----
-
-## Why is sliding window usually `O(n)`?
-
-Because each character:
-
-* Enters the window at most once.
-* Leaves the window at most once.
-
-Therefore:
-
-```text
-At most 2n significant operations → O(n)
-```
-
----
-
-# 28. Recommended Learning Order
+Continue with: Character Replacement, Encode and Decode Strings, String to Integer, Find All Anagrams, Regular Expression Matching.
 
 ```mermaid
 flowchart LR
-    A["Basic scanning"] --> B["Frequency counting"]
-    B --> C["Two pointers"]
-    C --> D["Fixed sliding window"]
-    D --> E["Variable sliding window"]
-    E --> F["String building"]
-    F --> G["Palindrome expansion"]
-    G --> H["Trie"]
-    H --> I["Advanced matching<br/>KMP / Rabin-Karp"]
+    Q0["Valid Anagram"]
+    Q0 --> Q1["Valid Palindrome"]
+    Q1 --> Q2["Longest Substring Without Repeating Characters"]
+    Q2 --> Q3["Minimum Window Substring"]
+    Q3 --> Q4["Group Anagrams"]
+    Q4 --> Q5["Longest Palindromic Substring"]
+    Q5 --> Q6["String Compression"]
+    Q6 --> Q7["Is Subsequence"]
+    Q7 --> Q8["Reverse a String"]
+    Q8 --> Q9["Rune-Safe Character Access"]
 ```
 
-Study the problems in this order:
-
-| Level        | Problems                                       |
-| ------------ | ---------------------------------------------- |
-| Beginner     | Reverse String, First Unique Character         |
-| Beginner     | Valid Anagram, Valid Palindrome                |
-| Intermediate | Longest Substring Without Repeating Characters |
-| Intermediate | Group Anagrams, String Compression             |
-| Intermediate | Longest Palindromic Substring                  |
-| Advanced     | Minimum Window Substring                       |
-| Advanced     | Implement Trie                                 |
-| Advanced     | KMP substring search                           |
-
----
-
-# 29. Final Mental Models
-
-| Pattern              | Mental picture                   |
-| -------------------- | -------------------------------- |
-| String               | Train of character compartments  |
-| Frequency map        | Inventory counter                |
-| Two pointers         | Two guards walking inward        |
-| Sliding window       | Camera frame moving over text    |
-| String builder       | One reusable construction area   |
-| Anagram signature    | Fingerprint for a word           |
-| Palindrome expansion | Opening curtains from the center |
-| Trie                 | Dictionary corridors             |
-| String compression   | Read worker and write worker     |
-
-The most important rule to remember is:
-
-```text
-Characters/counts      → Hash map
-Both ends              → Two pointers
-Contiguous section     → Sliding window
-Repeated construction  → String builder
-Prefix search          → Trie
-Palindrome substring   → Expand around center
-```
+> **Baby analogy:** Imagine letter tiles laid in a row. Pack the same checklist every time so no important interview step is forgotten.

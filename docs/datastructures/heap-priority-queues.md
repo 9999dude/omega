@@ -1,1248 +1,197 @@
-# Heap / Priority Queue — Explained Like You Are Five
+# Heaps and Priority Queues — A Compact Interview Guide
 
-Imagine a hospital waiting room.
+A heap maintains the next minimum or maximum efficiently. A priority queue is the behavior; a heap is the usual implementation.
 
-Patients do **not** always get treated in arrival order. A patient with a serious injury gets treated before someone with a small cut.
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 Heap Interview Questions](#top-10-heap-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-That is a **priority queue**:
-
-> The most important item comes out first.
-
-A **heap** is the data structure commonly used to build that priority queue.
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
 
-# 1. Heap vs Priority Queue
+## Mental model
 
-These terms are related but not identical.
+A binary heap is a complete tree normally stored in an array. Parent and child indexes preserve shape, while sift operations restore priority order.
 
-| Term           | Meaning                                                          |
-| -------------- | ---------------------------------------------------------------- |
-| Priority queue | The behaviour: insert items and remove the highest-priority item |
-| Heap           | A data structure commonly used to implement a priority queue     |
-| Min heap       | The smallest value has highest priority                          |
-| Max heap       | The largest value has highest priority                           |
+| Real system | How the topic appears |
+| --- | --- |
+| Schedulers | Run the highest-priority ready task |
+| Routing | Expand the smallest tentative distance |
+| Streaming | Retain top-k values or two median halves |
+| Storage | Merge sorted runs efficiently |
 
-A priority queue might expose operations such as:
-
-```text
-push(item)
-peek()
-pop()
+```mermaid
+flowchart TD
+    T["Heaps and priority queues"]
+    T --> R0["Heap array"]
+    T --> R1["Parent index"]
+    T --> R2["Child indexes"]
+    T --> R3["Priority item"]
 ```
 
-The heap is the internal machinery that makes these operations efficient.
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. The line is not fully ordered, but the child at the front always has the winning priority.
+
+---
+
+## Representation and core operations
+
+Heap order is partial, not fully sorted. The root is guaranteed best; arbitrary search still requires a scan.
+
+| Representation | Role |
+| --- | --- |
+| Heap array | Indexes encode the complete tree |
+| Parent index | For child i, usually (i-1)/2 |
+| Child indexes | For parent i, usually 2i+1 and 2i+2 |
+| Priority item | Value plus priority and optional tie-breaker |
+
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Peek root | O(1) | Read current min or max |
+| Push | O(log n) | Append and sift upward |
+| Pop root | O(log n) | Swap, remove, and sift downward |
+| Build heap | O(n) | Bottom-up heapify |
+| Search arbitrary value | O(n) | Heap order cannot choose one branch |
 
 ```mermaid
 flowchart LR
-    A[Application] --> B[Priority Queue API]
-    B --> C[Heap Implementation]
-
-    B --> D[Push item]
-    B --> E[Peek highest priority]
-    B --> F[Remove highest priority]
-
-    C --> G[Min Heap]
-    C --> H[Max Heap]
+    A0["Peek root"]
+    A0 --> A1["Push"]
+    A1 --> A2["Pop root"]
+    A2 --> A3["Build heap"]
+    A3 --> A4["Search arbitrary value"]
 ```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. A new child bubbles toward the front; after the winner leaves, another child bubbles into the correct place.
 
 ---
 
-# 2. Why Do We Need a Heap?
-
-Suppose you have these numbers:
-
-```text
-8, 2, 10, 4, 1, 7
-```
-
-You repeatedly need to ask:
-
-```text
-What is the smallest number right now?
-```
-
-You could use a normal array, but finding the smallest item would require scanning everything.
-
-```text
-Find minimum in array: O(n)
-```
-
-You could keep the array sorted, but inserting a new item might require shifting many elements.
-
-```text
-Insert into sorted array: O(n)
-```
-
-A heap gives a useful compromise:
-
-```text
-Peek minimum: O(1)
-Insert:       O(log n)
-Remove min:   O(log n)
-```
-
-A heap is useful when you repeatedly need the:
-
-* Smallest item
-* Largest item
-* Next task to execute
-* Next meeting to finish
-* K largest or smallest items
-* Next item among several sorted sources
-* Current median of a stream
-
----
-
-# 3. The Mental Model
-
-Think of a heap as a company.
-
-In a **min heap**, every manager must have a value smaller than or equal to their direct employees.
-
-```text
-Manager <= Children
-```
-
-In a **max heap**, every manager must have a value greater than or equal to their direct employees.
-
-```text
-Manager >= Children
-```
-
-The CEO is at the top.
-
-Therefore:
-
-* Min heap CEO = smallest value
-* Max heap CEO = largest value
-
-The entire company is not sorted. Only the manager-child relationship is maintained.
-
----
-
-# 4. Min Heap
-
-In a min heap, every parent is smaller than or equal to its children.
-
-```mermaid
-graph TD
-    A["2"] --> B["5"]
-    A --> C["3"]
-    B --> D["10"]
-    B --> E["8"]
-    C --> F["7"]
-    C --> G["4"]
-```
-
-This is a valid min heap because:
-
-```text
-2 <= 5 and 3
-5 <= 10 and 8
-3 <= 7 and 4
-```
-
-The smallest item is always at the root:
-
-```text
-heap[0]
-```
-
-But the rest of the heap is not fully sorted.
-
-For example:
-
-```text
-5 appears before 3
-```
-
-That is allowed because `5` and `3` are siblings. The heap only guarantees the relationship between parent and child.
-
----
-
-# 5. Max Heap
-
-In a max heap, every parent is larger than or equal to its children.
-
-```mermaid
-graph TD
-    A["10"] --> B["8"]
-    A --> C["7"]
-    B --> D["5"]
-    B --> E["4"]
-    C --> F["2"]
-    C --> G["3"]
-```
-
-The largest value is always at the root.
-
-```text
-heap[0] = maximum
-```
-
----
-
-# 6. A Heap Is Usually Stored as an Array
-
-Although we draw a heap as a tree, it is normally stored inside an array.
-
-Consider this min heap:
-
-```mermaid
-graph TD
-    A["Index 0: 2"] --> B["Index 1: 5"]
-    A --> C["Index 2: 3"]
-    B --> D["Index 3: 10"]
-    B --> E["Index 4: 8"]
-    C --> F["Index 5: 7"]
-    C --> G["Index 6: 4"]
-```
-
-Its array representation is:
-
-```text
-Index:  0  1  2   3  4  5  6
-Value: [2, 5, 3, 10, 8, 7, 4]
-```
-
-For an item at index `i`:
-
-```text
-Parent index = (i - 1) / 2
-Left child   = 2*i + 1
-Right child  = 2*i + 2
-```
-
-Integer division is used.
-
-For index `2`:
-
-```text
-Parent = (2 - 1) / 2 = 0
-Left   = 2*2 + 1 = 5
-Right  = 2*2 + 2 = 6
-```
-
-Therefore:
-
-```text
-Value at index 2 = 3
-Parent            = 2
-Left child        = 7
-Right child       = 4
-```
-
-No pointers are required.
-
----
-
-# 7. Why Does the Array Representation Work?
-
-A binary heap is a **complete binary tree**.
-
-Complete means:
-
-* Every level is completely filled, except possibly the last.
-* The last level is filled from left to right.
-* There are no random gaps.
-
-Valid:
-
-```mermaid
-graph TD
-    A["2"] --> B["4"]
-    A --> C["5"]
-    B --> D["8"]
-    B --> E["9"]
-    C --> F["10"]
-```
-
-Invalid complete tree:
-
-```mermaid
-graph TD
-    A["2"] --> B["4"]
-    A --> C["5"]
-    B --> D["8"]
-    C --> F["10"]
-```
-
-There is a missing position under `4`, even though a later position under `5` is occupied.
-
-Because there are no gaps, the tree can be packed neatly into an array.
-
----
-
-# 8. Heap Operations
-
-The most important operations are:
-
-| Operation | Description                  |
-| --------- | ---------------------------- |
-| Peek      | Read the root                |
-| Push      | Insert a new item            |
-| Pop       | Remove the root              |
-| Heapify   | Convert an array into a heap |
-
----
-
-# 9. Peek
-
-For a min heap:
-
-```text
-heap[0] = smallest item
-```
-
-For a max heap:
-
-```text
-heap[0] = largest item
-```
-
-No searching is required.
-
-```text
-Time: O(1)
-```
-
----
-
-# 10. Inserting an Item: Bubble Up
-
-Start with this min heap:
-
-```text
-[2, 5, 4, 10, 8, 7]
-```
-
-Insert `3`.
-
-## Step 1: Add it to the end
-
-```text
-[2, 5, 4, 10, 8, 7, 3]
-```
-
-The tree remains complete, but the heap rule may be broken.
-
-`3` has parent `4`.
-
-```text
-3 < 4
-```
-
-Swap them:
-
-```text
-[2, 5, 3, 10, 8, 7, 4]
-```
-
-Now `3` has parent `2`.
-
-```text
-3 >= 2
-```
-
-Stop.
+## Interview patterns and complexity
+
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Repeated next min or max | Heap | [Build a Min Heap](#build-a-min-heap), [Heap Sort](#heap-sort), [Connect Ropes](#minimum-cost-to-connect-ropes) |
+| Keep largest k | Min-heap of size k | [Kth Largest Element](#kth-largest-element-in-an-array), [Top K Largest Values](#top-k-largest-values), [Top K Frequent Elements](#top-k-frequent-elements) |
+| Merge sorted sources | Heap of current source heads | [Merge K Sorted Lists](#merge-k-sorted-lists) |
+| Running median | Two heaps | [Find Median from a Data Stream](#find-median-from-a-data-stream) |
+| Schedule earliest available work | Heap ordered by release time | [Meeting Rooms II](#meeting-rooms-ii), [Task Scheduler](#task-scheduler) |
+
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Peek | O(1) | Best item is root |
+| Push or pop | O(log n) | Move along one tree height |
+| Build heap | O(n) | Subtree heights shrink near leaves |
+| Heap storage | O(n) | Array stores all items |
 
 ```mermaid
 flowchart TD
-    A[Append item at end] --> B{Heap rule broken?}
-    B -- Yes --> C[Swap with parent]
-    C --> B
-    B -- No --> D[Insertion complete]
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Repeated next min or max"| P0["Heap"]
+    Q -->|"Keep largest k"| P1["Min-heap of size k"]
+    Q -->|"Keep smallest k"| P2["Max-heap of size k"]
+    Q -->|"Merge sorted sources"| P3["Heap of current source heads"]
+    Q -->|"Running median"| P4["Two heaps"]
 ```
 
-This process is called:
-
-* Bubble up
-* Sift up
-* Swim
-* Percolate up
-
-All usually mean the same thing.
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. Repeated best-item requests need a heap; one final sorted list may only need sorting.
 
 ---
 
-# 11. Removing the Root: Bubble Down
-
-Start with:
-
-```text
-[2, 5, 3, 10, 8, 7, 4]
-```
-
-Remove the minimum value, `2`.
-
-You cannot simply remove the first array element because that would leave a hole.
-
-## Step 1: Move the last item to the root
-
-```text
-[4, 5, 3, 10, 8, 7]
-```
-
-Now the min-heap rule is broken:
-
-```text
-4 > 3
-```
-
-## Step 2: Swap with the smaller child
-
-```text
-[3, 5, 4, 10, 8, 7]
-```
-
-The heap is valid again.
-
-```mermaid
-flowchart TD
-    A[Save root value] --> B[Move last item to root]
-    B --> C[Remove last array position]
-    C --> D{Heap rule broken?}
-    D -- Yes --> E[Swap with best child]
-    E --> D
-    D -- No --> F[Return original root]
-```
-
-For a min heap, swap with the **smaller child**.
-
-For a max heap, swap with the **larger child**.
-
-This process is called:
-
-* Bubble down
-* Sift down
-* Sink
-* Heapify down
-
----
-
-# 12. How Is Heap Complexity Calculated?
-
-A binary heap is a complete binary tree.
-
-At every level, the number of nodes approximately doubles.
-
-```text
-Level 0: 1 node
-Level 1: 2 nodes
-Level 2: 4 nodes
-Level 3: 8 nodes
-Level 4: 16 nodes
-```
-
-For a tree with height `h`:
-
-```text
-Number of nodes ≈ 2^h
-```
-
-Therefore:
-
-```text
-h ≈ log₂(n)
-```
-
-The heap's height is:
-
-```text
-O(log n)
-```
-
-During insertion, an item travels along at most one path from the bottom to the root.
-
-```text
-O(log n)
-```
-
-During removal, an item travels along at most one path from the root to the bottom.
-
-```text
-O(log n)
-```
-
----
-
-# 13. Heap Complexity Table
-
-| Operation               |                         Time |
-| ----------------------- | ---------------------------: |
-| Peek minimum or maximum |                       `O(1)` |
-| Insert                  |                   `O(log n)` |
-| Remove root             |                   `O(log n)` |
-| Replace root            |                   `O(log n)` |
-| Search arbitrary value  |                       `O(n)` |
-| Delete arbitrary value  | `O(log n)` after locating it |
-| Build heap              |                       `O(n)` |
-| Heap sort               |                 `O(n log n)` |
-
-Space:
-
-```text
-O(n)
-```
-
----
-
-# 14. Why Is Searching a Heap O(n)?
-
-A heap is not a sorted tree.
-
-Consider:
-
-```mermaid
-graph TD
-    A["2"] --> B["5"]
-    A --> C["3"]
-    B --> D["100"]
-    B --> E["8"]
-    C --> F["7"]
-    C --> G["4"]
-```
-
-Suppose you are searching for `8`.
-
-You cannot say:
-
-```text
-8 > 2, so search only the right side.
-```
-
-That works in a binary search tree, but not in a heap.
-
-Both sides may contain larger values.
-
-Therefore, in the worst case, you may inspect every item:
-
-```text
-O(n)
-```
-
-A heap is optimized for finding the root, not for searching arbitrary values.
-
----
-
-# 15. Building a Heap
-
-Suppose you receive an unsorted array:
-
-```text
-[8, 3, 5, 1, 9, 2]
-```
-
-There are two ways to build a heap.
-
-## Approach 1: Insert Items One by One
-
-Each insertion costs:
-
-```text
-O(log n)
-```
-
-For `n` items:
-
-```text
-O(n log n)
-```
-
-## Approach 2: Bottom-Up Heapify
-
-Start from the last non-leaf node:
-
-```text
-n/2 - 1
-```
-
-Then sift each node down toward the root.
-
-```text
-Time: O(n)
-```
-
-This often surprises interview candidates.
-
-## Why Is Bottom-Up Heapify O(n)?
-
-Most nodes are near the bottom.
-
-* About half the nodes are leaves and require no work.
-* About one-quarter can move only one level.
-* About one-eighth can move two levels.
-* Very few nodes can move all the way down.
-
-Therefore, the total work is linear:
-
-```text
-O(n)
-```
-
-Not every node performs `log n` work.
-
----
-
-# 16. Priority Queue Example
-
-Imagine tasks:
-
-| Task                   | Priority |
-| ---------------------- | -------: |
-| Update profile picture |        1 |
-| Fix payment outage     |      100 |
-| Reply to email         |        5 |
-| Fix login issue        |       50 |
-
-A max-priority queue processes:
-
-```text
-Fix payment outage
-Fix login issue
-Reply to email
-Update profile picture
-```
-
-```mermaid
-flowchart TD
-    A[New task arrives] --> B[Insert into priority queue]
-    B --> C{Worker available?}
-    C -- No --> B
-    C -- Yes --> D[Remove highest-priority task]
-    D --> E[Execute task]
-    E --> C
-```
-
----
-
-# 17. Min Heap or Max Heap?
-
-Use this rule:
-
-```text
-Need the smallest item repeatedly → Min heap
-Need the largest item repeatedly  → Max heap
-```
-
-Examples:
-
-| Problem                    | Heap     |
-| -------------------------- | -------- |
-| Earliest finishing meeting | Min heap |
-| Cheapest route candidate   | Min heap |
-| Next scheduled task        | Min heap |
-| Largest number             | Max heap |
-| Most frequent item         | Max heap |
-| Highest-priority job       | Max heap |
-
-The confusing part is Top K problems.
-
----
-
-# 18. The Opposite-Heap Rule for Top K
-
-Suppose you need the **K largest** values.
-
-Use a **min heap of size K**.
-
-Why min heap?
-
-Because the smallest item among your current winners is the first item you want to remove.
-
-Example:
-
-```text
-Numbers: 7, 2, 10, 4, 8
-K = 3
-```
-
-Keep only three candidates.
-
-```text
-After 7:       [7]
-After 2:       [2, 7]
-After 10:      [2, 7, 10]
-After 4:       remove 2 → [4, 7, 10]
-After 8:       remove 4 → [7, 8, 10]
-```
-
-The three largest numbers are:
-
-```text
-7, 8, 10
-```
-
-The root is `7`, which is the third largest.
-
-```text
-K largest  → Min heap of size K
-K smallest → Max heap of size K
-```
-
-Mental model:
-
-> Keep a small team of winners. The weakest winner stands at the door and is replaced when someone better arrives.
-
----
-
-# 19. Pattern 1: Kth Largest Element
-
-Problem:
-
-```text
-nums = [3, 2, 1, 5, 6, 4]
-k = 2
-```
-
-The sorted order is:
-
-```text
-[1, 2, 3, 4, 5, 6]
-```
-
-The second-largest value is:
-
-```text
-5
-```
-
-## Heap Approach
-
-Maintain a min heap containing at most `k` items.
-
-For every number:
-
-1. Push it into the heap.
-2. If heap size exceeds `k`, remove the smallest.
-3. At the end, the heap root is the kth-largest item.
-
-```mermaid
-flowchart TD
-    A[Read next number] --> B[Push into min heap]
-    B --> C{Heap size greater than K?}
-    C -- Yes --> D[Remove minimum]
-    D --> E{More numbers?}
-    C -- No --> E
-    E -- Yes --> A
-    E -- No --> F[Root is Kth largest]
-```
-
-Complexity:
-
-```text
-Time:  O(n log k)
-Space: O(k)
-```
-
-Alternative:
-
-```text
-Quickselect: Average O(n)
-```
-
-The heap solution is often easier and is especially useful for streams.
-
----
-
-# 20. Pattern 2: Top K Frequent Elements
-
-Problem:
-
-```text
-nums = [1, 1, 1, 2, 2, 3]
-k = 2
-```
-
-Frequencies:
-
-```text
-1 → 3 times
-2 → 2 times
-3 → 1 time
-```
-
-Answer:
-
-```text
-[1, 2]
-```
-
-## Approach
-
-First build a frequency map:
-
-```text
-value → count
-```
-
-Then maintain a min heap of size `k`, ordered by frequency.
+## Problem-solving checklist and common mistakes
+
+Before coding:
+
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
+
+Common mistakes:
+- Assuming a heap is fully sorted.
+- Using the wrong heap direction for top-k.
+- Forgetting container/heap methods use pointer receivers for mutation.
+- Ignoring stable tie-breaking when equal priorities matter.
+- Forgetting to discard stale priority-queue entries.
+- Using a heap when one sort and scan is simpler.
 
 ```mermaid
 flowchart LR
-    A[Input numbers] --> B[Frequency map]
-    B --> C[Min heap of size K]
-    C --> D[Top K frequent values]
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
 ```
 
-Complexity, where `m` is the number of unique values:
-
-```text
-Build frequency map: O(n)
-Heap processing:     O(m log k)
-Total:               O(n + m log k)
-Space:               O(m + k)
-```
-
-Interview clue:
-
-```text
-Top K + frequency
-```
-
-Usually means:
-
-```text
-Hash map + heap
-```
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. Do not expect the second child in line to be second-best unless the whole line was sorted.
 
 ---
 
-# 21. Pattern 3: Merge K Sorted Lists
+## Top 10 Heap Interview Questions
 
-Suppose you have:
-
-```text
-List 1: 1 → 4 → 8
-List 2: 2 → 3 → 9
-List 3: 5 → 6 → 7
-```
-
-At every step, you need the smallest head among all lists.
-
-Initially:
-
-```text
-1, 2, 5
-```
-
-Put those values into a min heap.
-
-Remove `1`, add it to the answer, and insert the next value from List 1: `4`.
-
-Heap now contains:
-
-```text
-2, 4, 5
-```
-
-Continue until all lists are empty.
-
-```mermaid
-flowchart TD
-    A[Take head of every list] --> B[Insert heads into min heap]
-    B --> C[Remove smallest node]
-    C --> D[Append node to result]
-    D --> E{Removed node has next?}
-    E -- Yes --> F[Insert next node into heap]
-    F --> G{Heap empty?}
-    E -- No --> G
-    G -- No --> C
-    G -- Yes --> H[Merged list complete]
-```
-
-If there are `N` total nodes and `k` lists:
-
-```text
-Time:  O(N log k)
-Space: O(k)
-```
-
-The heap never needs to contain more than one candidate from each list.
-
----
-
-# 22. Pattern 4: Find Median from a Data Stream
-
-Numbers arrive one by one:
-
-```text
-5, 2, 10, 3, 8, ...
-```
-
-You must return the median after every insertion.
-
-One heap is not enough.
-
-Use two heaps:
-
-```text
-Lower half → Max heap
-Upper half → Min heap
-```
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
 
 ```mermaid
 flowchart LR
-    A["Lower half<br/>Max heap<br/>2, 3, 5"] --> B["Median"]
-    B --> C["Upper half<br/>Min heap<br/>8, 10, 12"]
+    Q0["Kth Largest Element in an Array"]
+    Q0 --> Q1["Top K Frequent Elements"]
+    Q1 --> Q2["Merge K Sorted Lists"]
+    Q2 --> Q3["Find Median from a Data Stream"]
+    Q3 --> Q4["Meeting Rooms II"]
 ```
 
-The max heap gives the largest value in the lower half.
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. These ten puzzles are practice cards; each card teaches one reusable move.
 
-The min heap gives the smallest value in the upper half.
-
-Maintain these rules:
-
-```text
-1. Every lower-half value <= every upper-half value
-2. Heap sizes differ by at most one
-```
-
-## Odd Number of Elements
-
-```text
-Lower: [5, 3, 2]
-Upper: [8, 10]
-```
-
-Median:
-
-```text
-root of larger heap = 5
-```
-
-## Even Number of Elements
-
-```text
-Lower root = 5
-Upper root = 8
-```
-
-Median:
-
-```text
-(5 + 8) / 2 = 6.5
-```
-
-Complexity:
-
-```text
-Add number: O(log n)
-Find median: O(1)
-Space:      O(n)
-```
-
-Mental model:
-
-> Two rooms separated by a door. The left room stores the smaller half, and the right room stores the larger half. The people closest to the door determine the median.
-
----
-
-# 23. Pattern 5: Meeting Rooms II
-
-You receive meeting intervals:
-
-```text
-[0, 30]
-[5, 10]
-[15, 20]
-```
-
-You need to calculate the minimum number of rooms.
-
-At time `5`:
-
-* Meeting `[0,30]` is running.
-* Meeting `[5,10]` starts.
-
-You need two rooms.
-
-At time `15`:
-
-* Meeting `[5,10]` has ended.
-* Its room can be reused.
-
-## Heap Approach
-
-1. Sort meetings by start time.
-2. Keep a min heap of meeting end times.
-3. The root is the meeting that finishes earliest.
-4. If the next meeting starts after that time, reuse the room.
-5. Otherwise, allocate another room.
+### Kth Largest Element in an Array
 
 ```mermaid
 flowchart TD
-    A[Sort meetings by start time] --> B[Read next meeting]
-    B --> C{Start time >= earliest end time?}
-    C -- Yes --> D[Remove earliest end time]
-    C -- No --> E[Need another room]
-    D --> F[Insert current end time]
-    E --> F
-    F --> G{More meetings?}
-    G -- Yes --> B
-    G -- No --> H[Heap size is rooms needed]
+    subgraph PROCESS["Detailed algorithm flow: Kth Largest Element in an Array"]
+        direction TD
+        I["Input"] --> S0["Initialize an empty min heap and push each input <strong>value</strong>."]
+        S0 --> S1["Pop the minimum whenever more than <strong>k</strong> candidates are stored."]
+        S1 --> S2["Return the root after all inputs are processed because it is the kth-largest <strong>value</strong>."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Complexity:
+**Where it is used in real life:**
 
-```text
-Sorting: O(n log n)
-Heap:    O(n log n)
-Total:   O(n log n)
-Space:   O(n)
-```
-
-The heap stores the end time of every room currently being used.
-
----
-
-# 24. Pattern 6: Task Scheduler
-
-You have tasks such as:
-
-```text
-A, A, A, B, B, B
-```
-
-A task must wait for a cooldown before running again.
-
-For cooldown `n = 2`, a possible schedule is:
-
-```text
-A B idle A B idle A B
-```
-
-A common solution uses:
-
-* Max heap: tasks with the highest remaining frequency
-* Queue: tasks waiting for their cooldown to finish
-
-```mermaid
-flowchart LR
-    A[Frequency map] --> B[Max heap by remaining count]
-    B --> C[Execute most frequent available task]
-    C --> D{Task still remains?}
-    D -- Yes --> E[Cooldown queue]
-    E --> F{Cooldown finished?}
-    F -- Yes --> B
-    D -- No --> G[Task completed]
-```
-
-Why process the most frequent task first?
-
-Because highly frequent tasks are the hardest to schedule. Delaying them can create more idle slots later.
-
-General complexity:
-
-```text
-Time:  O(total schedule slots × log m)
-Space: O(m)
-```
-
-Here, `m` is the number of distinct task types.
-
-Because there are at most 26 uppercase English letters in the standard problem, the heap is very small.
-
----
-
-# 25. Heap Patterns to Recognize
-
-Use a heap when a question contains phrases like:
-
-| Interview wording           | Likely pattern             |
-| --------------------------- | -------------------------- |
-| K largest                   | Min heap of size K         |
-| K smallest                  | Max heap of size K         |
-| Kth largest                 | Min heap of size K         |
-| Kth smallest                | Max heap of size K         |
-| Top K frequent              | Frequency map + min heap   |
-| Continuously find median    | Two heaps                  |
-| Merge K sorted lists        | Min heap with K candidates |
-| Next task to execute        | Priority queue             |
-| Earliest finishing meeting  | Min heap                   |
-| Minimum cost available      | Min heap                   |
-| Maximum reward available    | Max heap                   |
-| Process events by timestamp | Min heap                   |
-| Find shortest path          | Min heap, usually Dijkstra |
-
----
-
-# 26. When Should You Not Use a Heap?
-
-A heap is not always the best choice.
-
-## Need the Entire Collection Sorted
-
-Use sorting:
-
-```text
-O(n log n)
-```
-
-A heap only guarantees the root.
-
-## Need Fast Membership Checking
-
-Use a hash set:
-
-```text
-O(1) average
-```
-
-Searching a heap is `O(n)`.
-
-## Need Ordered Searching and Range Queries
-
-Use:
-
-* Balanced binary search tree
-* Ordered map
-* Sorted structure
-
-A heap cannot efficiently answer:
-
-```text
-Give me every value between 20 and 50.
-```
-
-## Need a Single Minimum Once
-
-Scanning once may be simpler:
-
-```text
-O(n)
-```
-
-Building a heap would also cost `O(n)` and add unnecessary complexity.
-
----
-
-# 27. Heap vs Other Data Structures
-
-| Data structure |   Peek min |     Insert | Remove min |     Search |
-| -------------- | ---------: | ---------: | ---------: | ---------: |
-| Unsorted array |     `O(n)` |     `O(1)` |     `O(n)` |     `O(n)` |
-| Sorted array   |     `O(1)` |     `O(n)` |     `O(n)` | `O(log n)` |
-| Min heap       |     `O(1)` | `O(log n)` | `O(log n)` |     `O(n)` |
-| Balanced BST   | `O(log n)` | `O(log n)` | `O(log n)` | `O(log n)` |
-
-A heap is specialized for:
-
-```text
-Repeatedly accessing and removing the smallest or largest item.
-```
-
----
-
-# 28. Go Min-Heap Template
-
-Go provides heap functionality through `container/heap`.
+- Analytics retrieves a ranked threshold without fully sorting every update.
+- Monitoring keeps the kth highest latency or load value.
 
 ```go
-package main
-
-import (
-	"container/heap"
-	"fmt"
-)
-
-// IntMinHeap implements heap.Interface.
-type IntMinHeap []int
-
-func (h IntMinHeap) Len() int {
-	return len(h)
-}
-
-// Less defines priority.
-// For a min heap, smaller values have higher priority.
-func (h IntMinHeap) Less(i, j int) bool {
-	return h[i] < h[j]
-}
-
-func (h IntMinHeap) Swap(i, j int) {
-	h[i], h[j] = h[j], h[i]
-}
-
-func (h *IntMinHeap) Push(value any) {
-	*h = append(*h, value.(int))
-}
-
-func (h *IntMinHeap) Pop() any {
-	old := *h
-	n := len(old)
-
-	value := old[n-1]
-	*h = old[:n-1]
-
-	return value
-}
-
-func main() {
-	h := &IntMinHeap{8, 3, 5, 1}
-
-	heap.Init(h)
-
-	heap.Push(h, 2)
-	heap.Push(h, 10)
-
-	fmt.Println("Minimum:", (*h)[0])
-
-	for h.Len() > 0 {
-		fmt.Println(heap.Pop(h))
-	}
-}
-```
-
-Output:
-
-```text
-Minimum: 1
-1
-2
-3
-5
-8
-10
-```
-
-Important Go detail:
-
-`heap.Pop` internally swaps the root with the last item and restores the heap. Your custom `Pop` method removes the final array element, not the root directly.
-
----
-
-# 29. Creating a Max Heap in Go
-
-Change only the `Less` method:
-
-```go
-func (h IntMaxHeap) Less(i, j int) bool {
-	return h[i] > h[j]
-}
-```
-
-For a min heap:
-
-```go
-return h[i] < h[j]
-```
-
-For a max heap:
-
-```go
-return h[i] > h[j]
-```
-
-A useful mental model:
-
-> `Less(i, j)` answers whether item `i` should appear closer to the root than item `j`.
-
----
-
-# 30. Kth Largest Element in Go
-
-```go
+// Exact question: How do you find the kth-largest value with a size-`k` min heap in Go?
+//
+// Example: Input numbers = [3, 2, 1, 5, 6, 4] and k = 2 -> output 5.
+//
+// Possible answer: Push every input value and pop the minimum whenever the candidate heap grows beyond `k`.
+//
+// Output format: Return the kth-largest integer; for `[3,2,1,5,6,4]` and `k = 2`, return `5`.
+//
+// Inline descriptions:
+// - `nums` is an input slice: indexes identify input positions and elements are the integer values being ranked.
+// - `h` is a min-heap slice: indexes are heap positions and elements are the current Top-K candidate values.
+//
+// Boundary checks:
+// - The function requires `1 <= k <= len(nums)`; `h.Len() > k` trims every extra candidate.
+//
+// Key variables:
+// - `nums` supplies all candidate values, while `k` is both the requested rank and maximum heap size.
+// - `number` is the current input value; `h[0]` is the weakest retained candidate and final kth-largest value.
+// - `old` is the heap's backing slice, whose indexes are heap positions and whose elements are retained values.
+// - `n` is the current heap length before the last element is removed.
+// - `value` is the final heap element removed by the custom Pop method.
+//
+// Logic:
+// 1. Initialize an empty min heap and push each input value.
+// 2. Pop the minimum whenever more than `k` candidates are stored.
+// 3. Return the root after all inputs are processed because it is the kth-largest value.
 package main
 
 import "container/heap"
@@ -1281,434 +230,1010 @@ func findKthLargest(nums []int, k int) int {
 
 	return (*h)[0]
 }
+
+// time complexity: O(n log k) -> each of the `n` input values may require a heap push or pop on at most `k` items.
+// space complexity: O(k) -> the heap retains at most `k` values.
 ```
 
-Example:
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Kth Largest Element in an Array" is one small game played with the same pieces and rules.
 
-```go
-nums := []int{3, 2, 1, 5, 6, 4}
-answer := findKthLargest(nums, 2)
-
-// answer = 5
-```
-
-Complexity:
-
-```text
-Time:  O(n log k)
-Space: O(k)
-```
-
----
-
-# 31. Common Mistakes
-
-## Mistake 1: Thinking the Heap Is Fully Sorted
-
-This is valid:
-
-```text
-[2, 5, 3, 10, 8, 7, 4]
-```
-
-Even though:
-
-```text
-5 > 3
-```
-
-Only parent-child relationships matter.
-
----
-
-## Mistake 2: Using a Max Heap for K Largest
-
-For `K` largest, normally use:
-
-```text
-Min heap of size K
-```
-
-The root represents the weakest current winner.
-
----
-
-## Mistake 3: Saying Build Heap Is O(n log n)
-
-Repeated insertion is:
-
-```text
-O(n log n)
-```
-
-Bottom-up heap construction is:
-
-```text
-O(n)
-```
-
----
-
-## Mistake 4: Claiming Heap Search Is O(log n)
-
-Heap search is generally:
-
-```text
-O(n)
-```
-
-The tree is not ordered like a binary search tree.
-
----
-
-## Mistake 5: Forgetting the Complete-Tree Requirement
-
-The shape of the tree is important. It keeps the height at:
-
-```text
-O(log n)
-```
-
-Without this requirement, the tree could become a long chain.
-
----
-
-## Mistake 6: Using a Heap When Sorting Is Simpler
-
-For one-time offline processing:
-
-```text
-Sort: O(n log n)
-```
-
-may be simpler.
-
-A heap becomes especially valuable when:
-
-* Data arrives as a stream.
-* You only need `K` items.
-* You repeatedly remove the highest-priority item.
-
----
-
-# 32. Interview Questions and Answers
-
-## Question 1: What Is a Heap?
-
-A heap is a complete binary tree that satisfies a heap property. In a min heap, each parent is no greater than its children. In a max heap, each parent is no smaller than its children.
-
----
-
-## Question 2: Is a Heap Fully Sorted?
-
-No. A heap only guarantees ordering between parents and children. Siblings and separate subtrees are not necessarily sorted.
-
----
-
-## Question 3: Why Is Peek O(1)?
-
-The minimum or maximum value is always stored at the root, which is normally array index `0`.
-
----
-
-## Question 4: Why Are Insertion and Removal O(log n)?
-
-A heap is a complete binary tree with height `O(log n)`. An inserted or replaced item moves along at most one root-to-leaf path.
-
----
-
-## Question 5: What Is the Difference Between a Heap and a Priority Queue?
-
-A priority queue describes the operations and behaviour. A heap is one common data structure used to implement that behaviour.
-
----
-
-## Question 6: Why Is Searching a Heap O(n)?
-
-The heap property does not provide enough ordering to eliminate an entire subtree during a search. In the worst case, every node must be inspected.
-
----
-
-## Question 7: Why Is Building a Heap O(n)?
-
-Most nodes are close to the leaves and move very little during bottom-up heapification. Only a small number of nodes can move many levels.
-
----
-
-## Question 8: How Do You Find the Kth-Largest Element?
-
-Maintain a min heap of size `k`. Insert each value and remove the minimum whenever the heap grows beyond `k`. The root is the kth-largest value.
-
----
-
-## Question 9: How Can a Min Heap Be Used as a Max Heap?
-
-Reverse the comparison function, or store negated values when the language only provides a min heap.
-
-Example:
-
-```text
-Store 10 as -10
-Store 5 as -5
-```
-
-The smallest negative value represents the largest original value.
-
----
-
-## Question 10: Can a Heap Contain Duplicate Values?
-
-Yes. Duplicates do not violate the heap property.
-
-```text
-Parent <= child
-```
-
-allows equality.
-
----
-
-## Question 11: Is a Heap Stable?
-
-Not normally.
-
-If two items have the same priority, the heap does not necessarily preserve insertion order.
-
-To make it stable, store:
-
-```text
-(priority, insertionSequence, value)
-```
-
-Use the sequence number as a tie-breaker.
-
----
-
-## Question 12: How Do You Delete an Arbitrary Heap Element?
-
-If its index is known:
-
-1. Swap it with the last item.
-2. Remove the last item.
-3. Bubble the replacement up or down.
-
-The restructuring takes:
-
-```text
-O(log n)
-```
-
-But finding the item may cost:
-
-```text
-O(n)
-```
-
-unless an additional index map is maintained.
-
----
-
-# 33. Common Coding Questions
-
-| Problem                         | Main pattern                     | Complexity           |
-| ------------------------------- | -------------------------------- | -------------------- |
-| Kth Largest Element             | Min heap of size K               | `O(n log k)`         |
-| Top K Frequent Elements         | Hash map + min heap              | `O(n + m log k)`     |
-| Merge K Sorted Lists            | Min heap with list heads         | `O(N log k)`         |
-| Find Median from Data Stream    | Max heap + min heap              | Add `O(log n)`       |
-| Meeting Rooms II                | Sort + min heap of end times     | `O(n log n)`         |
-| Task Scheduler                  | Frequency map + max heap + queue | Usually `O(n log m)` |
-| K Closest Points                | Max heap of size K               | `O(n log k)`         |
-| Reorganize String               | Max heap by frequency            | `O(n log m)`         |
-| Smallest Range Covering K Lists | Min heap + current maximum       | `O(N log k)`         |
-| Dijkstra’s Algorithm            | Min heap of distances            | `O((V+E) log V)`     |
-
----
-
-# 34. Mock Interview Problems
-
-## Mock Problem 1: K Closest Points
-
-Given points:
-
-```text
-[[1,3], [-2,2], [5,8]]
-```
-
-Return the `k` points closest to the origin.
-
-Distance:
-
-```text
-x² + y²
-```
-
-Expected pattern:
-
-```text
-Max heap of size K
-```
-
-Why max heap?
-
-You are keeping the `K` smallest distances. The largest distance among the current winners should be removed first.
-
-Complexity:
-
-```text
-Time:  O(n log k)
-Space: O(k)
-```
-
----
-
-## Mock Problem 2: Connect Ropes with Minimum Cost
-
-You have ropes:
-
-```text
-[4, 3, 2, 6]
-```
-
-Connecting two ropes costs the sum of their lengths.
-
-To minimize total cost, repeatedly connect the two smallest ropes.
-
-Expected pattern:
-
-```text
-Min heap
-```
-
-Steps:
-
-```text
-2 + 3 = 5
-4 + 5 = 9
-6 + 9 = 15
-
-Total = 5 + 9 + 15 = 29
-```
-
-Complexity:
-
-```text
-O(n log n)
-```
-
----
-
-## Mock Problem 3: Kth Largest in a Stream
-
-Numbers arrive continuously.
-
-After every insertion, return the kth-largest value.
-
-Expected pattern:
-
-```text
-Persistent min heap of size K
-```
-
-This is preferable to sorting all values after every insertion.
-
-Each insertion:
-
-```text
-O(log k)
-```
-
----
-
-## Mock Problem 4: Reorganize String
-
-Given:
-
-```text
-"aaabbc"
-```
-
-Rearrange the characters so that no two adjacent characters are equal.
-
-Expected pattern:
-
-```text
-Frequency map + max heap
-```
-
-Repeatedly choose the most frequent character that is different from the previously used character.
-
----
-
-## Mock Problem 5: Smallest Range Covering K Lists
-
-Given several sorted lists, find the smallest range containing at least one number from every list.
-
-Expected pattern:
-
-```text
-Min heap + track current maximum
-```
-
-The heap gives the current minimum. The tracked value gives the current maximum.
-
----
-
-# 35. Interview Decision Framework
-
-When you see a problem, ask these questions.
+### Top K Frequent Elements
 
 ```mermaid
 flowchart TD
-    A[Do I repeatedly need min or max?] -->|No| B[Heap may not be needed]
-    A -->|Yes| C[Do I need all items sorted?]
-    C -->|Yes| D[Consider sorting]
-    C -->|No| E[Is K much smaller than N?]
-    E -->|Yes| F[Use heap of size K]
-    E -->|No| G[Use normal heap]
-    F --> H{Keeping K largest?}
-    H -->|Yes| I[Min heap]
-    H -->|No, K smallest| J[Max heap]
+    subgraph PROCESS["Detailed algorithm flow: Top K Frequent Elements"]
+        direction TD
+        I["Input"] --> S0["Count every value with a hash map."]
+        S0 --> S1["Push each unique value and frequency into the min heap."]
+        S1 --> S2["Remove the weakest candidate whenever the heap grows beyond <strong>k</strong>."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
+
+**Where it is used in real life:**
+
+- Search systems surface the most common queries.
+- Telemetry systems report the busiest labels.
+
+```go
+// Exact question: How do you find the `k` most frequent integers with a heap?
+//
+// Example: Input numbers = [1, 1, 1, 2, 2, 3] and k = 2 -> output values 1 and 2, in any order.
+//
+// Possible answer: Count values in a map, then keep a min heap containing the `k` largest frequencies.
+//
+// Output format: Return up to `k` values; their order in the result is not significant.
+//
+// Inline descriptions:
+// - `counts` maps each input value to its frequency; `frequencyMinHeap` stores candidate value-count pairs.
+// - `frequencyMinHeap` is a slice whose indexes are heap positions and whose elements are value-count states.
+// - `heap.Init`, `heap.Push`, and `heap.Pop` come from Go's standard `container/heap` package.
+//
+// Boundary checks:
+// - Non-positive `k` returns an empty slice, and `k` above the unique-value count returns every unique value.
+//
+// Key variables:
+// - The heap root has the smallest frequency among the current Top-K candidates.
+//
+// Logic:
+// 1. Count every value with a hash map.
+// 2. Push each unique value and frequency into the min heap.
+// 3. Remove the weakest candidate whenever the heap grows beyond `k`.
+package main
+
+import "container/heap"
+
+type frequencyItem struct {
+	value int
+	count int
+}
+
+type frequencyMinHeap []frequencyItem
+
+func (h frequencyMinHeap) Len() int           { return len(h) }
+func (h frequencyMinHeap) Less(i, j int) bool { return h[i].count < h[j].count }
+func (h frequencyMinHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *frequencyMinHeap) Push(value any)    { *h = append(*h, value.(frequencyItem)) }
+func (h *frequencyMinHeap) Pop() any {
+	old := *h
+	last := len(old) - 1
+	value := old[last]
+	*h = old[:last]
+	return value
+}
+
+func topKFrequent(numbers []int, k int) []int {
+	if k <= 0 {
+		return []int{}
+	}
+	counts := make(map[int]int)
+	for _, number := range numbers {
+		counts[number]++
+	}
+	h := &frequencyMinHeap{}
+	heap.Init(h)
+	for value, count := range counts {
+		heap.Push(h, frequencyItem{value: value, count: count})
+		if h.Len() > k {
+			heap.Pop(h)
+		}
+	}
+	result := make([]int, 0, h.Len())
+	for h.Len() > 0 {
+		result = append(result, heap.Pop(h).(frequencyItem).value)
+	}
+	return result
+}
+
+// time complexity: O(n + m log k) -> counting visits `n` values and `m` unique values perform heap work on at most `k` items.
+// space complexity: O(m + k) -> the frequency map stores `m` keys and the heap stores at most `k` candidates.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Top K Frequent Elements" is one small game played with the same pieces and rules.
+
+### Merge K Sorted Lists
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Merge K Sorted Lists"]
+        direction TD
+        I["Input"] --> S0["Push the head of every non-empty list."]
+        S0 --> S1["Remove the smallest candidate and append it to the result."]
+        S1 --> S2["Push that node's successor until no candidates remain."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Storage compaction merges sorted runs.
+- Log aggregation merges timestamp-ordered streams.
+
+```go
+// Exact question: How do you merge `k` sorted linked lists with a min heap?
+//
+// Example: Input lists 1->4->5, 1->3->4, and 2->6 -> output 1->1->2->3->4->4->5->6.
+//
+// Possible answer: Keep one current node from each non-empty list in a heap ordered by node value.
+//
+// Output format: Return the head of one ascending linked list containing all input nodes.
+//
+// Inline descriptions:
+// - `lists` is a slice whose indexes identify source lists and whose elements are head-node pointers.
+// - `nodeMinHeap` is a slice whose indexes are heap positions and whose elements are current unmerged node pointers.
+// - Heap operations use Go's standard `container/heap` package.
+//
+// Boundary checks:
+// - Nil list heads are skipped, and an all-empty input returns nil.
+//
+// Key variables:
+// - `tail` is the last node in the merged result; `smallest.Next` supplies the next candidate from its source list.
+//
+// Logic:
+// 1. Push the head of every non-empty list.
+// 2. Remove the smallest candidate and append it to the result.
+// 3. Push that node's successor until no candidates remain.
+package main
+
+import "container/heap"
+
+type ListNode struct {
+	Value int
+	Next  *ListNode
+}
+
+type nodeMinHeap []*ListNode
+
+func (h nodeMinHeap) Len() int           { return len(h) }
+func (h nodeMinHeap) Less(i, j int) bool { return h[i].Value < h[j].Value }
+func (h nodeMinHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *nodeMinHeap) Push(value any)    { *h = append(*h, value.(*ListNode)) }
+func (h *nodeMinHeap) Pop() any {
+	old := *h
+	last := len(old) - 1
+	value := old[last]
+	*h = old[:last]
+	return value
+}
+
+func mergeSortedLists(lists []*ListNode) *ListNode {
+	h := &nodeMinHeap{}
+	heap.Init(h)
+	for _, head := range lists {
+		if head != nil {
+			heap.Push(h, head)
+		}
+	}
+	dummy := &ListNode{}
+	tail := dummy
+	for h.Len() > 0 {
+		smallest := heap.Pop(h).(*ListNode)
+		tail.Next = smallest
+		tail = smallest
+		if smallest.Next != nil {
+			heap.Push(h, smallest.Next)
+		}
+	}
+	return dummy.Next
+}
+
+// time complexity: O(N log k) -> all `N` nodes are pushed and popped from a heap containing at most `k` list heads.
+// space complexity: O(k) -> the candidate heap stores at most one node from each list.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Merge K Sorted Lists" is one small game played with the same pieces and rules.
+
+### Find Median from a Data Stream
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Find Median from a Data Stream"]
+        direction TD
+        I["Input"] --> S0["Insert into the half selected by the current lower boundary."]
+        S0 --> S1["Rebalance so the lower heap has either the same size as <strong>upper</strong> or one extra value."]
+        S1 --> S2["Read one root for an odd count or average both roots for an even count."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Dashboards maintain a live median latency.
+- Sensor systems track central tendency without retaining sorted order.
+
+```go
+// Exact question: How do two heaps maintain the median of a growing integer stream?
+//
+// Example: Add 1 -> median 1; add 2 -> median 1.5; add 3 -> median 2.
+//
+// Possible answer: Store the lower half as negated values in a min heap and the upper half in a normal min heap.
+//
+// Output format: Add records a value; Median returns `(median, true)` or `(0, false)` before any values arrive.
+//
+// Inline descriptions:
+// - `lowerNeg` is a slice whose indexes are heap positions and whose elements are negated lower-half values.
+// - `upper` is a slice whose indexes are heap positions and whose elements are normal upper-half values.
+//
+// Boundary checks:
+// - Median checks for an empty stream; this compact negation technique assumes values are not the minimum machine integer.
+//
+// Key variables:
+// - The two roots are the values closest to the boundary between the lower and upper halves.
+//
+// Logic:
+// 1. Insert into the half selected by the current lower boundary.
+// 2. Rebalance so the lower heap has either the same size as upper or one extra value.
+// 3. Read one root for an odd count or average both roots for an even count.
+type MedianFinder struct {
+	lowerNeg []int
+	upper    []int
+}
+
+func pushMinHeap(values []int, value int) []int {
+	values = append(values, value)
+	child := len(values) - 1
+	for child > 0 {
+		parent := (child - 1) / 2
+		if values[parent] <= values[child] {
+			break
+		}
+		values[parent], values[child] = values[child], values[parent]
+		child = parent
+	}
+	return values
+}
+
+func popMinHeap(values []int) ([]int, int, bool) {
+	if len(values) == 0 {
+		return values, 0, false
+	}
+	minimum := values[0]
+	last := len(values) - 1
+	values[0] = values[last]
+	values = values[:last]
+	parent := 0
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			break
+		}
+		smaller := left
+		right := left + 1
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			break
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+	return values, minimum, true
+}
+
+func (m *MedianFinder) Add(value int) {
+	if len(m.lowerNeg) == 0 || value <= -m.lowerNeg[0] {
+		m.lowerNeg = pushMinHeap(m.lowerNeg, -value)
+	} else {
+		m.upper = pushMinHeap(m.upper, value)
+	}
+	if len(m.lowerNeg) > len(m.upper)+1 {
+		var negative int
+		m.lowerNeg, negative, _ = popMinHeap(m.lowerNeg)
+		m.upper = pushMinHeap(m.upper, -negative)
+	} else if len(m.upper) > len(m.lowerNeg) {
+		var smallestUpper int
+		m.upper, smallestUpper, _ = popMinHeap(m.upper)
+		m.lowerNeg = pushMinHeap(m.lowerNeg, -smallestUpper)
+	}
+}
+
+func (m *MedianFinder) Median() (float64, bool) {
+	if len(m.lowerNeg) == 0 {
+		return 0, false
+	}
+	lowerRoot := -m.lowerNeg[0]
+	if len(m.lowerNeg) > len(m.upper) {
+		return float64(lowerRoot), true
+	}
+	return (float64(lowerRoot) + float64(m.upper[0])) / 2, true
+}
+
+// time complexity: O(log n) -> Add performs a constant number of heap operations; Median itself is O(1).
+// space complexity: O(n) -> both heaps together retain all `n` stream values.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Find Median from a Data Stream" is one small game played with the same pieces and rules.
+
+### Meeting Rooms II
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Meeting Rooms II"]
+        direction TD
+        I["Input"] --> S0["Sort <strong>meetings</strong> by start time."]
+        S0 --> S1["Remove every end time that is no later than the current start."]
+        S1 --> S2["Insert the current end time and update the <strong>maximum</strong> overlap."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Calendars compute simultaneous room demand.
+- Cluster schedulers estimate peak concurrent resource use.
+
+```go
+// Exact question: How do you calculate the maximum number of simultaneously active meetings with a min heap?
+//
+// Example: Input intervals = [[0, 30], [5, 10], [15, 20]] -> output 2 rooms.
+//
+// Possible answer: Sort by start time and keep a min heap containing the end times of meetings still running.
+//
+// Output format: Return the minimum number of rooms required for all intervals.
+//
+// Inline descriptions:
+// - `meetings` is a slice whose indexes identify input intervals and whose elements are `[start, end]` values.
+// - `endTimes` is a slice whose indexes are heap positions and whose elements are active meeting end times.
+// - `sort.Slice` comes from Go's standard `sort` package.
+//
+// Boundary checks:
+// - Empty input returns zero, and all ended meetings are removed before the current meeting is added.
+//
+// Key variables:
+// - `endTimes[0]` is the earliest active end time; `maximum` records the largest active-heap size.
+//
+// Logic:
+// 1. Sort meetings by start time.
+// 2. Remove every end time that is no later than the current start.
+// 3. Insert the current end time and update the maximum overlap.
+package main
+
+import "sort"
+
+func pushMinHeap(values []int, value int) []int {
+	values = append(values, value)
+	child := len(values) - 1
+	for child > 0 {
+		parent := (child - 1) / 2
+		if values[parent] <= values[child] {
+			break
+		}
+		values[parent], values[child] = values[child], values[parent]
+		child = parent
+	}
+	return values
+}
+
+func popMinHeap(values []int) ([]int, int, bool) {
+	if len(values) == 0 {
+		return values, 0, false
+	}
+	minimum := values[0]
+	last := len(values) - 1
+	values[0] = values[last]
+	values = values[:last]
+	parent := 0
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			break
+		}
+		smaller := left
+		right := left + 1
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			break
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+	return values, minimum, true
+}
+
+func minimumMeetingRooms(meetings [][2]int) int {
+	sort.Slice(meetings, func(i, j int) bool {
+		return meetings[i][0] < meetings[j][0]
+	})
+	endTimes := []int{}
+	maximum := 0
+	for _, meeting := range meetings {
+		for len(endTimes) > 0 && endTimes[0] <= meeting[0] {
+			endTimes, _, _ = popMinHeap(endTimes)
+		}
+		endTimes = pushMinHeap(endTimes, meeting[1])
+		if len(endTimes) > maximum {
+			maximum = len(endTimes)
+		}
+	}
+	return maximum
+}
+
+// time complexity: O(n log n) -> sorting and at most one heap push and pop per meeting dominate the work.
+// space complexity: O(n) -> the end-time heap can hold all overlapping meetings.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Meeting Rooms II" is one small game played with the same pieces and rules.
+
+### Task Scheduler
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Task Scheduler"]
+        direction TD
+        I["Input"] --> S0["Move every cooled-down task back into the available max heap."]
+        S0 --> S1["Execute the available task with the largest remaining count, or leave the slot idle."]
+        S1 --> S2["Queue unfinished work with its next legal execution <strong>time</strong>."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- CPU schedulers enforce cooldowns between repeated task types.
+- Rate-limited workers space repeated jobs.
+
+```go
+// Exact question: How can a max heap and cooldown queue simulate the task scheduler?
+//
+// Example: Input tasks = [A, A, A, B, B, B] and cooldown = 2 -> output 8 time slots.
+//
+// Possible answer: Store remaining task counts as negative min-heap values and queue unfinished tasks until their ready time.
+//
+// Output format: Return the minimum number of task and idle slots needed to finish the schedule.
+//
+// Inline descriptions:
+// - `counts` maps task letters to remaining occurrences; `availableNeg` stores negated counts for max-priority behavior.
+// - `availableNeg` is a slice whose indexes are heap positions and whose elements are negated remaining counts.
+// - `waiting` is a slice-backed FIFO queue whose indexes preserve ready-time order and whose elements store cooldown state.
+//
+// Boundary checks:
+// - Empty tasks return zero, and negative cooldown is treated as zero.
+//
+// Key variables:
+// - `time` counts schedule slots; `readyAt` prevents a task from returning before its cooldown expires.
+//
+// Logic:
+// 1. Move every cooled-down task back into the available max heap.
+// 2. Execute the available task with the largest remaining count, or leave the slot idle.
+// 3. Queue unfinished work with its next legal execution time.
+func pushMinHeap(values []int, value int) []int {
+	values = append(values, value)
+	child := len(values) - 1
+	for child > 0 {
+		parent := (child - 1) / 2
+		if values[parent] <= values[child] {
+			break
+		}
+		values[parent], values[child] = values[child], values[parent]
+		child = parent
+	}
+	return values
+}
+
+func popMinHeap(values []int) ([]int, int, bool) {
+	if len(values) == 0 {
+		return values, 0, false
+	}
+	minimum := values[0]
+	last := len(values) - 1
+	values[0] = values[last]
+	values = values[:last]
+	parent := 0
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			break
+		}
+		smaller := left
+		right := left + 1
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			break
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+	return values, minimum, true
+}
+
+type coolingTask struct {
+	remaining int
+	readyAt   int
+}
+
+func leastTaskIntervals(tasks []byte, cooldown int) int {
+	if cooldown < 0 {
+		cooldown = 0
+	}
+	counts := make(map[byte]int)
+	for _, task := range tasks {
+		counts[task]++
+	}
+	availableNeg := []int{}
+	for _, count := range counts {
+		availableNeg = pushMinHeap(availableNeg, -count)
+	}
+	waiting := []coolingTask{}
+	time := 0
+	for len(availableNeg) > 0 || len(waiting) > 0 {
+		time++
+		for len(waiting) > 0 && waiting[0].readyAt <= time {
+			availableNeg = pushMinHeap(availableNeg, -waiting[0].remaining)
+			waiting = waiting[1:]
+		}
+		if len(availableNeg) == 0 {
+			continue
+		}
+		var negativeCount int
+		availableNeg, negativeCount, _ = popMinHeap(availableNeg)
+		remaining := -negativeCount - 1
+		if remaining > 0 {
+			waiting = append(waiting, coolingTask{remaining: remaining, readyAt: time + cooldown + 1})
+		}
+	}
+	return time
+}
+
+// time complexity: O(T log m) -> each of the `T` scheduled slots performs at most constant heap work over `m` task types.
+// space complexity: O(m) -> the heap, map, and cooldown queue store state for at most `m` distinct task types.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Task Scheduler" is one small game played with the same pieces and rules.
+
+### Top K Largest Values
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Top K Largest Values"]
+        direction TD
+        I["Input"] --> S0["Push every input value into the min heap."]
+        S0 --> S1["Remove the minimum whenever more than <strong>k</strong> candidates are stored."]
+        S1 --> S2["Return the final winner heap without claiming that it is fully sorted."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Leaderboards retain current highest scores.
+- Observability systems retain worst outliers.
+
+```go
+// Exact question: Given an integer slice and `k`, return the `k` largest values while storing no more than `k` heap candidates.
+//
+// Example: Input numbers = [3, 2, 1, 5, 6, 4] and k = 2 -> return a two-item min heap containing 5 and 6.
+//
+// Possible answer: Keep a min heap of at most `k` winners and remove its smallest value whenever it grows too large.
+//
+// Output format: Return the `k` largest values in heap order, with the kth-largest value at index zero.
+//
+// Inline descriptions:
+// - `numbers` is the input stream; `winners` contains at most `k` retained values.
+//
+// Boundary checks:
+// - Non-positive `k` returns an empty result; `k` larger than the input retains every value.
+//
+// Key variables:
+// - `winners[0]` is the weakest retained winner and therefore the next value discarded.
+//
+// Logic:
+// 1. Push every input value into the min heap.
+// 2. Remove the minimum whenever more than `k` candidates are stored.
+// 3. Return the final winner heap without claiming that it is fully sorted.
+func pushMinHeap(values []int, value int) []int {
+	values = append(values, value)
+	child := len(values) - 1
+	for child > 0 {
+		parent := (child - 1) / 2
+		if values[parent] <= values[child] {
+			break
+		}
+		values[parent], values[child] = values[child], values[parent]
+		child = parent
+	}
+	return values
+}
+
+func popMinHeap(values []int) ([]int, int, bool) {
+	if len(values) == 0 {
+		return values, 0, false
+	}
+	minimum := values[0]
+	last := len(values) - 1
+	values[0] = values[last]
+	values = values[:last]
+	parent := 0
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			break
+		}
+		smaller := left
+		right := left + 1
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			break
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+	return values, minimum, true
+}
+
+func topKLargest(numbers []int, k int) []int {
+	if k <= 0 {
+		return []int{}
+	}
+	winners := make([]int, 0, k)
+	for _, number := range numbers {
+		winners = pushMinHeap(winners, number)
+		if len(winners) > k {
+			winners, _, _ = popMinHeap(winners)
+		}
+	}
+	return winners
+}
+
+// time complexity: O(n log k) -> each of the `n` values performs heap work on at most `k` winners.
+// space complexity: O(k) -> the winner heap never retains more than `k` values.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Top K Largest Values" is one small game played with the same pieces and rules.
+
+### Build a Min Heap
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Build a Min Heap"]
+        direction TD
+        I["Input"] --> S0["Skip leaf indexes because a leaf is already a valid one-node heap."]
+        S0 --> S1["Sift each <strong>parent</strong> down until it is no greater than either child."]
+        S1 --> S2["Continue backward so both child subtrees are heaps before their <strong>parent</strong> is processed."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Priority-queue libraries initialize from a batch efficiently.
+- Schedulers load queued work from storage on startup.
+
+```go
+// Exact question: How do you build a min heap with bottom-up heapification in Go?
+//
+// Example: Input values = [5, 3, 8, 1, 2] -> one valid in-place result is [1, 2, 8, 3, 5].
+//
+// Possible answer: Start at `len(values)/2 - 1` and sift every parent downward in reverse index order.
+//
+// Output format: Return the supplied slice rearranged into valid min-heap order.
+//
+// Inline descriptions:
+// - `values` is both the unsorted input array and the in-place heap storage.
+//
+// Boundary checks:
+// - Empty and one-item slices have no parent to process and are returned unchanged.
+//
+// Key variables:
+// - `parent` walks from the last non-leaf index to zero; `smaller` chooses the better child.
+//
+// Logic:
+// 1. Skip leaf indexes because a leaf is already a valid one-node heap.
+// 2. Sift each parent down until it is no greater than either child.
+// 3. Continue backward so both child subtrees are heaps before their parent is processed.
+func buildMinHeap(values []int) []int {
+	for parent := len(values)/2 - 1; parent >= 0; parent-- {
+		siftDownMin(values, parent)
+	}
+	return values
+}
+
+func siftDownMin(values []int, parent int) {
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			return
+		}
+		right, smaller := left+1, left
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			return
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+}
+
+// time complexity: O(n) -> most of the `n` nodes start near the leaves and can move only a few levels.
+// space complexity: O(1) -> heapification rearranges the input slice using only indexes.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Build a Min Heap" is one small game played with the same pieces and rules.
+
+### Heap Sort
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Heap Sort"]
+        direction TD
+        I["Input"] --> S0["Copy and heapify the input so the caller's slice remains unchanged."]
+        S0 --> S1["Repeatedly remove the <strong>minimum</strong> root."]
+        S1 --> S2["Append each removed root to the <strong>sorted</strong> result."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Embedded systems sort in place with bounded auxiliary memory.
+- Selection pipelines repeatedly extract priority order.
+
+```go
+// Exact question: Given an integer slice, return a new slice containing all values in ascending order using heap sort.
+//
+// Example: Input values = [4, 10, 3, 5, 1] -> output [1, 3, 4, 5, 10].
+//
+// Possible answer: Build a min heap and repeatedly remove its root to produce ascending heap-sort output.
+//
+// Output format: Return a new slice containing all input values in ascending order.
+//
+// Inline descriptions:
+// - `heapValues` is a slice whose indexes are heap positions and whose elements are priority values.
+// - `sorted` is a slice whose indexes are output positions and whose elements are removed minimum values.
+// - `buildMinHeap` and `popMinHeap` are implemented in the heap-operation sections of this document.
+//
+// Boundary checks:
+// - Empty input returns an empty slice and never attempts a Pop.
+//
+// Key variables:
+// - `minimum` is the root removed during the current iteration.
+//
+// Logic:
+// 1. Copy and heapify the input so the caller's slice remains unchanged.
+// 2. Repeatedly remove the minimum root.
+// 3. Append each removed root to the sorted result.
+func buildMinHeap(values []int) []int {
+	for parent := len(values)/2 - 1; parent >= 0; parent-- {
+		siftDownMin(values, parent)
+	}
+	return values
+}
+
+func siftDownMin(values []int, parent int) {
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			return
+		}
+		smaller := left
+		right := left + 1
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			return
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+}
+
+func popMinHeap(values []int) ([]int, int, bool) {
+	if len(values) == 0 {
+		return values, 0, false
+	}
+	minimum := values[0]
+	last := len(values) - 1
+	values[0] = values[last]
+	values = values[:last]
+	if len(values) > 0 {
+		siftDownMin(values, 0)
+	}
+	return values, minimum, true
+}
+
+func heapSortAscending(values []int) []int {
+	heapValues := buildMinHeap(append([]int(nil), values...))
+	sorted := make([]int, 0, len(values))
+	for len(heapValues) > 0 {
+		var minimum int
+		heapValues, minimum, _ = popMinHeap(heapValues)
+		sorted = append(sorted, minimum)
+	}
+	return sorted
+}
+
+// time complexity: O(n log n) -> heap construction is O(n), followed by `n` root removals of at most O(log n).
+// space complexity: O(n) -> the copied heap and returned sorted slice each grow with the input size.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Heap Sort" is one small game played with the same pieces and rules.
+
+### Minimum Cost to Connect Ropes
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Minimum Cost to Connect Ropes"]
+        direction TD
+        I["Input"] --> S0["Validate, copy, and heapify the rope <strong>lengths</strong>."]
+        S0 --> S1["Remove and combine the two shortest ropes."]
+        S1 --> S2["Accumulate the cost and push the <strong>combined</strong> rope until one remains."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Compression trees repeatedly combine the cheapest items.
+- Batch-merging systems minimize total pairwise merge cost.
+
+```go
+// Exact question: How do you minimize the total cost of connecting ropes?
+//
+// Example: Input lengths = [4, 3, 2, 6] -> output cost 29 by combining 2+3, then 4+5, then 6+9.
+//
+// Possible answer: Repeatedly remove the two shortest ropes, add their sum to the cost, and push the combined rope.
+//
+// Output format: Return `(minimumCost, true)` or `(0, false)` if a rope length is negative.
+//
+// Inline descriptions:
+// - `lengths` is a slice whose indexes are input positions and whose elements are rope-length values.
+// - `ropeHeap` is a slice whose indexes are heap positions and whose elements are current rope lengths.
+//
+// Boundary checks:
+// - Empty and one-rope inputs cost zero; negative lengths are rejected.
+//
+// Key variables:
+// - `first` and `second` are the two shortest ropes; `combined` is their replacement rope.
+//
+// Logic:
+// 1. Validate, copy, and heapify the rope lengths.
+// 2. Remove and combine the two shortest ropes.
+// 3. Accumulate the cost and push the combined rope until one remains.
+func buildMinHeap(values []int) []int {
+	for parent := len(values)/2 - 1; parent >= 0; parent-- {
+		siftDownMin(values, parent)
+	}
+	return values
+}
+
+func siftDownMin(values []int, parent int) {
+	for {
+		left := 2*parent + 1
+		if left >= len(values) {
+			return
+		}
+		smaller := left
+		right := left + 1
+		if right < len(values) && values[right] < values[left] {
+			smaller = right
+		}
+		if values[parent] <= values[smaller] {
+			return
+		}
+		values[parent], values[smaller] = values[smaller], values[parent]
+		parent = smaller
+	}
+}
+
+func pushMinHeap(values []int, value int) []int {
+	values = append(values, value)
+	child := len(values) - 1
+	for child > 0 {
+		parent := (child - 1) / 2
+		if values[parent] <= values[child] {
+			break
+		}
+		values[parent], values[child] = values[child], values[parent]
+		child = parent
+	}
+	return values
+}
+
+func popMinHeap(values []int) ([]int, int, bool) {
+	if len(values) == 0 {
+		return values, 0, false
+	}
+	minimum := values[0]
+	last := len(values) - 1
+	values[0] = values[last]
+	values = values[:last]
+	if len(values) > 0 {
+		siftDownMin(values, 0)
+	}
+	return values, minimum, true
+}
+
+func minimumRopeConnectionCost(lengths []int) (int, bool) {
+	for _, length := range lengths {
+		if length < 0 {
+			return 0, false
+		}
+	}
+	ropeHeap := buildMinHeap(append([]int(nil), lengths...))
+	total := 0
+	for len(ropeHeap) > 1 {
+		var first, second int
+		ropeHeap, first, _ = popMinHeap(ropeHeap)
+		ropeHeap, second, _ = popMinHeap(ropeHeap)
+		combined := first + second
+		total += combined
+		ropeHeap = pushMinHeap(ropeHeap, combined)
+	}
+	return total, true
+}
+
+// time complexity: O(n log n) -> `n - 1` combinations perform a constant number of logarithmic heap operations.
+// space complexity: O(n) -> the copied rope heap stores all input lengths and their replacements.
+```
+
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. "Minimum Cost to Connect Ropes" is one small game played with the same pieces and rules.
 
 ---
 
-# 36. Final Mental Model
+## Interview checklist and next steps
 
-Remember these five ideas:
+Use this answer order during an interview:
 
-## 1. Heap Means Important Item at the Top
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
 
-```text
-Min heap → smallest on top
-Max heap → largest on top
+Recommended practice order:
+1. [Kth Largest Element in an Array](#kth-largest-element-in-an-array)
+2. [Top K Frequent Elements](#top-k-frequent-elements)
+3. [Merge K Sorted Lists](#merge-k-sorted-lists)
+4. [Find Median from a Data Stream](#find-median-from-a-data-stream)
+5. [Meeting Rooms II](#meeting-rooms-ii)
+6. [Task Scheduler](#task-scheduler)
+7. [Top K Largest Values](#top-k-largest-values)
+8. [Build a Min Heap](#build-a-min-heap)
+9. [Heap Sort](#heap-sort)
+10. [Minimum Cost to Connect Ropes](#minimum-cost-to-connect-ropes)
+
+Continue with: K Closest Points, Reorganize String, Smallest Range Covering K Lists, Kth Largest in a Stream, Dijkstra with a Heap.
+
+```mermaid
+flowchart LR
+    Q0["Kth Largest Element in an Array"]
+    Q0 --> Q1["Top K Frequent Elements"]
+    Q1 --> Q2["Merge K Sorted Lists"]
+    Q2 --> Q3["Find Median from a Data Stream"]
+    Q3 --> Q4["Meeting Rooms II"]
+    Q4 --> Q5["Task Scheduler"]
+    Q5 --> Q6["Top K Largest Values"]
+    Q6 --> Q7["Build a Min Heap"]
+    Q7 --> Q8["Heap Sort"]
+    Q8 --> Q9["Minimum Cost to Connect Ropes"]
 ```
 
-## 2. It Is Not Fully Sorted
-
-```text
-Only parent-child ordering is guaranteed.
-```
-
-## 3. Insert Goes Up
-
-```text
-Append → bubble up
-```
-
-## 4. Root Removal Goes Down
-
-```text
-Replace root with last → bubble down
-```
-
-## 5. Top K Uses the Opposite Heap
-
-```text
-K largest  → Min heap
-K smallest → Max heap
-```
-
-The one-sentence interview explanation is:
-
-> A binary heap is a complete binary tree, usually stored as an array, that maintains either the minimum or maximum element at the root and supports insertion and root removal in `O(log n)` time.
+> **Baby analogy:** Imagine a prize line where the most important child is always called next. Pack the same checklist every time so no important interview step is forgotten.

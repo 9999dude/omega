@@ -1,533 +1,391 @@
-# Queue / Deque Explained Like You Are a Baby
+# Queues and Deques — A Compact Interview Guide
 
-Imagine children waiting in a line for ice cream.
+A queue processes items in first-in, first-out order. A deque supports insertion and removal at both ends.
 
-```text
-Front                                  Back
-  ↓                                      ↓
-[Alice] → [Bob] → [Charlie] → [David]
-```
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 Queue and Deque Interview Questions](#top-10-queue-and-deque-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-Alice came first, so Alice gets ice cream first.
-
-This is a **queue**.
-
-> **First In, First Out — FIFO**
-
-A **deque** is a special queue where children can enter or leave from **either end**.
-
-```text
-Front                                  Back
-  ↓                                      ↓
-[Alice] ⇄ [Bob] ⇄ [Charlie] ⇄ [David]
-```
-
-Deque is pronounced **“deck.”**
+> **Baby analogy:** Imagine children waiting in a lunch line. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
 
-# 1. The Basic Mental Model
+## Mental model
 
-## Queue: A line at a ticket counter
+The front identifies the next item to remove; the back receives new items. BFS uses a queue because discovery order matches increasing distance.
 
-People join at the back and leave from the front.
-
-```mermaid
-flowchart LR
-    N[New person] -->|Enqueue| B[Back of queue]
-    B --> C[Person 3]
-    C --> D[Person 2]
-    D --> F[Person 1]
-    F -->|Dequeue| O[Gets served]
-```
-
-A normal queue supports:
-
-| Operation             | Meaning                          |
-| --------------------- | -------------------------------- |
-| `enqueue(x)`          | Add `x` to the back              |
-| `dequeue()`           | Remove the front item            |
-| `front()` or `peek()` | Look at the front item           |
-| `isEmpty()`           | Check whether the queue is empty |
-| `size()`              | Number of items                  |
-
----
-
-## Deque: A train with doors at both ends
-
-A deque lets you add or remove elements from both sides.
-
-```mermaid
-flowchart LR
-    LF[Add Front] --> F[Front]
-    F <--> A[A]
-    A <--> B[B]
-    B <--> C[C]
-    C <--> R[Back]
-    R --> RB[Remove Back]
-
-    RF[Remove Front] --- F
-    AB[Add Back] --- R
-```
-
-A deque supports:
-
-| Operation      | Meaning               |
-| -------------- | --------------------- |
-| `pushFront(x)` | Add to the front      |
-| `pushBack(x)`  | Add to the back       |
-| `popFront()`   | Remove from the front |
-| `popBack()`    | Remove from the back  |
-| `front()`      | Read the front item   |
-| `back()`       | Read the back item    |
-
----
-
-# 2. Why Do We Need a Queue?
-
-A queue is needed whenever things must be processed in the same order they arrived.
-
-Examples:
-
-| Real-world situation      | Why a queue fits                  |
-| ------------------------- | --------------------------------- |
-| Printer jobs              | First submitted job prints first  |
-| Customer support requests | Earlier request is handled first  |
-| Web server requests       | Requests wait to be processed     |
-| Message processing        | Messages are consumed in order    |
-| CPU task scheduling       | Tasks wait for execution          |
-| BFS traversal             | Nodes are visited level by level  |
-| Ride waiting line         | First person waiting enters first |
-
-The central question is:
-
-> “Who has been waiting the longest?”
-
-The answer is always at the **front of the queue**.
-
----
-
-# 3. Stack vs Queue
-
-A stack and queue may look similar, but the removal order is different.
-
-| Structure | Rule                | Mental model                  |
-| --------- | ------------------- | ----------------------------- |
-| Stack     | Last In, First Out  | Stack of plates               |
-| Queue     | First In, First Out | Line of people                |
-| Deque     | Both ends           | Train with doors at both ends |
+| Real system | How the topic appears |
+| --- | --- |
+| Web servers | Requests wait in arrival order |
+| Messaging | Consumers receive queued events |
+| Operating systems | Runnable tasks wait for scheduling |
+| Graph search | Discovered nodes wait by distance level |
 
 ```mermaid
 flowchart TD
-    DS[Data Structure] --> S[Stack]
-    DS --> Q[Queue]
-    DS --> D[Deque]
-
-    S --> SL["Add and remove<br/>from the same end"]
-    Q --> QL["Add at back<br/>remove from front"]
-    D --> DL["Add and remove<br/>from both ends"]
+    T["Queues and deques"]
+    T --> R0["FIFO queue"]
+    T --> R1["Head index"]
+    T --> R2["Circular buffer"]
+    T --> R3["Deque"]
 ```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. The child who arrived first is served first; a deque also has a door at the back.
 
 ---
 
-# 4. How Does a Queue Work Internally?
+## Representation and core operations
 
-A queue normally keeps track of two positions:
+Avoid repeatedly deleting slice index zero in production Go code because retained backing storage and shifting choices matter. Use a head index, ring buffer, or deque.
 
-* `front`: the next item to remove
-* `rear`: the position where a new item is added
+| Representation | Role |
+| --- | --- |
+| FIFO queue | Elements are pending values in arrival order |
+| Head index | Position of the next element to remove |
+| Circular buffer | Fixed storage with wrapped front and rear indexes |
+| Deque | Both ends support push and pop |
 
-Consider this queue:
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Enqueue | O(1) amortized | Append at back |
+| Dequeue with head index | O(1) | Advance front position |
+| Peek | O(1) | Read front without removal |
+| Deque end operation | O(1) | Modify front or back |
+| BFS | O(V+E) | Process graph work in discovery order |
 
-```text
-Index:   0       1       2       3
-       ┌─────┬─────┬─────┬─────┐
-Array: │ 10  │ 20  │ 30  │     │
-       └─────┴─────┴─────┴─────┘
-          ↑             ↑
-        front          rear
+```mermaid
+flowchart LR
+    A0["Enqueue"]
+    A0 --> A1["Dequeue with head index"]
+    A1 --> A2["Peek"]
+    A2 --> A3["Deque end operation"]
+    A3 --> A4["BFS"]
 ```
 
-If we dequeue `10`, the `front` moves forward.
-
-```text
-Index:   0       1       2       3
-       ┌─────┬─────┬─────┬─────┐
-Array: │     │ 20  │ 30  │     │
-       └─────┴─────┴─────┴─────┘
-                  ↑       ↑
-                front    rear
-```
-
-We do not need to physically move every element.
-
-We only move the `front` pointer.
+> **Baby analogy:** Imagine children waiting in a lunch line. Joining and leaving happen at opposite ends, so nobody in the middle needs to move.
 
 ---
 
-# 5. Queue Time Complexity
+## Interview patterns and complexity
 
-For a correctly implemented queue:
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Level or nearest | BFS queue | [Binary Tree Level Order Traversal](#binary-tree-level-order-traversal), [Number of Islands with BFS](#number-of-islands-with-bfs), [Minimum Jumps](#minimum-jumps) |
+| Many starting points | Multi-source BFS | [Rotting Oranges](#rotting-oranges), [Multi-Source BFS](#multi-source-bfs) |
+| Window maximum | Monotonic deque | [Sliding Window Maximum](#sliding-window-maximum) |
+| Fixed storage | Circular queue or deque | [Design a Circular Queue](#design-a-circular-queue), [Implement a Deque](#implement-a-deque) |
+| Arrival-order simulation | FIFO queue | [Queue with a Head Index](#implement-a-queue-with-a-head-index), [Recent Request Counter](#recent-request-counter) |
 
-| Operation          |   Time |
-| ------------------ | -----: |
-| Enqueue            | `O(1)` |
-| Dequeue            | `O(1)` |
-| Peek front         | `O(1)` |
-| Check empty        | `O(1)` |
-| Search for a value | `O(n)` |
-| Traverse all items | `O(n)` |
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Queue operation | O(1) amortized | One end update |
+| BFS time | O(V+E) | Visit vertices and edges |
+| BFS space | O(V) | Queue and visited state |
+| Sliding-window deque | O(n) | Each index enters and leaves once |
 
-Space complexity for storing `n` elements:
-
-```text
-O(n)
+```mermaid
+flowchart TD
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Level or nearest"| P0["BFS queue"]
+    Q -->|"Many starting points"| P1["Multi-source BFS"]
+    Q -->|"Window maximum"| P2["Monotonic deque"]
+    Q -->|"Fixed storage"| P3["Circular queue"]
+    Q -->|"Arrival-order simulation"| P4["FIFO queue"]
 ```
 
-## Why is enqueue `O(1)`?
-
-Because we add one element at the back.
-
-We do not inspect every other element.
-
-## Why is dequeue `O(1)`?
-
-Because we move the `front` pointer by one position.
-
-```text
-front = front + 1
-```
-
-## Common implementation mistake
-
-Removing the first element from an array by shifting everything left costs `O(n)`.
-
-```text
-Before:
-[10, 20, 30, 40]
-
-Remove 10 and shift:
-[20, 30, 40]
-```
-
-Three elements had to move.
-
-For repeated queue operations, use:
-
-* front index
-* linked list
-* circular buffer
-* language-provided deque
+> **Baby analogy:** Imagine children waiting in a lunch line. Use a normal line for arrival order, several starting children for multi-source BFS, and a two-door line for windows.
 
 ---
 
-# 6. Queue Implementation in Go
+## Problem-solving checklist and common mistakes
 
-Go does not have a general-purpose queue type in the standard library. For interviews, a slice with a front index is usually enough.
+Before coding:
+
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
+
+Common mistakes:
+- Removing slice index zero by shifting every item.
+- Marking graph nodes visited only after dequeue.
+- Mixing current and next BFS levels.
+- Forgetting circular wraparound.
+- Storing values in a monotonic deque when indexes are needed for expiry.
+- Using a queue where priority order is required.
+
+```mermaid
+flowchart LR
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
+```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. Give a child a seen sticker before joining the line, or the same child may join many times.
+
+---
+
+## Top 10 Queue and Deque Interview Questions
+
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
+
+```mermaid
+flowchart LR
+    Q0["Implement a Queue with a Head Index"]
+    Q0 --> Q1["Design a Circular Queue"]
+    Q1 --> Q2["Binary Tree Level Order Traversal"]
+    Q2 --> Q3["Number of Islands with BFS"]
+    Q3 --> Q4["Rotting Oranges"]
+```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. These ten puzzles are practice cards; each card teaches one reusable move.
+
+### Implement a Queue with a Head Index
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>head</strong> , <strong>items</strong>"]
+    B["Boundary checks<br/><strong>Dequeue</strong> returns 0, false when the <strong>head</strong> has reached the slice length."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Append new values at the back."]
+        S1["Read the <strong>head</strong> value and increment the <strong>head</strong> when removing."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["<strong>Enqueue</strong> adds a value; <strong>Dequeue</strong> returns the oldest value and an existence flag."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Go services buffer work without shifting a slice on every dequeue.
+- Event processors retain arrival order with an advancing read position.
 
 ```go
-package main
-
-import "fmt"
-
-type Queue struct {
+// Exact question: How can a slice-backed queue avoid shifting every element during dequeue?
+//
+// Example: Enqueue 10 and 20, then dequeue -> return 10 while 20 remains at the live head.
+//
+// Possible answer: Keep a head index that marks the first live element and increment it after removal.
+//
+// Output format: `Enqueue` adds a value; `Dequeue` returns the oldest value and an existence flag.
+//
+// Inline descriptions:
+// - Old values remain before `head` until optional compaction; they are no longer logically in the queue.
+//
+// Boundary checks:
+// - `Dequeue` returns `0, false` when the head has reached the slice length.
+//
+// Key variables:
+// - `items` is a slice whose indexes are storage positions and whose elements are queued integer values.
+// - `head` is the storage index of the oldest live element.
+//
+// Logic:
+// 1. Append new values at the back.
+// 2. Read the head value and increment the head when removing.
+type IndexedQueue struct {
 	items []int
-	front int
+	head  int
 }
 
-func (q *Queue) Enqueue(value int) {
-	q.items = append(q.items, value)
+func (queue *IndexedQueue) Enqueue(value int) {
+	queue.items = append(queue.items, value)
 }
 
-func (q *Queue) Dequeue() (int, bool) {
-	if q.IsEmpty() {
+func (queue *IndexedQueue) Dequeue() (int, bool) {
+	if queue.head >= len(queue.items) {
 		return 0, false
 	}
-
-	value := q.items[q.front]
-	q.front++
-
+	value := queue.items[queue.head]
+	queue.head++
 	return value, true
 }
 
-func (q *Queue) Peek() (int, bool) {
+// time complexity: O(1) -> amortized enqueue appends and dequeue advances an index without shifting elements.
+// space complexity: O(n) -> the backing slice can store `n` queued values.
+```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. "Implement a Queue with a Head Index" is one small game played with the same pieces and rules.
+
+### Design a Circular Queue
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>capacity</strong> , <strong>index</strong>"]
+    B["Boundary checks<br/>q.IsFull() decides whether the branch or loop should continue for the current input.<br/>q.IsEmpty() decides whether the branch or loop should continue for the current input."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Store values in a fixed slice and wrap front and rear indexes with modulo arithmetic while tracking the live size"]
+    end
+
+    B --> S0
+    S0 --> O["Return the *CircularQueue value from <strong>NewCircularQueue</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Network devices use fixed-size packet rings.
+- Audio systems reuse bounded sample buffers.
+
+```go
+// Exact question: Implement a fixed-capacity circular queue with O(1) enqueue, dequeue, front, rear, empty, and full operations.
+//
+// Example: Capacity 3: enqueue 1, 2, 3 succeeds, enqueue 4 fails, Front returns 1, and Rear returns 3.
+//
+// Possible answer: Store values in a fixed slice and wrap front and rear indexes with modulo arithmetic while tracking the live size.
+//
+// Output format: Return the `*CircularQueue` value from `NewCircularQueue`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `capacity` is the int input used by this example.
+//
+// Boundary checks:
+// - `q.IsFull()` decides whether the branch or loop should continue for the current input.
+// - `q.IsEmpty()` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `capacity` is the int input used by this example.
+// - `index` holds the intermediate value produced by `(q.rear - 1 + q.capacity) % q.capacity`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Return the value produced after the state updates are complete.
+type CircularQueue struct {
+	data     []int
+	front    int
+	rear     int
+	size     int
+	capacity int
+}
+
+func NewCircularQueue(capacity int) *CircularQueue {
+	return &CircularQueue{
+		data:     make([]int, capacity),
+		capacity: capacity,
+	}
+}
+
+func (q *CircularQueue) EnQueue(value int) bool {
+	if q.IsFull() {
+		return false
+	}
+
+	q.data[q.rear] = value
+	q.rear = (q.rear + 1) % q.capacity
+	q.size++
+
+	return true
+}
+
+func (q *CircularQueue) DeQueue() bool {
+	if q.IsEmpty() {
+		return false
+	}
+
+	q.front = (q.front + 1) % q.capacity
+	q.size--
+
+	return true
+}
+
+func (q *CircularQueue) Front() (int, bool) {
 	if q.IsEmpty() {
 		return 0, false
 	}
 
-	return q.items[q.front], true
+	return q.data[q.front], true
 }
 
-func (q *Queue) IsEmpty() bool {
-	return q.front >= len(q.items)
-}
-
-func (q *Queue) Size() int {
-	return len(q.items) - q.front
-}
-
-func main() {
-	queue := Queue{}
-
-	queue.Enqueue(10)
-	queue.Enqueue(20)
-	queue.Enqueue(30)
-
-	value, _ := queue.Dequeue()
-	fmt.Println(value) // 10
-
-	front, _ := queue.Peek()
-	fmt.Println(front) // 20
-}
-```
-
-## Production concern
-
-The consumed part of the slice may continue occupying memory.
-
-Occasionally, compact the slice:
-
-```go
-func (q *Queue) Compact() {
-	if q.front == 0 {
-		return
+func (q *CircularQueue) Rear() (int, bool) {
+	if q.IsEmpty() {
+		return 0, false
 	}
 
-	q.items = append([]int(nil), q.items[q.front:]...)
-	q.front = 0
+	index := (q.rear - 1 + q.capacity) % q.capacity
+	return q.data[index], true
 }
+
+func (q *CircularQueue) IsEmpty() bool {
+	return q.size == 0
+}
+
+func (q *CircularQueue) IsFull() bool {
+	return q.size == q.capacity
+}
+
+// time complexity: O(1) -> each enqueue, dequeue, front, and rear operation updates or reads a fixed number of indexes.
+// space complexity: O(k) -> construction reserves a fixed backing slice for the queue capacity `k`.
 ```
 
-For most coding interviews, this optimization is not necessary unless asked.
+> **Baby analogy:** Imagine children waiting in a lunch line. "Design a Circular Queue" is one small game played with the same pieces and rules.
 
----
-
-# 7. What Is a Deque?
-
-A deque is a **double-ended queue**.
-
-```text
-Deque = Double-Ended Queue
-```
-
-You can operate on both ends.
-
-```text
-pushFront    pushBack
-    ↓           ↓
-   [1] [2] [3] [4]
-    ↑           ↑
- popFront     popBack
-```
-
-## When is a deque useful?
-
-A deque is especially useful when:
-
-* you need a queue and a stack together
-* old and useless elements must be removed from the front
-* new elements are added at the back
-* you need the largest or smallest item in a moving window
-* you need zero-cost and one-cost graph traversal
-
----
-
-# 8. Deque Time Complexity
-
-For a proper deque implementation:
-
-| Operation  |   Time |
-| ---------- | -----: |
-| Push front | `O(1)` |
-| Push back  | `O(1)` |
-| Pop front  | `O(1)` |
-| Pop back   | `O(1)` |
-| Read front | `O(1)` |
-| Read back  | `O(1)` |
-| Search     | `O(n)` |
-
-The exact implementation may use:
-
-* doubly linked list
-* circular array
-* dynamic circular buffer
-
----
-
-# 9. The Most Important Queue Pattern: BFS
-
-## BFS means Breadth-First Search
-
-BFS visits things one level at a time.
-
-Imagine dropping a stone into water. The waves spread outward.
-
-```mermaid
-graph TD
-    A((A)) --> B((B))
-    A --> C((C))
-    B --> D((D))
-    B --> E((E))
-    C --> F((F))
-    C --> G((G))
-```
-
-BFS visits:
-
-```text
-A
-B, C
-D, E, F, G
-```
-
-Full order:
-
-```text
-A → B → C → D → E → F → G
-```
-
-A queue is required because nodes discovered first must be processed first.
-
----
-
-## BFS process
+### Binary Tree Level Order Traversal
 
 ```mermaid
 flowchart TD
-    A[Put starting node in queue] --> B{Queue empty?}
-    B -->|Yes| Z[Finish]
-    B -->|No| C[Remove front node]
-    C --> D[Process node]
-    D --> E[Find unvisited neighbors]
-    E --> F[Mark neighbors visited]
-    F --> G[Add neighbors to queue]
-    G --> B
+    I["Inputs and starting state: <strong>root</strong> , <strong>level</strong> , <strong>queue</strong> , <strong>levelSize</strong>"]
+    B["Boundary checks<br/><strong>root</strong> equals nil checks whether the referenced value exists before it is used.<br/>len(<strong>queue</strong>) greater than 0 decides whether the branch or loop should continue for the current input."]
+    I --> B
+
+    subgraph PROCESS["BFS and <strong>queue</strong>-processing region"]
+        direction TD
+        S0["BFS with a FIFO <strong>queue</strong> and snapshot its length before each <strong>level</strong> so exactly that depth's nodes enter one output row"]
+    end
+
+    B --> S0
+    S0 --> O["Return the [][]int value from <strong>levelOrder</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Generic BFS template:
+**Where it is used in real life:**
+
+- Organization charts render employees level by level.
+- Hierarchy tools group nodes by depth.
 
 ```go
-queue := []Node{start}
-visited[start] = true
-
-for len(queue) > 0 {
-	current := queue[0]
-	queue = queue[1:]
-
-	for _, neighbor := range current.Neighbors {
-		if !visited[neighbor] {
-			visited[neighbor] = true
-			queue = append(queue, neighbor)
-		}
-	}
-}
-```
-
----
-
-# 10. Why Mark Visited Before Enqueuing?
-
-This is an important interview detail.
-
-Consider:
-
-```text
-A connects to B
-C connects to B
-```
-
-If both `A` and `C` discover `B`, they may both insert `B` into the queue.
-
-Bad:
-
-```go
-current := dequeue()
-
-if !visited[current] {
-	visited[current] = true
-}
-```
-
-Better:
-
-```go
-if !visited[neighbor] {
-	visited[neighbor] = true
-	queue = append(queue, neighbor)
-}
-```
-
-Marking a node when it is enqueued prevents duplicates.
-
-> **BFS rule: mark visited when adding to the queue.**
-
----
-
-# 11. BFS Complexity
-
-For a graph:
-
-* `V` = number of vertices
-* `E` = number of edges
-
-BFS visits each vertex once and examines each edge.
-
-```text
-Time:  O(V + E)
-Space: O(V)
-```
-
-For a grid with `rows × columns`:
-
-```text
-Time:  O(rows × columns)
-Space: O(rows × columns)
-```
-
-The space is used by:
-
-* the queue
-* the visited structure
-
----
-
-# 12. Binary Tree Level-Order Traversal
-
-## Problem
-
-Given a binary tree, return values level by level.
-
-```mermaid
-graph TD
-    A((3)) --> B((9))
-    A --> C((20))
-    C --> D((15))
-    C --> E((7))
-```
-
-Expected result:
-
-```text
-[
-  [3],
-  [9, 20],
-  [15, 7]
-]
-```
-
-## Key observation
-
-At the beginning of each loop:
-
-```text
-queue size = number of nodes in the current level
-```
-
----
-
-## Go solution
-
-```go
+// Exact question: Given a binary-tree root, return node values grouped by depth from left to right.
+//
+// Example: Input tree [3, 9, 20, nil, nil, 15, 7] -> output [[3], [9, 20], [15, 7]].
+//
+// Possible answer: BFS with a FIFO queue and snapshot its length before each level so exactly that depth's nodes enter one output row.
+//
+// Output format: Return the `[][]int` value from `levelOrder`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `root` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `root == nil` checks whether the referenced value exists before it is used.
+// - `len(queue) > 0` decides whether the branch or loop should continue for the current input.
+// - `node.Left != nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `root` points to a TreeNode value that the function reads or updates.
+// - `level` stores node values for one depth in left-to-right dequeue order.
+// - `result[depth]` stores the complete value slice for that tree level.
+// - `queue` stores pending tree-node pointers in FIFO order.
+// - `levelSize` freezes the number of nodes belonging to the current depth before their children are enqueued.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 type TreeNode struct {
 	Val   int
 	Left  *TreeNode
@@ -566,72 +424,66 @@ func levelOrder(root *TreeNode) [][]int {
 
 	return result
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(w) -> the BFS queue can hold every node on the tree's widest level.
 ```
 
-## Complexity
+> **Baby analogy:** Imagine children waiting in a lunch line. "Binary Tree Level Order Traversal" is one small game played with the same pieces and rules.
 
-Every node enters and leaves the queue once.
-
-```text
-Time:  O(n)
-Space: O(w)
-```
-
-Where `w` is the maximum width of the tree.
-
-Worst case:
-
-```text
-Space: O(n)
-```
-
----
-
-# 13. Number of Islands
-
-## Problem
-
-A grid contains:
-
-* `1` = land
-* `0` = water
-
-Count the number of separate islands.
-
-```text
-1 1 0 0
-1 0 0 1
-0 0 1 1
-```
-
-There are two islands.
-
-## Mental model
-
-When you find land that has not been visited:
-
-1. Increase the island count.
-2. Start BFS.
-3. Visit all connected land.
-4. Mark it as visited.
-5. Continue scanning.
+### Number of Islands with BFS
 
 ```mermaid
 flowchart TD
-    A[Scan each grid cell] --> B{Unvisited land?}
-    B -->|No| A
-    B -->|Yes| C[Increase island count]
-    C --> D[Put cell in queue]
-    D --> E[Run BFS over connected land]
-    E --> F[Mark connected cells visited]
-    F --> A
+    I["Inputs and starting state: <strong>grid</strong> , <strong>rows</strong> , <strong>cols</strong> , <strong>islands</strong>"]
+    B["Boundary checks<br/>len(<strong>grid</strong>) equals 0 handles empty input before any element is accessed.<br/><strong>grid</strong>[row][col] not equal to '1' keeps indexes or pointers within the portion of the input still being processed."]
+    I --> B
+
+    subgraph PROCESS["BFS and queue-processing region"]
+        direction TD
+        S0["Scan for unvisited land, count one island, mark it immediately"]
+        S1["BFS through all connected land cells"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>numIslands</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Go solution
+- Image processing groups connected foreground regions.
+- Monitoring groups neighboring failed grid cells.
 
 ```go
+// Exact question: Given a land-and-water grid, return the number of four-directionally connected land components using BFS.
+//
+// Example: Input grid rows 110, 010, 001 -> output 2 four-directional islands.
+//
+// Possible answer: Scan for unvisited land, count one island, mark it immediately, and BFS through all connected land cells.
+//
+// Output format: Return an `int` value from `numIslands`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `grid` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+//
+// Boundary checks:
+// - `len(grid) == 0` handles empty input before any element is accessed.
+// - `grid[row][col] != '1'` keeps indexes or pointers within the portion of the input still being processed.
+// - `len(queue) > 0` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `grid` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+// - `rows` and `cols` define valid grid-coordinate boundaries.
+// - `islands` counts BFS traversals started from previously unvisited land.
+// - `directions` stores four row-column offsets for orthogonal neighbors.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func numIslands(grid [][]byte) int {
 	if len(grid) == 0 {
 		return 0
@@ -683,63 +535,72 @@ func numIslands(grid [][]byte) int {
 
 	return islands
 }
+
+// time complexity: O(rows * columns) -> the algorithm processes every cell in the rows-by-columns state space.
+// space complexity: O(rows * columns) -> the BFS queue can hold cells from a grid-sized island in the worst case.
 ```
 
-## Complexity
+> **Baby analogy:** Imagine children waiting in a lunch line. "Number of Islands with BFS" is one small game played with the same pieces and rules.
 
-Each grid cell is processed at most once.
-
-```text
-Time:  O(rows × columns)
-Space: O(rows × columns)
-```
-
----
-
-# 14. Rotting Oranges
-
-## Problem
-
-Each cell contains:
-
-* `0` = empty
-* `1` = fresh orange
-* `2` = rotten orange
-
-Every minute, rotten oranges infect adjacent fresh oranges.
-
-Find the minimum number of minutes required to rot every orange.
-
-## Important pattern: Multi-source BFS
-
-Instead of starting BFS from one rotten orange, put **all initially rotten oranges** into the queue.
-
-```text
-Minute 0:
-R . . R
-
-Both rotten oranges spread simultaneously.
-```
+### Rotting Oranges
 
 ```mermaid
 flowchart TD
-    A[Find all rotten oranges] --> B[Add all of them to queue]
-    B --> C[Count fresh oranges]
-    C --> D{Fresh oranges remaining?}
-    D -->|No| Z[Return minutes]
-    D -->|Yes| E[Process one complete queue level]
-    E --> F[Rot adjacent fresh oranges]
-    F --> G[Add newly rotten oranges]
-    G --> H[Increase minute]
-    H --> D
+    I["Inputs and starting state: <strong>grid</strong> , <strong>rows</strong> , <strong>cols</strong> , <strong>queue</strong>"]
+    B["Boundary checks<br/>An empty <strong>grid</strong> or empty first row returns 0 before accessing <strong>grid</strong>[0].<br/><strong>fresh</strong> equals 0 handles the smallest valid state or recursive base case."]
+    I --> B
+
+    subgraph PROCESS["BFS and <strong>queue</strong>-processing region"]
+        direction TD
+        S0["Seed the <strong>queue</strong> with every rotten orange"]
+        S1["run level-order multi-source BFS so each completed level represents one minute"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>orangesRotting</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Go solution
+- Simulations model wave propagation over time steps.
+- Incident tools model contamination or failure spreading from many sources.
 
 ```go
+// Exact question: Given empty, fresh, and rotten grid cells, return the minutes until every reachable fresh orange rots, or `-1` if some remain fresh.
+//
+// Example: Input grid [[2,1,1],[1,1,0],[0,1,1]] -> output 4 minutes.
+//
+// Possible answer: Seed the queue with every rotten orange, then run level-order multi-source BFS so each completed level represents one minute.
+//
+// Output format: Return an `int` value from `orangesRotting`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `grid` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+//
+// Boundary checks:
+// - An empty grid or empty first row returns `0` before accessing `grid[0]`.
+// - `fresh == 0` handles the smallest valid state or recursive base case.
+// - `len(queue) > 0 && fresh > 0` decides whether the branch or loop should continue for the current input.
+// - `!insideGrid || grid[nextRow][nextCol] != 1` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `grid` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+// - `rows` and `cols` define valid grid-coordinate boundaries.
+// - `queue` stores rotten-cell coordinates in FIFO wavefront order.
+// - `fresh` counts fresh oranges not yet reached by the spreading wave.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func orangesRotting(grid [][]int) int {
+	if len(grid) == 0 || len(grid[0]) == 0 {
+		return 0
+	}
+
 	rows := len(grid)
 	cols := len(grid[0])
 
@@ -806,396 +667,70 @@ func orangesRotting(grid [][]int) int {
 
 	return minutes
 }
+
+// time complexity: O(rows * columns) -> the algorithm processes every cell in the rows-by-columns state space.
+// space complexity: O(rows * columns) -> the multi-source BFS queue can hold a grid-sized wavefront in the worst case.
 ```
 
-## Why does one queue level represent one minute?
+> **Baby analogy:** Imagine children waiting in a lunch line. "Rotting Oranges" is one small game played with the same pieces and rules.
 
-At the start of a level, the queue contains oranges that are already rotten.
-
-During that level, they infect their neighbors.
-
-Those newly infected oranges spread during the next level.
-
-```text
-Queue level 0 → Minute 0
-Queue level 1 → Minute 1
-Queue level 2 → Minute 2
-```
-
----
-
-# 15. Circular Queue
-
-A normal array-based queue may eventually reach the end of its array.
-
-Consider a queue with capacity five:
-
-```text
-[10, 20, 30, 40, 50]
-```
-
-After removing three elements:
-
-```text
-[_, _, _, 40, 50]
-```
-
-There is free space at the beginning, but `rear` has reached the end.
-
-A circular queue wraps around.
-
-```mermaid
-flowchart LR
-    A[0] --> B[1]
-    B --> C[2]
-    C --> D[3]
-    D --> E[4]
-    E --> A
-```
-
-The array is mentally treated as a circle.
-
----
-
-## Circular index calculation
-
-Suppose the capacity is `5`.
-
-To move forward:
-
-```text
-nextIndex = (currentIndex + 1) % capacity
-```
-
-Example:
-
-```text
-currentIndex = 4
-capacity     = 5
-
-nextIndex = (4 + 1) % 5
-          = 5 % 5
-          = 0
-```
-
-So the position wraps from index `4` back to index `0`.
-
----
-
-# 16. Circular Queue State
-
-A circular queue usually stores:
-
-```text
-data     = fixed-size array
-front    = index of first element
-rear     = index for insertion
-size     = current number of elements
-capacity = maximum number of elements
-```
-
-## Empty condition
-
-```text
-size == 0
-```
-
-## Full condition
-
-```text
-size == capacity
-```
-
-This is often easier to understand than trying to distinguish empty and full using only `front` and `rear`.
-
----
-
-## Go circular queue implementation
-
-```go
-type CircularQueue struct {
-	data     []int
-	front    int
-	rear     int
-	size     int
-	capacity int
-}
-
-func NewCircularQueue(capacity int) *CircularQueue {
-	return &CircularQueue{
-		data:     make([]int, capacity),
-		capacity: capacity,
-	}
-}
-
-func (q *CircularQueue) EnQueue(value int) bool {
-	if q.IsFull() {
-		return false
-	}
-
-	q.data[q.rear] = value
-	q.rear = (q.rear + 1) % q.capacity
-	q.size++
-
-	return true
-}
-
-func (q *CircularQueue) DeQueue() bool {
-	if q.IsEmpty() {
-		return false
-	}
-
-	q.front = (q.front + 1) % q.capacity
-	q.size--
-
-	return true
-}
-
-func (q *CircularQueue) Front() (int, bool) {
-	if q.IsEmpty() {
-		return 0, false
-	}
-
-	return q.data[q.front], true
-}
-
-func (q *CircularQueue) Rear() (int, bool) {
-	if q.IsEmpty() {
-		return 0, false
-	}
-
-	index := (q.rear - 1 + q.capacity) % q.capacity
-	return q.data[index], true
-}
-
-func (q *CircularQueue) IsEmpty() bool {
-	return q.size == 0
-}
-
-func (q *CircularQueue) IsFull() bool {
-	return q.size == q.capacity
-}
-```
-
-## Why this rear calculation?
-
-`rear` points to the next available insertion position.
-
-The last inserted value is therefore one position behind it.
-
-```text
-rearValueIndex = rear - 1
-```
-
-But when `rear == 0`, `rear - 1` becomes negative.
-
-Therefore:
-
-```text
-(rear - 1 + capacity) % capacity
-```
-
----
-
-# 17. Priority Queue
-
-A priority queue does not necessarily follow normal FIFO behavior.
-
-The highest-priority or lowest-priority item leaves first.
-
-Example: Hospital emergency room.
-
-```text
-Patient A arrived first: mild fever
-Patient B arrived later: severe breathing problem
-```
-
-Patient B may be treated first because the priority is higher.
-
-```mermaid
-flowchart LR
-    A[Insert tasks] --> PQ[Priority Queue]
-    PQ --> H[Highest-priority task]
-    PQ --> M[Medium-priority task]
-    PQ --> L[Low-priority task]
-```
-
-Priority queues are usually implemented using a **heap**.
-
-| Operation                      | Typical complexity |
-| ------------------------------ | -----------------: |
-| Insert                         |         `O(log n)` |
-| Remove highest/lowest priority |         `O(log n)` |
-| Peek highest/lowest priority   |             `O(1)` |
-
-Do not confuse:
-
-| Queue type     | Removal rule               |
-| -------------- | -------------------------- |
-| Normal queue   | Oldest item                |
-| Deque          | Either end                 |
-| Priority queue | Highest or lowest priority |
-
----
-
-# 18. Sliding Window Maximum
-
-This is the most important deque interview problem.
-
-## Problem
-
-Given:
-
-```text
-nums = [1, 3, -1, -3, 5, 3, 6, 7]
-k = 3
-```
-
-Find the maximum in every window of size `3`.
-
-```text
-[1, 3, -1]  → 3
-[3, -1, -3] → 3
-[-1, -3, 5] → 5
-[-3, 5, 3]  → 5
-[5, 3, 6]   → 6
-[3, 6, 7]   → 7
-```
-
-Answer:
-
-```text
-[3, 3, 5, 5, 6, 7]
-```
-
----
-
-## Brute-force solution
-
-For every window, inspect all `k` elements.
-
-```text
-Number of windows ≈ n
-Work per window    = k
-
-Time = O(n × k)
-```
-
-We want:
-
-```text
-O(n)
-```
-
----
-
-# 19. Monotonic Deque
-
-A monotonic deque keeps useful candidates in sorted order.
-
-For Sliding Window Maximum, maintain values in **decreasing order**.
-
-```text
-Front                         Back
-largest → smaller → smaller → smallest
-```
-
-The front always stores the maximum candidate.
-
-But in code, store **indices**, not just values.
-
-Why indices?
-
-Because we need to know when an element leaves the window.
-
----
-
-## Three rules
-
-For every index `i`:
-
-### Rule 1: Remove expired indices from the front
-
-Current window starts at:
-
-```text
-i - k + 1
-```
-
-Any index smaller than this has expired.
-
-```go
-if deque[0] < i-k+1 {
-	popFront()
-}
-```
-
-### Rule 2: Remove smaller values from the back
-
-If the new value is larger, smaller values behind it can never become the maximum.
-
-```text
-Existing deque: [8, 6, 4]
-New value:       7
-
-Remove 4
-Remove 6
-
-New deque: [8, 7]
-```
-
-### Rule 3: The front is the maximum
-
-Once the first full window is formed:
-
-```text
-maximum = nums[deque[0]]
-```
-
----
-
-## Why can smaller elements be removed?
-
-Consider:
-
-```text
-Old value: 3
-New value:  5
-```
-
-The new `5` is:
-
-* larger than `3`
-* newer than `3`
-
-Therefore, as long as `3` remains inside the window, `5` will also remain inside the window and will always be a better maximum candidate.
-
-The `3` is useless.
-
----
-
-## Mermaid visualization
+### Sliding Window Maximum
 
 ```mermaid
 flowchart TD
-    A[Process nums i] --> B[Remove expired index from front]
-    B --> C{Back value smaller than nums i?}
-    C -->|Yes| D[Remove index from back]
-    D --> C
-    C -->|No| E[Add i to back]
-    E --> F{Window size at least k?}
-    F -->|No| A
-    F -->|Yes| G[nums deque front is maximum]
-    G --> A
+    I["Inputs and starting state: <strong>nums</strong> , <strong>k</strong> , <strong>result</strong> , <strong>deque</strong>"]
+    B["Boundary checks<br/>len(<strong>nums</strong>) equals 0 or <strong>k</strong> less than or equal to 0 or <strong>k</strong> greater than len(<strong>nums</strong>) rejects empty input and invalid window widths before allocating the <strong>result</strong>."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Keep candidate indexes in decreasing value order, remove expired indexes from the front"]
+        S1["read each window maximum at the front"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the []int value from <strong>maxSlidingWindow</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Go solution
+- Monitoring reports peak latency in each rolling interval.
+- Trading systems track rolling high prices.
 
 ```go
+// Exact question: Given an integer slice and window width `k`, return the maximum value in every contiguous window.
+//
+// Example: Input numbers = [1,3,-1,-3,5,3,6,7] and k = 3 -> output [3,3,5,5,6,7].
+//
+// Possible answer: Keep candidate indexes in decreasing value order, remove expired indexes from the front, and read each window maximum at the front.
+//
+// Output format: Return the `[]int` value from `maxSlidingWindow`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `k` is the int input used by this example.
+//
+// Boundary checks:
+// - `len(nums) == 0 || k <= 0 || k > len(nums)` rejects empty input and invalid window widths before allocating the result.
+// - `len(deque) > 0 && deque[0] < windowStart` decides whether the branch or loop should continue for the current input.
+// - `i >= k-1` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `k` is the int input used by this example.
+// - `result` stores one maximum per complete window in left-to-right window order.
+// - `deque` stores input indexes, not values; their referenced values decrease from front to back.
+// - `windowStart` holds the intermediate value produced by `i - k + 1`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func maxSlidingWindow(nums []int, k int) []int {
-	if len(nums) == 0 || k <= 0 {
+	if len(nums) == 0 || k <= 0 || k > len(nums) {
 		return []int{}
 	}
 
@@ -1226,649 +761,375 @@ func maxSlidingWindow(nums []int, k int) []int {
 
 	return result
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(k) -> the auxiliary storage grows according to this bound.
 ```
 
-## Complexity
+> **Baby analogy:** Imagine children waiting in a lunch line. "Sliding Window Maximum" is one small game played with the same pieces and rules.
 
-At first glance, the inner `for` loop looks expensive.
-
-But every index is:
-
-* inserted once
-* removed at most once
-
-Therefore:
-
-```text
-Time:  O(n)
-Space: O(k)
-```
-
-This is an example of **amortized analysis**.
-
----
-
-# 20. Queue Problem Recognition
-
-Use a queue when the problem contains language like:
-
-| Problem clue                | Likely pattern   |
-| --------------------------- | ---------------- |
-| Level by level              | BFS queue        |
-| Minimum number of steps     | BFS queue        |
-| Nearest destination         | BFS queue        |
-| Spread every minute         | Multi-source BFS |
-| Process in arrival order    | Normal queue     |
-| Fixed-size reusable storage | Circular queue   |
-| Maximum in each window      | Monotonic deque  |
-| Minimum in each window      | Monotonic deque  |
-| Highest priority first      | Priority queue   |
-| Add/remove from both sides  | Deque            |
-
----
-
-# 21. BFS vs DFS
-
-Both BFS and DFS can visit all nodes.
-
-The important difference is the visitation order.
-
-| BFS                                | DFS                                       |
-| ---------------------------------- | ----------------------------------------- |
-| Uses queue                         | Uses stack or recursion                   |
-| Level by level                     | Goes deep first                           |
-| Finds shortest unweighted path     | Does not automatically find shortest path |
-| May use more memory on wide graphs | May use more memory on deep graphs        |
-
-```mermaid
-graph TD
-    A((A)) --> B((B))
-    A --> C((C))
-    B --> D((D))
-    B --> E((E))
-    C --> F((F))
-
-    BFS["BFS: A, B, C, D, E, F"]
-    DFS["DFS example: A, B, D, E, C, F"]
-```
-
-## Interview rule
-
-For an **unweighted graph**:
-
-> BFS finds the shortest path measured by number of edges.
-
-Why?
-
-Because BFS explores:
-
-```text
-distance 0
-distance 1
-distance 2
-distance 3
-```
-
-It cannot reach a distance-three node before processing all distance-two nodes.
-
----
-
-# 22. Common Queue Patterns
-
-## Pattern 1: Standard BFS
-
-```go
-queue := []Node{start}
-visited[start] = true
-
-for len(queue) > 0 {
-	current := queue[0]
-	queue = queue[1:]
-
-	for _, next := range neighbors(current) {
-		if !visited[next] {
-			visited[next] = true
-			queue = append(queue, next)
-		}
-	}
-}
-```
-
-Use for:
-
-* graph traversal
-* island traversal
-* connected components
-* shortest path in an unweighted graph
-
----
-
-## Pattern 2: Level-order BFS
-
-```go
-for len(queue) > 0 {
-	levelSize := len(queue)
-
-	for i := 0; i < levelSize; i++ {
-		current := queue[0]
-		queue = queue[1:]
-
-		// Process the current level.
-	}
-}
-```
-
-Use for:
-
-* tree levels
-* number of minutes
-* number of moves
-* distance from starting point
-
----
-
-## Pattern 3: Multi-source BFS
-
-```go
-queue := []Position{}
-
-for each starting source {
-	queue = append(queue, source)
-	visited[source] = true
-}
-
-for len(queue) > 0 {
-	current := queue[0]
-	queue = queue[1:]
-
-	// Expand from all sources together.
-}
-```
-
-Use for:
-
-* Rotting Oranges
-* nearest zero
-* nearest hospital
-* fire spreading
-* infection spreading
-* distance to nearest gate
-
----
-
-## Pattern 4: Monotonic Deque
-
-```go
-for i := 0; i < len(nums); i++ {
-	removeExpiredIndices()
-
-	for backIsWorseThanCurrent() {
-		removeBack()
-	}
-
-	addCurrentIndex()
-
-	if windowIsComplete() {
-		recordFront()
-	}
-}
-```
-
-Use for:
-
-* sliding window maximum
-* sliding window minimum
-* shortest constrained subarray
-* maximum equation value
-
----
-
-# 23. Common Interview Mistakes
-
-## Mistake 1: Using a stack for BFS
-
-A stack goes deep first.
-
-BFS requires a queue.
-
----
-
-## Mistake 2: Marking visited too late
-
-Mark a node when it enters the queue, not when it leaves.
-
----
-
-## Mistake 3: Forgetting the level size
-
-This code is dangerous:
-
-```go
-for i := 0; i < len(queue); i++ {
-	// Add more elements to queue.
-}
-```
-
-`len(queue)` changes while the loop runs.
-
-Correct:
-
-```go
-levelSize := len(queue)
-
-for i := 0; i < levelSize; i++ {
-	// Process exactly the current level.
-}
-```
-
----
-
-## Mistake 4: Storing values instead of indices in a monotonic deque
-
-Values alone cannot tell you whether an element has left the window.
-
-Store indices.
-
----
-
-## Mistake 5: Using a normal queue for priorities
-
-A normal queue processes the oldest item.
-
-A priority queue processes the most important item.
-
----
-
-## Mistake 6: Forgetting circular wraparound
-
-Incorrect:
-
-```go
-rear++
-```
-
-Correct:
-
-```go
-rear = (rear + 1) % capacity
-```
-
----
-
-## Mistake 7: Treating every shortest-path problem as BFS
-
-BFS finds shortest paths only when edges have equal weight.
-
-| Graph type                   | Algorithm          |
-| ---------------------------- | ------------------ |
-| Unweighted graph             | BFS                |
-| Equal edge weights           | BFS                |
-| Edge weights `0` or `1`      | 0-1 BFS with deque |
-| Non-negative varying weights | Dijkstra           |
-| Negative weights             | Bellman-Ford       |
-
----
-
-# 24. Interview Questions and Model Answers
-
-## Question 1: What is a queue?
-
-A queue is a linear data structure that follows FIFO: First In, First Out. Elements are inserted at the rear and removed from the front.
-
----
-
-## Question 2: Why is queue insertion and removal `O(1)`?
-
-A correctly implemented queue maintains front and rear pointers. Adding moves the rear pointer, and removing moves the front pointer. No traversal is required.
-
----
-
-## Question 3: What is the difference between a queue and a deque?
-
-A queue allows insertion at the back and removal from the front. A deque allows insertion and removal from both the front and back.
-
----
-
-## Question 4: Why does BFS use a queue?
-
-BFS must process nodes in the order they are discovered. Nodes discovered earlier are closer to the starting node, so they must be processed first. FIFO ordering guarantees this.
-
----
-
-## Question 5: Why does BFS find the shortest path?
-
-In an unweighted graph, BFS explores nodes in increasing distance from the source. It visits all nodes one edge away before nodes two edges away, so the first time it reaches a node is through a shortest path.
-
----
-
-## Question 6: What is multi-source BFS?
-
-Multi-source BFS starts with multiple source nodes in the queue. All sources expand simultaneously. It is useful for infection spread, nearest-distance problems, and Rotting Oranges.
-
----
-
-## Question 7: What is a circular queue?
-
-A circular queue is a fixed-size queue that treats its underlying array as circular. When an index reaches the end, it wraps back to the beginning using modulo arithmetic.
-
----
-
-## Question 8: Why use a circular queue?
-
-It reuses empty array positions created by dequeue operations and avoids shifting elements.
-
----
-
-## Question 9: What is a monotonic deque?
-
-A monotonic deque stores elements in consistently increasing or decreasing order. It allows the maximum or minimum candidate to be accessed from the front in `O(1)` time.
-
----
-
-## Question 10: Why is Sliding Window Maximum `O(n)`?
-
-Each index enters the deque once and leaves it at most once. Across the entire algorithm, the total number of deque operations is proportional to `n`.
-
----
-
-## Question 11: Is a priority queue FIFO?
-
-Not necessarily. A priority queue removes elements according to priority rather than insertion order. Items with equal priority may follow FIFO depending on the implementation.
-
----
-
-## Question 12: Can a queue be implemented using two stacks?
-
-Yes.
-
-* One stack receives new elements.
-* The second stack provides elements for removal.
-* When the output stack is empty, move all elements from the input stack to the output stack.
-
-This reverses their order and produces FIFO behavior.
-
-Amortized complexity:
-
-```text
-Enqueue: O(1)
-Dequeue: O(1) amortized
-```
-
----
-
-# 25. Mock Coding Questions
-
-## Easy
-
-### 1. Implement a Queue Using Two Stacks
-
-Expected concepts:
-
-* FIFO from LIFO structures
-* amortized analysis
-* transfer elements only when necessary
-
-### 2. Binary Tree Level Order Traversal
-
-Expected concepts:
-
-* BFS
-* queue size per level
-* child insertion
-
-### 3. Moving Average from Data Stream
-
-Expected concepts:
-
-* fixed-size queue
-* running sum
-* remove oldest item
-
----
-
-## Medium
-
-### 4. Number of Islands
-
-Expected concepts:
-
-* grid BFS
-* connected components
-* visited marking
-
-### 5. Rotting Oranges
-
-Expected concepts:
-
-* multi-source BFS
-* level equals time
-* count remaining fresh oranges
-
-### 6. Design Circular Queue
-
-Expected concepts:
-
-* front and rear indices
-* modulo arithmetic
-* full and empty conditions
-
-### 7. Open the Lock
-
-Expected concepts:
-
-* shortest path
-* BFS over states
-* visited set
-
-### 8. Clone Graph
-
-Expected concepts:
-
-* graph BFS
-* map original nodes to cloned nodes
-* avoid cloning nodes repeatedly
-
----
-
-## Hard
-
-### 9. Sliding Window Maximum
-
-Expected concepts:
-
-* monotonic decreasing deque
-* remove expired indices
-* remove weaker candidates
-
-### 10. Shortest Subarray With Sum at Least K
-
-Expected concepts:
-
-* prefix sums
-* monotonic deque
-* careful handling of negative numbers
-
-### 11. Minimum Cost to Make at Least One Valid Path in a Grid
-
-Expected concepts:
-
-* 0-1 BFS
-* deque
-* zero-cost moves at front
-* one-cost moves at back
-
----
-
-# 26. Mock Interview Walkthrough
-
-## Problem
-
-Given a binary matrix, return the shortest path from the top-left cell to the bottom-right cell. You may move in eight directions. A `0` cell is open and a `1` cell is blocked.
-
-## What should you say?
-
-### Step 1: Identify the graph
-
-Each open cell is a graph node.
-
-A cell connects to up to eight neighboring cells.
-
-### Step 2: Identify the shortest-path requirement
-
-All moves cost one.
-
-Therefore, BFS is appropriate.
-
-### Step 3: Define queue contents
-
-Store:
-
-```text
-row
-column
-distance
-```
-
-Alternatively, process the queue level by level and let each level represent a distance.
-
-### Step 4: Mark visited
-
-Mark a cell visited when it enters the queue.
-
-### Step 5: Complexity
-
-For an `m × n` matrix:
-
-```text
-Time:  O(m × n)
-Space: O(m × n)
-```
-
-Every cell is inserted into the queue at most once.
-
----
-
-# 27. Queue and Deque Decision Tree
+### Multi-Source BFS
 
 ```mermaid
 flowchart TD
-    A[What must be processed next?] --> B{Oldest item?}
-    B -->|Yes| Q[Use Queue]
-    B -->|No| C{Need both ends?}
+    I["Inputs and starting state: <strong>graph</strong> , <strong>sources</strong> , <strong>queue</strong> , <strong>distance</strong>"]
+    B["Boundary checks<br/>Invalid and duplicate source indexes are skipped.<br/>Invalid neighbor indexes and already visited vertices are skipped before enqueueing."]
+    I --> B
 
-    C -->|Yes| D[Use Deque]
-    C -->|No| E{Highest priority?}
+    subgraph PROCESS["BFS and <strong>queue</strong>-processing region"]
+        direction TD
+        S0["Seed the <strong>queue</strong> with every distinct valid source."]
+        S1["Expand all <strong>queue</strong> entries level by level and assign unseen neighbor distances."]
+        S0 --> S1
+    end
 
-    E -->|Yes| P[Use Priority Queue]
-    E -->|No| F{Fixed reusable capacity?}
+    B --> S0
+    S1 --> O["Return one <strong>distance</strong> per vertex; <strong>sources</strong> are 0, unreachable vertices are -1, and other values are minimum edge counts."]
 
-    F -->|Yes| CQ[Use Circular Queue]
-    F -->|No| G{Level-by-level or shortest unweighted path?}
-
-    G -->|Yes| BFS[Use BFS with Queue]
-    G -->|No| H{Sliding window max or min?}
-
-    H -->|Yes| MD[Use Monotonic Deque]
-    H -->|No| I[Consider another structure]
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-# 28. Final Mental Models
-
-## Queue
-
-> A queue is a line of people.
-
-```text
-Join at the back.
-Leave from the front.
-```
-
-## BFS
-
-> BFS is a wave expanding outward.
-
-```text
-Nearest first.
-Then the next nearest.
-```
-
-## Level-order traversal
-
-> Take a photograph of the queue before processing a level.
+- Maps compute distance to the nearest hospital or charger.
+- Infrastructure tools calculate distance from every node to the closest replica.
 
 ```go
-levelSize := len(queue)
+// Exact question: Given an unweighted graph and multiple source vertices, return every vertex's minimum edge distance to any valid source.
+//
+// Example: Input chain 0-1-2-3 with sources [0, 3] -> output distances [0, 1, 1, 0].
+//
+// Possible answer: Enqueue all distinct valid sources at distance zero, then perform one BFS so the first discovery of each vertex is its nearest-source distance.
+//
+// Output format: Return one distance per vertex; sources are `0`, unreachable vertices are `-1`, and other values are minimum edge counts.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - Invalid and duplicate source indexes are skipped.
+// - Invalid neighbor indexes and already visited vertices are skipped before enqueueing.
+//
+// Key variables:
+// - `graph` is an adjacency-list slice whose indexes are vertex IDs and whose elements are neighbor-ID slices.
+// - `sources` is a slice whose indexes are source positions and whose elements are starting vertex IDs.
+// - `queue` stores discovered vertex IDs in FIFO order.
+// - `distance` is a parallel slice whose indexes are vertex IDs and whose values are nearest-source edge counts.
+//
+// Logic:
+// 1. Seed the queue with every distinct valid source.
+// 2. Expand all queue entries level by level and assign unseen neighbor distances.
+func multiSourceDistances(graph [][]int, sources []int) []int {
+	distance := make([]int, len(graph))
+	for vertex := range distance {
+		distance[vertex] = -1
+	}
+	queue := make([]int, 0, len(graph))
+	for _, source := range sources {
+		if source < 0 || source >= len(graph) || distance[source] != -1 {
+			continue
+		}
+		distance[source] = 0
+		queue = append(queue, source)
+	}
+	for head := 0; head < len(queue); head++ {
+		current := queue[head]
+		for _, neighbor := range graph[current] {
+			if neighbor < 0 || neighbor >= len(graph) || distance[neighbor] != -1 {
+				continue
+			}
+			distance[neighbor] = distance[current] + 1
+			queue = append(queue, neighbor)
+		}
+	}
+	return distance
+}
+
+// time complexity: O(V + E) -> each reachable vertex is processed once and each edge is examined once.
+// space complexity: O(V) -> the visited state, queue, stack, or result can hold one entry per vertex.
 ```
 
-Process exactly that many nodes.
+> **Baby analogy:** Imagine children waiting in a lunch line. "Multi-Source BFS" is one small game played with the same pieces and rules.
 
-## Multi-source BFS
+### Recent Request Counter
 
-> Several fires start spreading at the same time.
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>times</strong> , <strong>head</strong> , <strong>tail</strong> , <strong>now</strong>"]
+    B["Boundary checks<br/>A negative window returns zero.<br/>Future timestamps greater than <strong>now</strong> are excluded even if the caller supplied them."]
+    I --> B
 
-Put all starting points into the queue first.
+    subgraph PROCESS["BFS and queue-processing region"]
+        direction TD
+        S0["Dequeue timestamps older than the lower bound."]
+        S1["Find the live <strong>tail</strong> and return the number of entries between the two ends."]
+        S0 --> S1
+    end
 
-## Circular queue
+    B --> S0
+    S1 --> O["Return the number of timestamps still inside the requested time window."]
 
-> The end of the array connects back to the beginning.
-
-```text
-next = (current + 1) % capacity
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## Monotonic deque
+**Where it is used in real life:**
 
-> Keep only candidates that still have a chance to win.
+- Rate limiters count requests inside a rolling time window.
+- Observability systems track recent event volume.
 
-For Sliding Window Maximum:
+```go
+// Exact question: Given sorted request times, how many requests occurred in the inclusive interval `[now-window, now]`?
+//
+// Example: Input times = [1, 100, 3001, 3002], now = 3002, and window = 3000 -> output 3.
+//
+// Possible answer: Keep request times in a queue and advance its head past expired entries.
+//
+// Output format: Return the number of timestamps still inside the requested time window.
+//
+// Inline descriptions:
+// - Advancing the head models dequeuing expired requests without shifting later timestamps.
+//
+// Boundary checks:
+// - A negative window returns zero.
+// - Future timestamps greater than `now` are excluded even if the caller supplied them.
+//
+// Key variables:
+// - `times` is a sorted slice whose indexes are arrival order and whose elements are request timestamps.
+// - `head` becomes the index of the first request that has not expired.
+// - `tail` is one past the last timestamp no later than `now`.
+//
+// Logic:
+// 1. Dequeue timestamps older than the lower bound.
+// 2. Find the live tail and return the number of entries between the two ends.
+func recentRequestCount(times []int, now, window int) int {
+	if window < 0 {
+		return 0
+	}
+	lowerBound := now - window
+	head := 0
+	for head < len(times) && times[head] < lowerBound {
+		head++
+	}
+	tail := head
+	for tail < len(times) && times[tail] <= now {
+		tail++
+	}
+	return tail - head
+}
 
-* remove expired candidates from the front
-* remove weaker candidates from the back
-* the winner is at the front
+// time complexity: O(n) -> each of the `n` timestamps is inspected at most once by a queue boundary.
+// space complexity: O(1) -> the queue is represented by indexes into the supplied slice.
+```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. "Recent Request Counter" is one small game played with the same pieces and rules.
+
+### Minimum Jumps
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>maxJump</strong> , <strong>queue</strong> , <strong>distance</strong>"]
+    B["Boundary checks<br/>Empty input returns -1; a one-position input returns zero.<br/>Candidate indexes must stay inside the slice and must not have been visited."]
+    I --> B
+
+    subgraph PROCESS["BFS and <strong>queue</strong>-processing region"]
+        direction TD
+        S0["Explore positions level by level."]
+        S1["Assign a position's <strong>distance</strong> only on its first discovery."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the minimum jump count, or -1 when the final position is unreachable."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Routing finds the fewest transitions between states.
+- Game engines compute minimum moves under jump constraints.
+
+```go
+// Exact question: Given allowed forward jumps, what is the minimum number of jumps from position zero to the final position?
+//
+// Example: Input maxJump = [2, 3, 1, 1, 4] -> output 2 using positions 0->1->4.
+//
+// Possible answer: Run BFS because every jump is one unweighted step and the first visit has the minimum distance.
+//
+// Output format: Return the minimum jump count, or `-1` when the final position is unreachable.
+//
+// Inline descriptions:
+// - Each queue element is a position, and `distance[position]` records its BFS level.
+//
+// Boundary checks:
+// - Empty input returns `-1`; a one-position input returns zero.
+// - Candidate indexes must stay inside the slice and must not have been visited.
+//
+// Key variables:
+// - `maxJump` is a slice whose indexes are positions and whose elements are the maximum forward step from that position.
+// - `queue` stores discovered position indexes in FIFO order.
+// - `distance` is a slice whose indexes are positions and whose values are minimum jump counts; `-1` means unseen.
+//
+// Logic:
+// 1. Explore positions level by level.
+// 2. Assign a position's distance only on its first discovery.
+func minimumJumps(maxJump []int) int {
+	if len(maxJump) == 0 {
+		return -1
+	}
+	distance := make([]int, len(maxJump))
+	for index := range distance {
+		distance[index] = -1
+	}
+	distance[0] = 0
+	queue := []int{0}
+	for head := 0; head < len(queue); head++ {
+		position := queue[head]
+		if position == len(maxJump)-1 {
+			return distance[position]
+		}
+		for step := 1; step <= maxJump[position]; step++ {
+			next := position + step
+			if next >= len(maxJump) {
+				break
+			}
+			if distance[next] != -1 {
+				continue
+			}
+			distance[next] = distance[position] + 1
+			queue = append(queue, next)
+		}
+	}
+	return -1
+}
+
+// time complexity: O(n^2) -> in the worst case a position considers O(n) forward jumps, although the BFS queue processes each position once.
+// space complexity: O(n) -> the distance slice and queue can contain every position.
+```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. "Minimum Jumps" is one small game played with the same pieces and rules.
+
+### Implement a Deque
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>items</strong>"]
+    B["Boundary checks<br/>Both pop methods return 0, false for an empty deque."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Add or remove at the requested end while preserving the order of remaining values."]
+    end
+
+    B --> S0
+    S0 --> O["Push methods update the deque; pop methods return a value and an existence flag."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Schedulers add urgent work at the front and normal work at the back.
+- Window algorithms expire old indexes at one end and add candidates at the other.
+
+```go
+// Exact question: How can a deque accept and remove values at both ends?
+//
+// Example: PushBack(2), PushFront(1), PopFront() -> 1, and PopBack() -> 2.
+//
+// Possible answer: Store values in a slice and expose front and back operations.
+//
+// Output format: Push methods update the deque; pop methods return a value and an existence flag.
+//
+// Inline descriptions:
+// - This teaching implementation favors clarity; removing the front copies remaining elements.
+//
+// Boundary checks:
+// - Both pop methods return `0, false` for an empty deque.
+//
+// Key variables:
+// - `items` is a slice whose indexes represent deque positions and whose elements are stored values.
+// - Index zero is the front and index `len(items)-1` is the back.
+//
+// Logic:
+// 1. Add or remove at the requested end while preserving the order of remaining values.
+type TeachingDeque struct {
+	items []int
+}
+
+func (deque *TeachingDeque) PushFront(value int) {
+	deque.items = append([]int{value}, deque.items...)
+}
+
+func (deque *TeachingDeque) PushBack(value int) {
+	deque.items = append(deque.items, value)
+}
+
+func (deque *TeachingDeque) PopFront() (int, bool) {
+	if len(deque.items) == 0 {
+		return 0, false
+	}
+	value := deque.items[0]
+	deque.items = deque.items[1:]
+	return value, true
+}
+
+func (deque *TeachingDeque) PopBack() (int, bool) {
+	if len(deque.items) == 0 {
+		return 0, false
+	}
+	last := len(deque.items) - 1
+	value := deque.items[last]
+	deque.items = deque.items[:last]
+	return value, true
+}
+
+// time complexity: O(n) -> `PushFront` copies existing elements; the other shown deque operations are O(1).
+// space complexity: O(n) -> the deque stores up to `n` live values.
+```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. "Implement a Deque" is one small game played with the same pieces and rules.
 
 ---
 
-# 29. What You Must Know for Interviews
+## Interview checklist and next steps
 
-| Topic            | Essential knowledge                        |
-| ---------------- | ------------------------------------------ |
-| FIFO             | Add at back, remove from front             |
-| Queue complexity | Enqueue and dequeue are `O(1)`             |
-| BFS              | Queue-based level-by-level traversal       |
-| Graph BFS        | Mark visited while enqueuing               |
-| Tree BFS         | Capture `levelSize` before processing      |
-| Multi-source BFS | Start with every source in the queue       |
-| Deque            | Add and remove from both ends              |
-| Monotonic deque  | Maintain useful candidates in sorted order |
-| Circular queue   | Use modulo for wraparound                  |
-| Priority queue   | Usually implemented with a heap            |
-| Shortest path    | BFS for unweighted graphs                  |
+Use this answer order during an interview:
 
----
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
 
-# 30. Recommended Practice Order
+Recommended practice order:
+1. [Implement a Queue with a Head Index](#implement-a-queue-with-a-head-index)
+2. [Design a Circular Queue](#design-a-circular-queue)
+3. [Binary Tree Level Order Traversal](#binary-tree-level-order-traversal)
+4. [Number of Islands with BFS](#number-of-islands-with-bfs)
+5. [Rotting Oranges](#rotting-oranges)
+6. [Sliding Window Maximum](#sliding-window-maximum)
+7. [Multi-Source BFS](#multi-source-bfs)
+8. [Recent Request Counter](#recent-request-counter)
+9. [Minimum Jumps](#minimum-jumps)
+10. [Implement a Deque](#implement-a-deque)
 
-1. Implement Queue
-2. Binary Tree Level Order Traversal
-3. Number of Islands
-4. Rotting Oranges
-5. Design Circular Queue
-6. Implement Queue Using Stacks
-7. Open the Lock
-8. Sliding Window Maximum
-9. Shortest Subarray With Sum at Least K
-10. 0-1 BFS problems
-
-The main interview progression is:
+Continue with: Implement Queue Using Stacks, Open the Lock, Walls and Gates, Shortest Path in Binary Matrix, Task Scheduler.
 
 ```mermaid
 flowchart LR
-    A[FIFO Basics] --> B[Tree BFS]
-    B --> C[Grid BFS]
-    C --> D[Multi-source BFS]
-    D --> E[Circular Queue]
-    E --> F[Monotonic Deque]
-    F --> G[Advanced Shortest Paths]
+    Q0["Implement a Queue with a Head Index"]
+    Q0 --> Q1["Design a Circular Queue"]
+    Q1 --> Q2["Binary Tree Level Order Traversal"]
+    Q2 --> Q3["Number of Islands with BFS"]
+    Q3 --> Q4["Rotting Oranges"]
+    Q4 --> Q5["Sliding Window Maximum"]
+    Q5 --> Q6["Multi-Source BFS"]
+    Q6 --> Q7["Recent Request Counter"]
+    Q7 --> Q8["Minimum Jumps"]
+    Q8 --> Q9["Implement a Deque"]
 ```
+
+> **Baby analogy:** Imagine children waiting in a lunch line. Pack the same checklist every time so no important interview step is forgotten.

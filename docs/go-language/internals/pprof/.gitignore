@@ -1,0 +1,6 @@
+/bin/
+/profiles/*.pb.gz
+/profiles/*.trace
+/profiles/*.svg
+/profiles/*.pdf
+/profiles/*.png

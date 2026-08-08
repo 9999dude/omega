@@ -1,535 +1,282 @@
+# Dynamic Programming — A Compact Interview Guide
 
-# Dynamic Programming — explained like a baby
+Dynamic programming solves repeated subproblems once and reuses their answers. The central design task is choosing a state that contains exactly enough information for the future.
 
-Dynamic Programming, usually called **DP**, is a technique for solving a large problem by:
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 Dynamic Programming Interview Questions](#top-10-dynamic-programming-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-1. Breaking it into smaller problems.
-2. Solving each smaller problem once.
-3. Remembering the answer.
-4. Reusing that answer instead of recalculating it.
-
-> **DP = recursion or iteration + memory**
-
-Dynamic Programming does not mean “programming dynamically.” It means **remembering previously calculated results**.
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
 
-# 1. Baby-level mental model
+## Mental model
 
-Imagine someone asks:
+Define a state, write its transition from smaller states, establish base cases, and choose memoization or tabulation.
 
-> “How many ways can you climb five stairs if you can take one or two steps?”
-
-To reach stair `5`, your final jump must come from:
-
-* Stair `4` using one step.
-* Stair `3` using two steps.
-
-Therefore:
-
-```text
-ways(5) = ways(4) + ways(3)
-```
-
-But calculating `ways(4)` also needs `ways(3)`.
-
-Without DP, you calculate `ways(3)` multiple times.
+| Real system | How the topic appears |
+| --- | --- |
+| Route planning | Reuse best costs to intermediate locations |
+| Resource allocation | Choose items under capacity constraints |
+| Text comparison | Align, edit, or segment sequences |
+| Scheduling | Reuse best results for prefixes of jobs |
 
 ```mermaid
 flowchart TD
-    A["ways(5)"] --> B["ways(4)"]
-    A --> C["ways(3)"]
-
-    B --> D["ways(3) again"]
-    B --> E["ways(2)"]
-
-    C --> F["ways(2) again"]
-    C --> G["ways(1)"]
-
-    D --> H["ways(2) again"]
-    D --> I["ways(1)"]
+    T["Dynamic programming"]
+    T --> R0["State"]
+    T --> R1["Transition"]
+    T --> R2["Memo map or slice"]
+    T --> R3["DP table"]
 ```
 
-The computer keeps asking the same questions:
-
-```text
-ways(3)?
-ways(2)?
-ways(3) again?
-ways(2) again?
-```
-
-DP says:
-
-> “I already calculated `ways(3)`. Let me reuse the answer.”
-
-That is the entire idea.
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. When the same puzzle appears again, read the sticker instead of rebuilding the answer.
 
 ---
 
-# 2. Why is Dynamic Programming needed?
+## Representation and core operations
 
-Consider the Fibonacci sequence:
+A state is not merely a loop index. It is the complete description required to answer the remaining subproblem.
 
-```text
-fib(n) = fib(n-1) + fib(n-2)
+| Representation | Role |
+| --- | --- |
+| State | Smallest information that uniquely identifies a subproblem |
+| Transition | Rule combining smaller states |
+| Memo map or slice | Keys are states; values are cached answers |
+| DP table | Indexes select states; cells store their answers |
+
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Read cached state | O(1) typical | Reuse a previously solved answer |
+| Compute one transition | O(k) | Inspect k predecessor choices |
+| Fill S states | O(S·k) | Solve each state once |
+| Space optimize | Problem-specific | Keep only predecessor rows or values |
+
+```mermaid
+flowchart LR
+    A0["Read cached state"]
+    A0 --> A1["Compute one transition"]
+    A1 --> A2["Fill S states"]
+    A2 --> A3["Space optimize"]
 ```
 
-A normal recursive solution recalculates the same values repeatedly.
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. Each table box is one tiny question; fill it once using boxes that are already known.
+
+---
+
+## Interview patterns and complexity
+
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Take or skip | Pick/not-pick DP | [House Robber](#house-robber), [Partition Equal Subset Sum](#partition-equal-subset-sum) |
+| Prefix of one sequence | 1D DP | [Climbing Stairs](#climbing-stairs), [Decode Ways](#decode-ways), [Word Break](#word-break) |
+| Prefixes of two sequences | 2D DP | [Longest Common Subsequence](#longest-common-subsequence) |
+| Minimum coins or cost | Unbounded choice DP | [Coin Change](#coin-change), [Min Cost Climbing Stairs](#min-cost-climbing-stairs) |
+| Grid paths | Row and column state | [Unique Paths](#unique-paths) |
+| Best ordered subsequence | Sequence DP | [Longest Increasing Subsequence](#longest-increasing-subsequence) |
+
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Memoized states | O(states × transitions) | Each state is solved once |
+| 1D table | O(n) space | One answer per index |
+| 2D table | O(rows × columns) space | One answer per state pair |
+| Optimized rolling state | O(width) or O(1) | Discard unreachable history |
+
+```mermaid
+flowchart TD
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Take or skip"| P0["Pick/not-pick DP"]
+    Q -->|"Prefix of one sequence"| P1["1D DP"]
+    Q -->|"Prefixes of two sequences"| P2["2D DP"]
+    Q -->|"Minimum coins or cost"| P3["Unbounded choice DP"]
+    Q -->|"Grid paths"| P4["Row and column state"]
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. The clue tells you whether the notebook needs one page, a grid, or a take-or-skip choice.
+
+---
+
+## Problem-solving checklist and common mistakes
+
+Before coding:
+
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
+
+Common mistakes:
+
+- Starting with a table before defining the state meaning.
+- Caching by an incomplete state key.
+- Using greedy reasoning without proving it.
+- Updating a 1D knapsack table in the wrong direction.
+- Forgetting impossible-state sentinels.
+- Counting recursive calls instead of unique memoized states.
+
+```mermaid
+flowchart LR
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. If the sticker label omits important information, you may reuse the right answer for the wrong puzzle.
+
+---
+
+## Top 10 Dynamic Programming Interview Questions
+
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
+
+```mermaid
+flowchart LR
+    Q0["Climbing Stairs"]
+    Q0 --> Q1["House Robber"]
+    Q1 --> Q2["Coin Change"]
+    Q2 --> Q3["Min Cost Climbing Stairs"]
+    Q3 --> Q4["Unique Paths"]
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. These ten puzzles are practice cards; each card teaches one reusable move.
+
+### Climbing Stairs
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Climbing Stairs"]
+        direction TD
+        I["Input"] --> S0["Return 1 for <strong>stair</strong> 0 or <strong>stair</strong> 1."]
+        S0 --> S1["Return memostair when that subproblem was solved earlier."]
+        S1 --> S2["Otherwise add the answers for <strong>stair</strong>-1 and <strong>stair</strong>-2, cache the sum, and return it."]
+        S2 --> O["Return <strong>result</strong>"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Workflow planners count ways to reach a milestone using allowed step sizes.
+- Protocol analysis counts valid sequences of incremental transitions.
 
 ```go
-func fib(n int) int {
-	if n <= 1 {
-		return n
-	}
-
-	return fib(n-1) + fib(n-2)
-}
-```
-
-Its recursion tree grows rapidly.
-
-```mermaid
-flowchart TD
-    A["fib(5)"] --> B["fib(4)"]
-    A --> C["fib(3)"]
-
-    B --> D["fib(3)"]
-    B --> E["fib(2)"]
-
-    C --> F["fib(2)"]
-    C --> G["fib(1)"]
-
-    D --> H["fib(2)"]
-    D --> I["fib(1)"]
-```
-
-Notice:
-
-* `fib(3)` is calculated more than once.
-* `fib(2)` is calculated many times.
-
-### Without DP
-
-```text
-Time: O(2ⁿ)
-```
-
-### With DP
-
-```text
-Time: O(n)
-```
-
-DP can turn an extremely slow solution into a practical one.
-
----
-
-# 3. When can DP be used?
-
-A problem usually needs two properties.
-
-## Property 1: Overlapping subproblems
-
-The same smaller problem appears repeatedly.
-
-Examples:
-
-```text
-fib(3) is needed multiple times
-minimum coins for amount 7 is needed multiple times
-LCS for prefixes i and j is reused
-```
-
-## Property 2: Optimal substructure
-
-The answer to the large problem can be built from answers to smaller problems.
-
-For example:
-
-```text
-Minimum coins for amount 11
-=
-1 coin + minimum coins for a smaller amount
-```
-
-Or:
-
-```text
-Best robbery result at house i
-=
-maximum of:
-- skipping house i
-- robbing house i
-```
-
----
-
-# 4. The most important DP mental model
-
-Almost every DP problem can be solved using six questions.
-
-```mermaid
-flowchart LR
-    A["1. State<br/>What changes?"] -->
-    B["2. Meaning<br/>What does dp[i] represent?"] -->
-    C["3. Choices<br/>What can I do?"] -->
-    D["4. Transition<br/>How do smaller answers combine?"] -->
-    E["5. Base cases<br/>What are the smallest answers?"] -->
-    F["6. Final answer<br/>Which state contains it?"]
-```
-
-Use this checklist:
-
-```text
-State
-Meaning
-Choices
-Transition
-Base case
-Calculation order
-Answer
-```
-
----
-
-# 5. What is a DP state?
-
-A **state** describes one smaller version of the original problem.
-
-For Climbing Stairs:
-
-```text
-dp[i] = number of ways to reach stair i
-```
-
-For House Robber:
-
-```text
-dp[i] = maximum money that can be robbed from houses 0 to i
-```
-
-For Coin Change:
-
-```text
-dp[a] = minimum coins needed to create amount a
-```
-
-For Longest Common Subsequence:
-
-```text
-dp[i][j] = LCS length using the first i characters of text1
-           and the first j characters of text2
-```
-
-A correct state definition is usually the hardest part of DP.
-
----
-
-# 6. What is a state transition?
-
-A **state transition** explains how one DP answer is calculated from earlier answers.
-
-For Climbing Stairs:
-
-```text
-dp[i] = dp[i-1] + dp[i-2]
-```
-
-For House Robber:
-
-```text
-dp[i] = max(
-    dp[i-1],            // skip current house
-    money[i] + dp[i-2]  // rob current house
-)
-```
-
-For Unique Paths:
-
-```text
-dp[row][col] =
-    dp[row-1][col] + dp[row][col-1]
-```
-
-The transition is the formula that connects smaller problems to the current problem.
-
----
-
-# 7. Memoization vs Tabulation
-
-There are two main ways to write DP.
-
-## Memoization: top-down DP
-
-Start with the original problem and recursively move toward smaller problems.
-
-Store each result in a cache.
-
-```mermaid
-flowchart TD
-    A["Solve big problem"] --> B["Ask smaller problem"]
-    B --> C{"Already cached?"}
-    C -- Yes --> D["Return cached result"]
-    C -- No --> E["Calculate result"]
-    E --> F["Store in cache"]
-    F --> D
-```
-
-## Tabulation: bottom-up DP
-
-Start with the smallest known answers.
-
-Build larger answers one by one.
-
-```mermaid
-flowchart LR
-    A["Base case"] --> B["Small state"]
-    B --> C["Larger state"]
-    C --> D["Final state"]
-```
-
-| Property                   | Memoization               | Tabulation         |
-| -------------------------- | ------------------------- | ------------------ |
-| Direction                  | Top-down                  | Bottom-up          |
-| Technique                  | Recursion + cache         | Loop + table       |
-| Calculates                 | Only requested states     | Usually all states |
-| Stack usage                | Uses recursive call stack | No recursion stack |
-| Often easier initially     | Yes                       | Sometimes          |
-| Usually faster in practice | Sometimes slower          | Often faster       |
-| Stack overflow risk        | Yes                       | No                 |
-
-Both implement the same recurrence.
-
----
-
-# 8. Example 1: Climbing Stairs
-
-You can climb either:
-
-* One stair.
-* Two stairs.
-
-How many ways can you reach stair `n`?
-
-## Step 1: Define the state
-
-```text
-dp[i] = number of ways to reach stair i
-```
-
-## Step 2: Find the choices
-
-To reach stair `i`, the last jump came from:
-
-```text
-i - 1
-or
-i - 2
-```
-
-## Step 3: Write the transition
-
-```text
-dp[i] = dp[i-1] + dp[i-2]
-```
-
-## Step 4: Base cases
-
-```text
-dp[0] = 1
-dp[1] = 1
-```
-
-Why is `dp[0] = 1`?
-
-There is exactly one way to stay at the starting position: do nothing.
-
-## Calculation
-
-```text
-dp[0] = 1
-dp[1] = 1
-dp[2] = 2
-dp[3] = 3
-dp[4] = 5
-dp[5] = 8
-```
-
-```mermaid
-flowchart LR
-    A["dp[0] = 1"] --> B["dp[1] = 1"]
-    A --> C["dp[2] = 2"]
-    B --> C
-    B --> D["dp[3] = 3"]
-    C --> D
-    C --> E["dp[4] = 5"]
-    D --> E
-    D --> F["dp[5] = 8"]
-    E --> F
-```
-
-## Memoization solution in Go
-
-```go
+// Exact question: Given `n` stairs and moves of one or two stairs, return the number of distinct ways to reach the top.
+//
+// Example: Input n = 5 -> output 8 distinct sequences of one-step and two-step moves.
+// at a time, how many distinct ways are there to reach the top?
+//
+// Possible answer: Use top-down recursion and cache each state so repeated subproblems are returned immediately.
+//
+// Output format: Return one `int`: the number of distinct ways to reach stair `n`.
+//
+// Inline descriptions:
+// - `climbStairs` creates one cache and starts the recursive calculation at `n`.
+// - `solve(stair)` returns the number of ways to reach that specific stair.
+// - Each recursive call moves to a smaller stair until it reaches a base case.
+//
+// Boundary checks:
+// - The function assumes `n >= 0`.
+// - `stair <= 1` is the base case: stair 0 and stair 1 each have exactly one way.
+//
+// Key variables:
+// - `n` is the target stair.
+// - `memo` is a map: each key is a stair number, and its value is the already
+//   calculated number of ways to reach that stair.
+// - `stair` is the smaller subproblem currently being solved.
+// - `result` is a cached number of ways; `exists` says whether the key was found.
+//
+// Logic:
+// 1. Return 1 for stair 0 or stair 1.
+// 2. Return `memo[stair]` when that subproblem was solved earlier.
+// 3. Otherwise add the answers for `stair-1` and `stair-2`, cache the sum, and return it.
 func climbStairs(n int) int {
+	// Key = stair number; value = number of ways to reach that stair.
 	memo := make(map[int]int)
 
+	// Declare the function variable first so the function can call itself.
 	var solve func(int) int
 	solve = func(stair int) int {
+		// There is one way to stay at stair 0 and one way to reach stair 1.
 		if stair <= 1 {
 			return 1
 		}
 
+		// Reuse the cached value instead of rebuilding the same recursion tree.
 		if result, exists := memo[stair]; exists {
 			return result
 		}
 
+		// The final move came from either one stair back or two stairs back.
 		memo[stair] = solve(stair-1) + solve(stair-2)
 		return memo[stair]
 	}
 
+	// Solve the original target after all smaller states are available on demand.
 	return solve(n)
 }
+
+// time complexity: O(n) -> each of the `n` states is calculated once and then reused.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Climbing Stairs" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(n)
-```
-
-## Tabulation solution
-
-```go
-func climbStairs(n int) int {
-	if n <= 1 {
-		return 1
-	}
-
-	dp := make([]int, n+1)
-	dp[0] = 1
-	dp[1] = 1
-
-	for stair := 2; stair <= n; stair++ {
-		dp[stair] = dp[stair-1] + dp[stair-2]
-	}
-
-	return dp[n]
-}
-```
-
-## Space-optimized solution
-
-We only need the previous two values.
-
-```go
-func climbStairs(n int) int {
-	if n <= 1 {
-		return 1
-	}
-
-	twoStepsBack := 1
-	oneStepBack := 1
-
-	for stair := 2; stair <= n; stair++ {
-		current := oneStepBack + twoStepsBack
-		twoStepsBack = oneStepBack
-		oneStepBack = current
-	}
-
-	return oneStepBack
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
-
----
-
-# 9. Example 2: House Robber
-
-You have houses containing:
-
-```text
-[2, 7, 9, 3, 1]
-```
-
-You cannot rob adjacent houses.
-
-At every house, you have two choices:
-
-1. Skip it.
-2. Rob it.
+### House Robber
 
 ```mermaid
 flowchart TD
-    A["Current house i"] --> B["Skip house i"]
-    A --> C["Rob house i"]
+    I["Inputs and starting state: <strong>houses</strong> , <strong>twoHousesBack</strong> , <strong>oneHouseBack</strong> , <strong>skipCurrent</strong>"]
+    B["Boundary checks<br/>a greater than b decides whether the branch or loop should continue for the current input."]
+    I --> B
 
-    B --> D["Keep best result from i-1"]
-    C --> E["Money at i + best result from i-2"]
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["For each house, keep the better of skipping it or adding its value to the best total from two positions earlier"]
+    end
 
-    D --> F["Take maximum"]
-    E --> F
+    B --> S0
+    S0 --> O["Return an <strong>int</strong> value from <strong>rob</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-## State
+**Where it is used in real life:**
 
-```text
-dp[i] = maximum money obtainable using houses 0 through i
-```
-
-## Transition
-
-```text
-dp[i] = max(
-    dp[i-1],
-    money[i] + dp[i-2]
-)
-```
-
-Translation:
-
-```text
-skip current house
-versus
-rob current house and skip the previous one
-```
-
-## Step-by-step
-
-```text
-Houses: [2, 7, 9, 3, 1]
-
-dp[0] = 2
-dp[1] = max(2, 7) = 7
-
-dp[2] = max(7, 9 + 2) = 11
-dp[3] = max(11, 3 + 7) = 11
-dp[4] = max(11, 1 + 11) = 12
-```
-
-Answer:
-
-```text
-12
-```
-
-Rob houses containing:
-
-```text
-2 + 9 + 1 = 12
-```
-
-## Go solution
+- Scheduling chooses non-adjacent jobs when neighboring jobs conflict.
+- Ad placement maximizes value while preventing adjacent placements.
 
 ```go
+// Exact question: Given non-negative values in houses along one street, return the maximum value that can be robbed without choosing adjacent houses.
+//
+// Example: Input houses = [2, 7, 9, 3, 1] -> output 12 by choosing 2, 9, and 1.
+//
+// Possible answer: For each house, keep the better of skipping it or adding its value to the best total from two positions earlier.
+//
+// Output format: Return an `int` value from `rob`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `houses` is a slice: the index identifies an element or state, and the stored item has type int.
+//
+// Boundary checks:
+// - `a > b` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `houses` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `twoHousesBack` holds the intermediate value produced by `0`.
+// - `oneHouseBack` holds the intermediate value produced by `0`.
+// - `skipCurrent` holds the value for the state currently being calculated.
+// - `robCurrent` holds the value for the state currently being calculated.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 func rob(houses []int) int {
 	twoHousesBack := 0
 	oneHouseBack := 0
@@ -553,152 +300,65 @@ func max(a, b int) int {
 	}
 	return b
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "House Robber" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(1)
-```
-
----
-
-# 10. The pick/not-pick pattern
-
-Many DP problems have this structure:
-
-```text
-Pick the current item
-or
-Do not pick the current item
-```
+### Coin Change
 
 ```mermaid
 flowchart TD
-    A["Item i"] --> B["Do not pick"]
-    A --> C["Pick"]
+    I["Inputs and starting state: <strong>coins</strong> , <strong>amount</strong> , <strong>dp</strong> , <strong>impossible</strong>"]
+    B["Boundary checks<br/>coin less than or equal to currentAmount decides whether the branch or loop should continue for the current input."]
+    I --> B
 
-    B --> D["Solve remaining problem"]
-    C --> E["Use item value<br/>and solve smaller capacity"]
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Build a table where <strong>dp</strong>[value] is the fewest <strong>coins</strong> for that value and relax it from every usable denomination"]
+    end
 
-    D --> F["Choose best valid result"]
-    E --> F
+    B --> S0
+    S0 --> O["Return an <strong>int</strong> value from <strong>coinChange</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Common pick/not-pick problems:
+**Where it is used in real life:**
 
-* House Robber
-* 0/1 Knapsack
-* Partition Equal Subset Sum
-* Target Sum
-* Subset Sum
-* Longest Increasing Subsequence
-* Coin Change variants
-
----
-
-# 11. Knapsack: the main DP family
-
-Suppose you have a bag with capacity `W`.
-
-Each item has:
-
-* A weight.
-* A value.
-
-You want the maximum value without exceeding the capacity.
-
-## 0/1 Knapsack
-
-Each item may be selected zero or one time.
-
-State:
-
-```text
-dp[i][capacity]
-=
-maximum value using the first i items
-with the given remaining capacity
-```
-
-Transition:
-
-```text
-Do not take item:
-dp[i-1][capacity]
-
-Take item:
-value[i] + dp[i-1][capacity-weight[i]]
-```
-
-Therefore:
-
-```text
-dp[i][capacity] =
-max(
-    dp[i-1][capacity],
-    value[i] + dp[i-1][capacity-weight[i]]
-)
-```
-
-The second choice only exists when the item fits.
-
-## 0/1 versus unbounded knapsack
-
-| Type               | Can reuse item? | Example                      |
-| ------------------ | --------------: | ---------------------------- |
-| 0/1 Knapsack       |              No | Partition Equal Subset Sum   |
-| Unbounded Knapsack |             Yes | Coin Change                  |
-| Bounded Knapsack   |   Limited count | Inventory-selection problems |
-
----
-
-# 12. Example 3: Coin Change
-
-Given:
-
-```text
-coins = [1, 2, 5]
-amount = 11
-```
-
-Find the minimum number of coins.
-
-Answer:
-
-```text
-5 + 5 + 1 = 3 coins
-```
-
-## State
-
-```text
-dp[a] = minimum number of coins required to create amount a
-```
-
-## Transition
-
-Try every coin:
-
-```text
-dp[a] = min(
-    dp[a],
-    1 + dp[a-coin]
-)
-```
-
-## Base case
-
-```text
-dp[0] = 0
-```
-
-Zero coins are needed to create amount zero.
-
-## Go solution
+- Payment systems minimize denominations used for a target amount.
+- Resource packaging minimizes units needed to satisfy capacity.
 
 ```go
+// Exact question: Given coin denominations and an amount, return the minimum number of coins needed to form the amount, or `-1` when it is impossible.
+//
+// Example: Input coins = [1, 2, 5] and amount = 11 -> output 3 using 5 + 5 + 1.
+//
+// Possible answer: Build a table where `dp[value]` is the fewest coins for that value and relax it from every usable denomination.
+//
+// Output format: Return an `int` value from `coinChange`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `coins` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `amount` is the int input used by this example.
+//
+// Boundary checks:
+// - `coin <= currentAmount` decides whether the branch or loop should continue for the current input.
+// - `dp[amount] == impossible` decides whether the branch or loop should continue for the current input.
+// - `a < b` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `coins` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `amount` is the int input used by this example.
+// - `dp` is indexed by a state and stores the computed answer for that state.
+// - `impossible` holds the intermediate value produced by `amount + 1`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 func coinChange(coins []int, amount int) int {
 	impossible := amount + 1
 
@@ -731,132 +391,127 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// time complexity: O(amount * number of coins) -> the algorithm combines work across each dimension or choice represented in the product.
+// space complexity: O(amount) -> the auxiliary storage grows according to this bound.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Coin Change" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(amount × number of coins)
-Space: O(amount)
-```
-
----
-
-# 13. 1D Dynamic Programming
-
-Use 1D DP when one variable is enough to describe the smaller problem.
-
-Examples:
-
-```text
-dp[i]
-dp[amount]
-dp[capacity]
-```
-
-Common 1D DP problems:
-
-* Climbing Stairs
-* House Robber
-* Coin Change
-* Decode Ways
-* Word Break
-* Maximum Product Subarray
-* Longest Increasing Subsequence
-* Partition Equal Subset Sum
-
-Typical transition:
-
-```text
-dp[i] depends on earlier dp values
-```
-
-```mermaid
-flowchart LR
-    A["dp[i-3]"] --> D["dp[i]"]
-    B["dp[i-2]"] --> D
-    C["dp[i-1]"] --> D
-```
-
----
-
-# 14. 2D Dynamic Programming
-
-Use 2D DP when two values are required to describe a state.
-
-Examples:
-
-```text
-dp[row][column]
-dp[index1][index2]
-dp[item][capacity]
-```
-
-Common 2D DP problems:
-
-* Unique Paths
-* Longest Common Subsequence
-* Edit Distance
-* 0/1 Knapsack
-* Minimum Path Sum
-* Interleaving String
-* Distinct Subsequences
-
----
-
-# 15. Example 4: Unique Paths
-
-A robot starts at the top-left of a grid.
-
-It may move:
-
-* Right.
-* Down.
-
-How many ways can it reach the bottom-right?
+### Min Cost Climbing Stairs
 
 ```mermaid
 flowchart TD
-    A["Start"] --> B["Move right"]
-    A --> C["Move down"]
-    B --> D["Continue"]
-    C --> D
-    D --> E["Destination"]
+    subgraph PROCESS["Detailed algorithm flow: Min Cost Climbing Stairs"]
+        direction TD
+        I["Input"] --> S0["Choose the cheaper predecessor for each stair."]
+        S0 --> S1["Add the current landing <strong>cost</strong> and roll the two saved states forward."]
+        S1 --> S2["Return the cheaper way to step beyond the array."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-To enter a cell, the robot must come from:
+**Where it is used in real life:**
 
-```text
-Above
-or
-Left
-```
-
-## State
-
-```text
-dp[row][column] =
-number of ways to reach this cell
-```
-
-## Transition
-
-```text
-dp[row][column] =
-    dp[row-1][column] +
-    dp[row][column-1]
-```
-
-## Base case
-
-There is one way to move through:
-
-* The first row: keep moving right.
-* The first column: keep moving down.
-
-## Space-optimized Go solution
+- Route planners minimize accumulated cost across permitted jumps.
+- Workflow engines select the cheaper predecessor transition.
 
 ```go
+// Exact question: Given the cost of stepping on each stair, return the minimum cost to move beyond the final stair when each move climbs one or two stairs.
+//
+// Example: Input cost = [10, 15, 20] -> output 15 by starting on the second stair and stepping beyond the end.
+//
+// Possible answer: Keep only the minimum costs to reach the previous two boundaries.
+//
+// Output format: Return the minimum cost to move beyond the final stair.
+//
+// Inline descriptions:
+// - `cost` indexes are stair positions and elements are costs paid when stepping there.
+//
+// Boundary checks:
+// - Zero or one stair can be skipped from the allowed starting positions and costs zero.
+//
+// Key variables:
+// - `twoBack` and `oneBack` are the only predecessor DP states needed by the transition.
+//
+// Logic:
+// 1. Choose the cheaper predecessor for each stair.
+// 2. Add the current landing cost and roll the two saved states forward.
+// 3. Return the cheaper way to step beyond the array.
+func minCostClimbingStairs(cost []int) int {
+	twoBack, oneBack := 0, 0
+	for _, landingCost := range cost {
+		bestPrevious := oneBack
+		if twoBack < bestPrevious {
+			bestPrevious = twoBack
+		}
+		twoBack, oneBack = oneBack, bestPrevious+landingCost
+	}
+	if twoBack < oneBack {
+		return twoBack
+	}
+	return oneBack
+}
+
+// time complexity: O(n) -> each stair cost is processed once.
+// space complexity: O(1) -> only two prior DP states are retained.
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Min Cost Climbing Stairs" is one small game played with the same pieces and rules.
+
+### Unique Paths
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>rows</strong> , <strong>columns</strong> , <strong>dp</strong>"]
+    B["Boundary checks<br/>No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Keep only the earlier states needed by the next transition instead of the full table"]
+        S1["Reuse stored state instead of recomputing the same subproblem."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>uniquePaths</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Grid robots count monotonic routes through warehouse layouts.
+- Combinatorial systems count valid right-and-down workflows.
+
+```go
+// Exact question: Given a grid with `rows` rows and `columns` columns, count paths from the top-left to the bottom-right when moves are only right or down.
+//
+// Example: Input rows = 3 and columns = 7 -> output 28 right-and-down paths.
+//
+// Possible answer: Keep only the earlier states needed by the next transition instead of the full table.
+//
+// Output format: Return an `int` value from `uniquePaths`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `rows` is the int input used by this example.
+// - `columns` is the int input used by this example.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `rows` is the int input used by this example.
+// - `columns` is the int input used by this example.
+// - `dp` is indexed by a state and stores the computed answer for that state.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Reuse stored state instead of recomputing the same subproblem.
 func uniquePaths(rows, columns int) int {
 	dp := make([]int, columns)
 
@@ -872,82 +527,66 @@ func uniquePaths(rows, columns int) int {
 
 	return dp[columns-1]
 }
+
+// time complexity: O(rows * columns) -> the algorithm processes every cell in the rows-by-columns state space.
+// space complexity: O(columns) -> the auxiliary storage grows according to this bound.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Unique Paths" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(rows × columns)
-Space: O(columns)
+### Longest Increasing Subsequence
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>numbers</strong> , <strong>dp</strong> , <strong>answer</strong>"]
+    B["Boundary checks<br/>len(<strong>numbers</strong>) equals 0 handles empty input before any element is accessed.<br/><strong>numbers</strong>[j] less than <strong>numbers</strong>[<strong>i</strong>] keeps indexes or pointers within the portion of the input still being processed."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Let <strong>dp</strong>[<strong>i</strong>] be the best subsequence ending at <strong>i</strong>"]
+        S1["extend every earlier smaller value and retain the largest length"]
+        S0 --> S1
+        S2["Reuse stored state instead of recomputing the same subproblem."]
+        S1 --> S2
+    end
+
+    B --> S0
+    S2 --> O["Return an <strong>int</strong> value from <strong>lengthOfLIS</strong>; the function does not print the <strong>answer</strong>."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-# 16. Longest subsequence problems
-
-A **subsequence** keeps the order but may remove elements.
-
-For example:
-
-```text
-Original:    A B C D E
-Subsequence: A C E
-```
-
-`ACE` is a subsequence.
-
-`ECA` is not, because the order changed.
-
----
-
-# 17. Longest Increasing Subsequence
-
-Given:
-
-```text
-[10, 9, 2, 5, 3, 7, 101, 18]
-```
-
-One longest increasing subsequence is:
-
-```text
-[2, 3, 7, 101]
-```
-
-Length:
-
-```text
-4
-```
-
-## State
-
-```text
-dp[i] =
-length of the longest increasing subsequence ending exactly at i
-```
-
-The words **ending exactly at `i`** are important.
-
-## Transition
-
-Look at every earlier index `j`.
-
-When:
-
-```text
-numbers[j] < numbers[i]
-```
-
-then `numbers[i]` may be added after `numbers[j]`.
-
-```text
-dp[i] = max(dp[i], dp[j] + 1)
-```
-
-## Go solution: O(n²)
+- Trend analysis finds the longest steadily improving sequence.
+- Version analysis finds the largest order-preserving chain.
 
 ```go
+// Exact question: Given an integer slice, return the length of its longest strictly increasing subsequence using O(n²) dynamic programming.
+//
+// Example: Input numbers = [10, 9, 2, 5, 3, 7, 101, 18] -> output length 4, for example [2, 3, 7, 101].
+//
+// Possible answer: Let `dp[i]` be the best subsequence ending at `i`; extend every earlier smaller value and retain the largest length.
+//
+// Output format: Return an `int` value from `lengthOfLIS`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `numbers` is a slice: the index identifies an element or state, and the stored item has type int.
+//
+// Boundary checks:
+// - `len(numbers) == 0` handles empty input before any element is accessed.
+// - `numbers[j] < numbers[i]` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `numbers` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `dp` is indexed by a state and stores the computed answer for that state.
+// - `answer` tracks the best or final answer found so far.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Reuse stored state instead of recomputing the same subproblem.
 func lengthOfLIS(numbers []int) int {
 	if len(numbers) == 0 {
 		return 0
@@ -970,840 +609,319 @@ func lengthOfLIS(numbers []int) int {
 
 	return answer
 }
+
+// time complexity: O(n^2) -> nested traversal can compare or process every pair of input elements.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Longest Increasing Subsequence" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n²)
-Space: O(n)
-```
-
-A more advanced binary-search solution runs in:
-
-```text
-O(n log n)
-```
-
-In interviews, explain the `O(n²)` DP solution before optimizing.
-
----
-
-# 18. Longest Common Subsequence
-
-Given:
-
-```text
-text1 = "abcde"
-text2 = "ace"
-```
-
-The longest common subsequence is:
-
-```text
-"ace"
-```
-
-Length:
-
-```text
-3
-```
-
-## State
-
-```text
-dp[i][j] =
-LCS length using text1[0:i] and text2[0:j]
-```
-
-## Transition
-
-When the current characters match:
-
-```text
-dp[i][j] = 1 + dp[i-1][j-1]
-```
-
-When they do not match:
-
-```text
-dp[i][j] = max(
-    dp[i-1][j],
-    dp[i][j-1]
-)
-```
+### Longest Common Subsequence
 
 ```mermaid
 flowchart TD
-    A["Compare text1[i-1] and text2[j-1]"] --> B{"Characters equal?"}
+    subgraph PROCESS["Detailed algorithm flow: Longest Common Subsequence"]
+        direction TD
+        I["Input"] --> S0["Compare the final bytes of each prefix pair."]
+        S0 --> S1["Extend the diagonal state on a match."]
+        S1 --> S2["Otherwise reuse the better state after skipping one side."]
+        S2 --> O["Return result"]
+    end
 
-    B -- Yes --> C["1 + diagonal value<br/>dp[i-1][j-1]"]
-    B -- No --> D["Maximum of top and left<br/>dp[i-1][j], dp[i][j-1]"]
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Complexity:
+**Where it is used in real life:**
 
-```text
-Time:  O(m × n)
-Space: O(m × n)
-```
-
----
-
-# 19. Edit Distance
-
-Given two strings, find the minimum operations required to convert one into the other.
-
-Allowed operations:
-
-1. Insert.
-2. Delete.
-3. Replace.
-
-Example:
-
-```text
-horse → ros
-```
-
-## State
-
-```text
-dp[i][j] =
-minimum operations required to convert
-the first i characters of word1
-into the first j characters of word2
-```
-
-## Transition
-
-When characters match:
-
-```text
-dp[i][j] = dp[i-1][j-1]
-```
-
-When characters do not match:
-
-```text
-dp[i][j] = 1 + min(
-    dp[i-1][j],    // delete
-    dp[i][j-1],    // insert
-    dp[i-1][j-1]   // replace
-)
-```
-
-Mental model:
-
-```mermaid
-flowchart TD
-    A["Characters do not match"] --> B["Delete"]
-    A --> C["Insert"]
-    A --> D["Replace"]
-
-    B --> E["Choose minimum cost"]
-    C --> E
-    D --> E
-```
-
----
-
-# 20. Word Break
-
-Given:
-
-```text
-s = "leetcode"
-dictionary = ["leet", "code"]
-```
-
-Can the string be divided into dictionary words?
-
-Answer:
-
-```text
-true
-```
-
-Because:
-
-```text
-"leet" + "code"
-```
-
-## State
-
-```text
-dp[i] =
-whether the first i characters can be segmented
-```
-
-## Transition
-
-Try every previous cut `j`:
-
-```text
-dp[i] = true
-if:
-    dp[j] is true
-and
-    s[j:i] exists in the dictionary
-```
-
-Conceptually:
-
-```text
-Can the prefix before j be formed?
-+
-Is the substring from j to i a word?
-```
-
----
-
-# 21. Partition Equal Subset Sum
-
-Given:
-
-```text
-[1, 5, 11, 5]
-```
-
-Can it be divided into two subsets with the same sum?
-
-Total:
-
-```text
-22
-```
-
-Each subset must have:
-
-```text
-11
-```
-
-So the problem becomes:
-
-> Can we select numbers whose sum is `total / 2`?
-
-This is a 0/1 knapsack problem.
-
-## State
-
-```text
-dp[sum] =
-whether the target sum can be created
-```
-
-## Transition
-
-```text
-dp[sum] = dp[sum] OR dp[sum-number]
-```
-
-Important: Iterate sums backward.
+- Diff tools identify preserved ordered content between files.
+- Bioinformatics aligns common symbol sequences.
 
 ```go
-for _, number := range numbers {
-	for sum := target; sum >= number; sum-- {
-		dp[sum] = dp[sum] || dp[sum-number]
+// Exact question: Given two strings, return the length of their longest subsequence that appears in both strings in the same relative order.
+//
+// Example: Input first = abcde and second = ace -> output 3 for the common subsequence ace.
+//
+// Possible answer: Match equal bytes diagonally or reuse the better state obtained by skipping one byte.
+//
+// Output format: Return the common-subsequence length.
+//
+// Inline descriptions:
+// - String indexes identify byte positions; `best` row and column indexes are prefix lengths and elements are LCS lengths.
+//
+// Boundary checks:
+// - An empty string creates only zero-valued base-prefix states.
+//
+// Key variables:
+// - `best[i][j]` is the answer for `left[:i]` and `right[:j]`.
+//
+// Logic:
+// 1. Compare the final bytes of each prefix pair.
+// 2. Extend the diagonal state on a match.
+// 3. Otherwise reuse the better state after skipping one side.
+func longestCommonSubsequence(left, right string) int {
+	best := make([][]int, len(left)+1)
+	for row := range best {
+		best[row] = make([]int, len(right)+1)
 	}
-}
-```
-
-Why backward?
-
-Because each number may be used only once.
-
-Going forward could reuse the same number during the same iteration.
-
----
-
-# 22. How to recognize a DP problem
-
-Look for words such as:
-
-* Maximum.
-* Minimum.
-* Number of ways.
-* Can it be done?
-* Longest.
-* Shortest.
-* Count all possibilities.
-* Choose or skip.
-* Divide into groups.
-* Convert one sequence into another.
-
-Then ask:
-
-```text
-Does the answer depend on answers to smaller versions
-of the same problem?
-```
-
-Common clues:
-
-```mermaid
-flowchart TD
-    A["Interview problem"] --> B{"Asks max, min, count or possibility?"}
-    B -- No --> C["DP may not be needed"]
-    B -- Yes --> D{"Can it be split into smaller similar problems?"}
-    D -- No --> C
-    D -- Yes --> E{"Do the same smaller states repeat?"}
-    E -- Yes --> F["Strong DP candidate"]
-    E -- No --> G["May be recursion, greedy or divide-and-conquer"]
-```
-
----
-
-# 23. A practical DP-solving process
-
-When you see a DP problem, do not immediately create a table.
-
-Use this process.
-
-## Step 1: Write the brute-force choices
-
-Ask:
-
-```text
-What decisions can I make here?
-```
-
-Examples:
-
-```text
-Pick or skip
-Move right or down
-Use coin or try another coin
-Match characters or skip one
-Rob or skip
-```
-
-## Step 2: Write the recursive function
-
-Determine its changing arguments.
-
-```go
-solve(index)
-solve(index, capacity)
-solve(row, column)
-solve(index1, index2)
-```
-
-These arguments usually become the DP state.
-
-## Step 3: Identify repeated states
-
-If `solve(index, capacity)` can be reached through different paths, cache it.
-
-## Step 4: Add memoization
-
-Store the result using the function arguments as the cache key.
-
-## Step 5: Convert to tabulation when useful
-
-Determine which smaller states must be calculated first.
-
-## Step 6: Optimize memory
-
-Ask:
-
-```text
-Does the current row need every previous row,
-or only the immediately previous row?
-```
-
----
-
-# 24. DP state dimensions
-
-The number of changing variables usually determines the DP dimensions.
-
-| Recursive function            | DP structure               |
-| ----------------------------- | -------------------------- |
-| `solve(index)`                | `dp[index]`                |
-| `solve(amount)`               | `dp[amount]`               |
-| `solve(row, column)`          | `dp[row][column]`          |
-| `solve(i, j)`                 | `dp[i][j]`                 |
-| `solve(index, capacity)`      | `dp[index][capacity]`      |
-| `solve(index, previousIndex)` | `dp[index][previousIndex]` |
-
-This is a useful interview shortcut:
-
-> The parameters that change between recursive calls often form the DP state.
-
----
-
-# 25. Common DP patterns
-
-| Pattern           | State idea                           | Common problems                             |
-| ----------------- | ------------------------------------ | ------------------------------------------- |
-| Fibonacci-style   | `dp[i]` from earlier positions       | Climbing Stairs, House Robber               |
-| Grid DP           | `dp[row][column]`                    | Unique Paths, Minimum Path Sum              |
-| Pick/not pick     | Index plus optional capacity         | Knapsack, Partition Equal Subset Sum        |
-| Coin DP           | Amount or target                     | Coin Change, Combination Sum IV             |
-| Subsequence DP    | Ending index or two sequence indexes | LIS, LCS                                    |
-| String conversion | Prefixes of two strings              | Edit Distance                               |
-| Segmentation      | Whether a prefix is valid            | Word Break                                  |
-| Interval DP       | Answer for range `[left, right]`     | Burst Balloons, Matrix Chain Multiplication |
-| State-machine DP  | State such as holding/not holding    | Stock-buying problems                       |
-| Tree DP           | Answer for each subtree              | House Robber III                            |
-
----
-
-# 26. Most important interview problems
-
-## Foundation
-
-1. **Climbing Stairs**
-
-   * Fibonacci-style recurrence.
-   * Learn memoization and tabulation.
-
-2. **House Robber**
-
-   * Pick/not-pick decisions.
-   * Learn space optimization.
-
-3. **Unique Paths**
-
-   * Basic 2D grid DP.
-
-## Core intermediate problems
-
-4. **Coin Change**
-
-   * Unbounded knapsack.
-   * Minimum-value DP.
-
-5. **Partition Equal Subset Sum**
-
-   * 0/1 knapsack.
-   * Boolean DP.
-
-6. **Word Break**
-
-   * Prefix-based DP.
-
-7. **Longest Increasing Subsequence**
-
-   * Subsequence ending at an index.
-
-## Important string DP
-
-8. **Longest Common Subsequence**
-
-   * Two-string 2D DP.
-
-9. **Edit Distance**
-
-   * Multiple transitions.
-   * Insert/delete/replace decisions.
-
----
-
-# 27. Common mistakes
-
-## Mistake 1: Undefined DP meaning
-
-Bad:
-
-```text
-dp[i] stores the answer
-```
-
-Better:
-
-```text
-dp[i] stores the maximum money obtainable
-using houses from index 0 through i
-```
-
-The state definition must be precise.
-
----
-
-## Mistake 2: Incorrect base cases
-
-For Climbing Stairs:
-
-```text
-dp[0] = 1
-```
-
-For Coin Change:
-
-```text
-dp[0] = 0
-```
-
-The same index can have different meanings in different problems.
-
----
-
-## Mistake 3: Wrong iteration order
-
-For 0/1 knapsack:
-
-```text
-Iterate capacity backward
-```
-
-For unbounded knapsack:
-
-```text
-Iterating capacity forward may allow item reuse
-```
-
-Iteration order is part of the algorithm.
-
----
-
-## Mistake 4: Confusing subsequence and substring
-
-Substring:
-
-```text
-Characters must be continuous
-```
-
-Subsequence:
-
-```text
-Characters may be skipped, but order must remain
-```
-
----
-
-## Mistake 5: Optimizing space too early
-
-First build the correct recurrence and table.
-
-Then optimize:
-
-```text
-O(n) space → O(1)
-O(rows × columns) → O(columns)
-```
-
----
-
-## Mistake 6: Using DP when greedy works
-
-DP explores and compares multiple decisions.
-
-Greedy commits to the locally best decision.
-
-For example:
-
-* Coin Change with arbitrary denominations generally needs DP.
-* Interval scheduling can use greedy.
-* Minimum Spanning Tree uses greedy.
-* House Robber needs DP.
-
----
-
-# 28. DP complexity calculation
-
-A practical formula is:
-
-```text
-Time complexity
-=
-number of states × work per state
-```
-
-## Climbing Stairs
-
-```text
-States: n
-Work per state: O(1)
-
-Time: O(n)
-```
-
-## Coin Change
-
-```text
-States: amount
-Work per state: number of coins
-
-Time: O(amount × coins)
-```
-
-## Unique Paths
-
-```text
-States: rows × columns
-Work per state: O(1)
-
-Time: O(rows × columns)
-```
-
-## LCS
-
-```text
-States: m × n
-Work per state: O(1)
-
-Time: O(m × n)
-```
-
-## LIS basic DP
-
-```text
-States: n
-Work per state: scan up to n earlier elements
-
-Time: O(n²)
-```
-
-Space complexity is usually:
-
-```text
-Number of stored states
-+
-recursion stack for memoization
-```
-
----
-
-# 29. Memoization template in Go
-
-```go
-func solve(input []int) int {
-	memo := make(map[int]int)
-
-	var dp func(index int) int
-	dp = func(index int) int {
-		if index < 0 {
-			return 0
+	for i := 1; i <= len(left); i++ {
+		for j := 1; j <= len(right); j++ {
+			if left[i-1] == right[j-1] {
+				best[i][j] = best[i-1][j-1] + 1
+			} else {
+				best[i][j] = best[i-1][j]
+				if best[i][j-1] > best[i][j] {
+					best[i][j] = best[i][j-1]
+				}
+			}
 		}
-
-		if result, exists := memo[index]; exists {
-			return result
-		}
-
-		// Calculate using smaller states.
-		result := dp(index - 1)
-
-		memo[index] = result
-		return result
 	}
-
-	return dp(len(input) - 1)
-}
-```
-
-For a two-dimensional state, use a struct as the key:
-
-```go
-type State struct {
-	Index    int
-	Capacity int
+	return best[len(left)][len(right)]
 }
 
-memo := make(map[State]int)
+// time complexity: O(n * m) -> every pair of prefix lengths is solved once.
+// space complexity: O(n * m) -> the table stores an answer for every prefix pair.
 ```
 
----
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Longest Common Subsequence" is one small game played with the same pieces and rules.
 
-# 30. Tabulation template
-
-```go
-func solve(n int) int {
-	dp := make([]int, n+1)
-
-	// Base cases.
-	dp[0] = 0
-
-	for state := 1; state <= n; state++ {
-		// Calculate dp[state] using previously calculated states.
-	}
-
-	return dp[n]
-}
-```
-
-Two-dimensional version:
-
-```go
-dp := make([][]int, rows)
-
-for row := range dp {
-	dp[row] = make([]int, columns)
-}
-
-for row := 0; row < rows; row++ {
-	for column := 0; column < columns; column++ {
-		// Calculate dp[row][column].
-	}
-}
-```
-
----
-
-# 31. Mock interview questions
-
-## Question 1: What is Dynamic Programming?
-
-A strong answer:
-
-> Dynamic Programming solves problems with overlapping subproblems and optimal substructure. It stores the result of each subproblem so that the same state is not recalculated. It can be implemented using top-down memoization or bottom-up tabulation.
-
----
-
-## Question 2: What is the difference between memoization and tabulation?
-
-> Memoization is top-down. It uses recursion and caches states as they are requested. Tabulation is bottom-up. It calculates states iteratively, beginning with base cases. Both generally use the same recurrence.
-
----
-
-## Question 3: What is a DP state?
-
-> A state is the minimum information required to uniquely describe a smaller subproblem. For example, in Coin Change, the remaining amount can be the state. In Longest Common Subsequence, the two string indexes form the state.
-
----
-
-## Question 4: How do you calculate DP time complexity?
-
-> Count the number of unique states, then multiply by the amount of work done for each state.
-
-Example:
-
-```text
-LCS has m × n states.
-Each state performs O(1) work.
-Therefore, time complexity is O(m × n).
-```
-
----
-
-## Question 5: Why is Climbing Stairs a DP problem?
-
-> The number of ways to reach stair `i` depends on the number of ways to reach stairs `i-1` and `i-2`. These subproblems repeat in the recursive solution, so their answers can be cached.
-
----
-
-## Question 6: How do you decide the dimensions of a DP table?
-
-> Look at the changing parameters of the recursive solution. One changing parameter usually gives 1D DP. Two independent changing parameters usually give 2D DP.
-
----
-
-## Question 7: What is the difference between 0/1 and unbounded knapsack?
-
-> In 0/1 knapsack, each item can be selected at most once. In unbounded knapsack, an item may be selected repeatedly. The table iteration order often changes because of this distinction.
-
----
-
-## Question 8: Why do we iterate backward in Partition Equal Subset Sum?
-
-> Each number can be used only once. Iterating backward prevents a number from updating a state and then immediately reusing that updated state during the same iteration.
-
----
-
-## Question 9: Can every recursive problem be solved using DP?
-
-> No. DP is useful when recursive subproblems overlap. If subproblems are independent, memoization may not offer meaningful benefits.
-
----
-
-## Question 10: DP versus greedy?
-
-> DP considers multiple possible choices and stores the best result for each state. Greedy makes the locally best choice immediately. Greedy is valid only when a local choice can be proven to produce a global optimum.
-
----
-
-# 32. Interview explanation template
-
-When solving a DP problem aloud, use this order:
-
-```text
-1. I will first identify the decisions.
-2. I will define the DP state.
-3. I will write the recurrence.
-4. I will specify the base cases.
-5. I will determine the calculation order.
-6. I will calculate time and space complexity.
-7. I will consider space optimization.
-```
-
-Example for House Robber:
-
-> Let `dp[i]` represent the maximum money obtainable from the first `i` houses. At each house, I can either skip it and keep `dp[i-1]`, or rob it and add its money to `dp[i-2]`. Therefore, the transition is `dp[i] = max(dp[i-1], money[i] + dp[i-2])`. Since only the previous two states are needed, space can be reduced to `O(1)`.
-
----
-
-# 33. Recommended practice order
+### Word Break
 
 ```mermaid
 flowchart TD
-    A["Climbing Stairs"] --> B["House Robber"]
-    B --> C["Unique Paths"]
-    C --> D["Minimum Path Sum"]
-    D --> E["Coin Change"]
-    E --> F["Partition Equal Subset Sum"]
-    F --> G["Word Break"]
-    G --> H["Longest Increasing Subsequence"]
-    H --> I["Longest Common Subsequence"]
-    I --> J["Edit Distance"]
+    subgraph PROCESS["Detailed algorithm flow: Word Break"]
+        direction TD
+        I["Input"] --> S0["Seed the empty prefix."]
+        S0 --> S1["Try every earlier <strong>reachable</strong> boundary for each ending boundary."]
+        S1 --> S2["Mark and reuse successful prefix states."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Suggested progression:
+**Where it is used in real life:**
 
-| Level       | Problems                                    |
-| ----------- | ------------------------------------------- |
-| Beginner    | Climbing Stairs, Min Cost Climbing Stairs   |
-| Basic 1D    | House Robber, Decode Ways                   |
-| Grid        | Unique Paths, Minimum Path Sum              |
-| Knapsack    | Coin Change, Partition Equal Subset Sum     |
-| Subsequence | LIS, LCS                                    |
-| String DP   | Word Break, Edit Distance                   |
-| Advanced    | Burst Balloons, Regular Expression Matching |
+- Tokenizers determine whether text can be segmented into known vocabulary.
+- URL and identifier parsers validate concatenated dictionary terms.
+
+```go
+// Exact question: Given a string and a dictionary, return whether the entire string can be segmented into one or more dictionary words.
+//
+// Example: Input text = leetcode and dictionary = [leet, code] -> output true.
+//
+// Possible answer: Mark prefix boundary `end` reachable when an earlier reachable boundary starts a dictionary word.
+//
+// Output format: Return true when the entire string can be segmented.
+//
+// Inline descriptions:
+// - `dictionary` map keys are valid words and empty values carry membership state; `reachable` indexes are string boundaries and elements are booleans.
+//
+// Boundary checks:
+// - Boundary zero is reachable by using no words; an empty dictionary cannot segment non-empty text.
+//
+// Key variables:
+// - `reachable[end]` is true when some reachable `start` produces a dictionary-key substring.
+//
+// Logic:
+// 1. Seed the empty prefix.
+// 2. Try every earlier reachable boundary for each ending boundary.
+// 3. Mark and reuse successful prefix states.
+func wordBreak(text string, dictionary map[string]struct{}) bool {
+	reachable := make([]bool, len(text)+1)
+	reachable[0] = true
+	for end := 1; end <= len(text); end++ {
+		for start := 0; start < end; start++ {
+			if !reachable[start] {
+				continue
+			}
+			if _, exists := dictionary[text[start:end]]; exists {
+				reachable[end] = true
+				break
+			}
+		}
+	}
+	return reachable[len(text)]
+}
+
+// time complexity: O(n³) -> O(n²) boundaries may create O(n)-length substring keys in Go.
+// space complexity: O(n + d) -> reachability stores `n + 1` states in addition to the supplied dictionary.
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Word Break" is one small game played with the same pieces and rules.
+
+### Decode Ways
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Decode Ways"]
+        direction TD
+        I["Input"] --> S0["Add the previous count for a nonzero single digit."]
+        S0 --> S1["Add the two-back count for a valid two-digit number."]
+        S1 --> S2["Roll prefix states forward."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Protocol decoders count interpretations of compact numeric encodings.
+- Validation tools detect whether an encoded message has any legal parse.
+
+```go
+// Exact question: Given digits where `1` through `26` map to letters, return the number of valid decodings and reject encodings that begin a token with zero.
+//
+// Example: Input digits = 226 -> output 3 from 2|2|6, 22|6, and 2|26.
+//
+// Possible answer: Combine the saved counts for valid one-digit and two-digit endings.
+//
+// Output format: Return the number of decodings using `1` through `26` as letters.
+//
+// Inline descriptions:
+// - `digits` indexes are byte positions and elements are digit bytes; rolling scalars store prefix-count states.
+//
+// Boundary checks:
+// - Empty input and a leading zero return zero; only pairs from 10 through 26 are valid.
+//
+// Key variables:
+// - `twoBack` and `oneBack` are decoding counts for the two preceding prefix boundaries.
+//
+// Logic:
+// 1. Add the previous count for a nonzero single digit.
+// 2. Add the two-back count for a valid two-digit number.
+// 3. Roll prefix states forward.
+func decodeWays(digits string) int {
+	if len(digits) == 0 || digits[0] == '0' {
+		return 0
+	}
+	twoBack, oneBack := 1, 1
+	for index := 1; index < len(digits); index++ {
+		current := 0
+		if digits[index] != '0' {
+			current += oneBack
+		}
+		pair := int(digits[index-1]-'0')*10 + int(digits[index]-'0')
+		if pair >= 10 && pair <= 26 {
+			current += twoBack
+		}
+		twoBack, oneBack = oneBack, current
+	}
+	return oneBack
+}
+
+// time complexity: O(n) -> each digit position performs constant transition work.
+// space complexity: O(1) -> only two previous prefix states are retained.
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Decode Ways" is one small game played with the same pieces and rules.
+
+### Partition Equal Subset Sum
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Partition Equal Subset Sum"]
+        direction TD
+        I["Input"] --> S0["Seed the empty-subset <strong>sum</strong>."]
+        S0 --> S1["Copy existing sums and add picked-value transitions."]
+        S1 --> S2["Check the <strong>target</strong> key after all choices."]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Workload balancing divides items into equal-total groups.
+- Finance reconciliation checks whether a subset matches half the total.
+
+```go
+// Exact question: Given positive integers, return whether they can be partitioned into two subsets with equal sums.
+//
+// Example: Input numbers = [1, 5, 11, 5] -> output true because [11] and [1, 5, 5] both sum to 11.
+//
+// Possible answer: Track reachable sum keys and add a new sum state for every picked value.
+//
+// Output format: Return true when some subset sums exactly to `target`.
+//
+// Inline descriptions:
+// - `values` indexes are choice positions and elements are non-negative candidates; `reachable` map keys are sums and values are reachability state.
+//
+// Boundary checks:
+// - Negative targets return false; target zero is reachable by picking nothing.
+//
+// Key variables:
+// - Each `sum` key represents a not-pick state, while `sum+value` represents picking the current value.
+//
+// Logic:
+// 1. Seed the empty-subset sum.
+// 2. Copy existing sums and add picked-value transitions.
+// 3. Check the target key after all choices.
+func canReachSubsetSum(values []int, target int) bool {
+	if target < 0 {
+		return false
+	}
+	reachable := map[int]bool{0: true}
+	for _, value := range values {
+		next := make(map[int]bool, len(reachable)*2)
+		for sum := range reachable {
+			next[sum] = true
+			if sum+value <= target {
+				next[sum+value] = true
+			}
+		}
+		reachable = next
+	}
+	return reachable[target]
+}
+
+// time complexity: O(n * target) -> each value can update every reachable sum through the target.
+// space complexity: O(target) -> the maps retain at most one state per sum from zero through target.
+```
+
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. "Partition Equal Subset Sum" is one small game played with the same pieces and rules.
 
 ---
 
-# 34. Final mental model
+## Interview checklist and next steps
 
-Think of DP as completing a school worksheet.
+Use this answer order during an interview:
 
-Without DP:
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
 
-> Every time you need an earlier answer, you erase everything and solve it again.
+Recommended practice order:
 
-With DP:
+1. [Climbing Stairs](#climbing-stairs)
+2. [House Robber](#house-robber)
+3. [Coin Change](#coin-change)
+4. [Min Cost Climbing Stairs](#min-cost-climbing-stairs)
+5. [Unique Paths](#unique-paths)
+6. [Longest Increasing Subsequence](#longest-increasing-subsequence)
+7. [Longest Common Subsequence](#longest-common-subsequence)
+8. [Word Break](#word-break)
+9. [Decode Ways](#decode-ways)
+10. [Partition Equal Subset Sum](#partition-equal-subset-sum)
 
-> You write each answer in a table and look it up later.
-
-The core process is:
+Continue with: House Robber II, Edit Distance, 0/1 Knapsack, Target Sum, Burst Balloons.
 
 ```mermaid
 flowchart LR
-    A["Break problem into states"] -->
-    B["Find choices"] -->
-    C["Write transition"] -->
-    D["Set base cases"] -->
-    E["Store answers"] -->
-    F["Build final answer"]
+    Q0["Climbing Stairs"]
+    Q0 --> Q1["House Robber"]
+    Q1 --> Q2["Coin Change"]
+    Q2 --> Q3["Min Cost Climbing Stairs"]
+    Q3 --> Q4["Unique Paths"]
+    Q4 --> Q5["Longest Increasing Subsequence"]
+    Q5 --> Q6["Longest Common Subsequence"]
+    Q6 --> Q7["Word Break"]
+    Q7 --> Q8["Decode Ways"]
+    Q8 --> Q9["Partition Equal Subset Sum"]
 ```
 
-Remember this sentence:
-
-> **DP is not mainly about arrays or tables. DP is about defining a state and connecting it to smaller states.**
-
-And this formula:
-
-```text
-DP solution
-=
-State
-+
-Transition
-+
-Base case
-+
-Calculation order
-```
+> **Baby analogy:** Imagine a sticker notebook that records the answer to every smaller puzzle. Pack the same checklist every time so no important interview step is forgotten.

@@ -1,0 +1,7 @@
+go 1.22
+
+use (
+	./bad-service
+	./healthy-service
+	./loadgen
+)

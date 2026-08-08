@@ -108,6 +108,37 @@ func TestRoutes(t *testing.T) {
 	}
 }
 
+func TestDatastructureArticlesEnableCodeWrapping(t *testing.T) {
+	s, err := newSite(fstest.MapFS{
+		"datastructures/array.md": {Data: []byte("# Arrays\n\n```go\nfunc example() {}\n```")},
+		"systems/intro.md":        {Data: []byte("# Systems\n\n```go\nfunc example() {}\n```")},
+	})
+	if err != nil {
+		t.Fatalf("newSite() error = %v", err)
+	}
+
+	tests := []struct {
+		path     string
+		wantWrap bool
+	}{
+		{path: "/docs/datastructures/array", wantWrap: true},
+		{path: "/docs/systems/intro", wantWrap: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			s.routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tt.path, nil))
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+			}
+			wrapped := strings.Contains(recorder.Body.String(), `data-code-wrap="true"`)
+			if wrapped != tt.wantWrap {
+				t.Errorf("wrapped = %t, want %t", wrapped, tt.wantWrap)
+			}
+		})
+	}
+}
+
 func TestSearch(t *testing.T) {
 	s := testSite(t)
 	recorder := httptest.NewRecorder()

@@ -128,9 +128,29 @@ Use fenced blocks labeled `go`, `yaml`, `yml`, or `json`:
 
 ````markdown
 ```go
+// Exact question: How do you add a syntax-highlighted Go code example to Markdown?
+//
+// Possible answer: Use `main` to format and write the demonstrated value to standard output.
+//
+// Output format: `main` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 func main() {
     fmt.Println("learn deeply")
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 ```yaml

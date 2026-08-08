@@ -31,6 +31,24 @@ flowchart TD
 Suppose we want to count down from `3`.
 
 ```go
+// Exact question: How does `countdown` solve The smallest possible example?
+//
+// Possible answer: Use `countdown` to format and write the demonstrated value to standard output.
+//
+// Output format: `countdown` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func countdown(n int) {
 	if n == 0 {
 		fmt.Println("Done")
@@ -40,12 +58,35 @@ func countdown(n int) {
 	fmt.Println(n)
 	countdown(n - 1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Calling:
 
 ```go
+// Exact question: How does this Go example demonstrate The smallest possible example?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 countdown(3)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Produces:
@@ -79,9 +120,29 @@ Every recursive solution needs two things.
 The condition that stops recursion.
 
 ```go
+// Exact question: How does this Go example demonstrate Part 1: Base case?
+//
+// Possible answer: Use the fragment to compare the current values and return or update state when the condition matches.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 if n == 0 {
 	return
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Without a base case, the function keeps calling itself until the program runs out of stack memory.
@@ -91,7 +152,27 @@ Without a base case, the function keeps calling itself until the program runs ou
 The function calls itself with a smaller or simpler problem.
 
 ```go
+// Exact question: How does this Go example demonstrate Part 2: Recursive case?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 countdown(n - 1)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 The input must move toward the base case.
@@ -211,6 +292,24 @@ factorial(1) = 1
 Go implementation:
 
 ```go
+// Exact question: How recursion is calculated?
+//
+// Possible answer: Use `factorial` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `factorial`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func factorial(n int) int {
 	if n <= 1 {
 		return 1
@@ -218,12 +317,35 @@ func factorial(n int) int {
 
 	return n * factorial(n-1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Calling:
 
 ```go
+// Exact question: How recursion is calculated?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 factorial(4)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 First, calls go downward:
@@ -285,7 +407,27 @@ This information is stored in the **call stack**.
 For:
 
 ```go
+// Exact question: How does this Go example demonstrate The call stack?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 factorial(4)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 The stack grows like this:
@@ -345,6 +487,24 @@ Even when the function uses no explicit array or map.
 A recursive countdown:
 
 ```go
+// Exact question: How does `countdown` solve Recursion versus iteration?
+//
+// Possible answer: Use `countdown` to format and write the demonstrated value to standard output.
+//
+// Output format: `countdown` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func countdown(n int) {
 	if n == 0 {
 		return
@@ -353,17 +513,40 @@ func countdown(n int) {
 	fmt.Println(n)
 	countdown(n - 1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 An iterative countdown:
 
 ```go
+// Exact question: How does `countdown` solve Recursion versus iteration?
+//
+// Possible answer: Use `countdown` to iterate through the input once, updating the running state for each element.
+//
+// Output format: `countdown` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n > 0` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
 func countdown(n int) {
 	for n > 0 {
 		fmt.Println(n)
 		n--
 	}
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Both solve the same problem.
@@ -391,7 +574,27 @@ For every recursive problem, ask:
 Example:
 
 ```go
+// Exact question: What does my function mean?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 factorial(n)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 means:
@@ -401,7 +604,27 @@ means:
 For a tree:
 
 ```go
+// Exact question: What does my function mean?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 maxDepth(node)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 means:
@@ -459,6 +682,26 @@ This prevents infinite recursion.
 # 9. A reusable recursion template
 
 ```go
+// Exact question: How does `solve` solve A reusable recursion template?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return a `Result` value from `solve`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `state` is the State input used by this example.
+//
+// Boundary checks:
+// - `isBaseCase(state)` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `state` is the State input used by this example.
+// - `smallerState` holds the intermediate value produced by `makeSmaller(state`.
+// - `smallerResult` holds the answer computed for the current operation.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(state State) Result {
 	// 1. Base case
 	if isBaseCase(state) {
@@ -474,11 +717,34 @@ func solve(state State) Result {
 	// 4. Use the smaller result
 	return combine(state, smallerResult)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 For recursion with multiple branches:
 
 ```go
+// Exact question: How does `solve` solve A reusable recursion template?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return a `Result` value from `solve`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `state` is the State input used by this example.
+//
+// Boundary checks:
+// - `isBaseCase(state)` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `state` is the State input used by this example.
+// - `leftResult` holds the answer computed for the current operation.
+// - `rightResult` holds the answer computed for the current operation.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(state State) Result {
 	if isBaseCase(state) {
 		return baseResult
@@ -489,6 +755,9 @@ func solve(state State) Result {
 
 	return combine(leftResult, rightResult)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ---
@@ -656,6 +925,24 @@ factorial(n) = n × factorial(n - 1)
 ## Code
 
 ```go
+// Exact question: How does `factorial` solve Factorial?
+//
+// Possible answer: Use `factorial` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `factorial`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func factorial(n int) int {
 	if n <= 1 {
 		return 1
@@ -663,6 +950,9 @@ func factorial(n int) int {
 
 	return n * factorial(n-1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Complexity
@@ -695,6 +985,24 @@ fib(n) = fib(n - 1) + fib(n - 2)
 ## Naive recursive code
 
 ```go
+// Exact question: How does `fib` solve Naive recursive code?
+//
+// Possible answer: Use `fib` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `fib`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func fib(n int) int {
 	if n <= 1 {
 		return n
@@ -702,6 +1010,9 @@ func fib(n int) int {
 
 	return fib(n-1) + fib(n-2)
 }
+
+// time complexity: O(2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 For `fib(5)`:
@@ -732,6 +1043,27 @@ The stack depth is only `n`, even though the number of calls is exponential.
 ## Improved with memoization
 
 ```go
+// Exact question: How can Improved with memoization be solved using memoization?
+//
+// Possible answer: Use top-down recursion and cache each state so repeated subproblems are returned immediately.
+//
+// Output format: Return an `int` value from `fib`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+// - `memo` is a map: each key is int, and each value is int.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+// - `memo` is a map: each key is int, and each value is int.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Reuse stored state instead of recomputing the same subproblem.
 func fib(n int, memo map[int]int) int {
 	if n <= 1 {
 		return n
@@ -744,12 +1076,35 @@ func fib(n int, memo map[int]int) int {
 	memo[n] = fib(n-1, memo) + fib(n-2, memo)
 	return memo[n]
 }
+
+// time complexity: O(n) -> each of the `n` states is calculated once and then reused.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Usage:
 
 ```go
+// Exact question: How can Improved with memoization be solved using memoization?
+//
+// Possible answer: Use the fragment with a map whose keys identify lookups and whose values hold the associated data.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `result` holds the answer computed for the current operation.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
 result := fib(10, make(map[int]int))
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
 Complexity:
@@ -783,6 +1138,27 @@ sum([4, 7, 2])
 ## Go code
 
 ```go
+// Exact question: How does `sum` solve Go code?
+//
+// Possible answer: Use `sum` with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: Return an `int` value from `sum`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `index` is the int input used by this example.
+//
+// Boundary checks:
+// - `index == len(nums)` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `index` is the int input used by this example.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Return the value produced after the state updates are complete.
 func sum(nums []int, index int) int {
 	if index == len(nums) {
 		return 0
@@ -790,6 +1166,9 @@ func sum(nums []int, index int) int {
 
 	return nums[index] + sum(nums, index+1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Complexity
@@ -802,7 +1181,27 @@ Space: O(n)
 A common mistake is to create a new slice during every call:
 
 ```go
+// Exact question: How does this Go example demonstrate Complexity?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 return nums[0] + sum(nums[1:])
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 This may create additional slice-related overhead depending on what else is done. Passing an index is usually cleaner.
@@ -830,11 +1229,31 @@ flowchart TD
 ## Tree node
 
 ```go
+// Exact question: How does this Go example demonstrate Tree node?
+//
+// Possible answer: Use the fragment to declare the types or values required by the surrounding implementation.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 type TreeNode struct {
 	Val   int
 	Left  *TreeNode
 	Right *TreeNode
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 ## Preorder traversal
@@ -846,6 +1265,24 @@ Root → Left → Right
 ```
 
 ```go
+// Exact question: How does `preorder` solve Preorder traversal?
+//
+// Possible answer: Use `preorder` to format and write the demonstrated value to standard output.
+//
+// Output format: `preorder` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `node == nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func preorder(node *TreeNode) {
 	if node == nil {
 		return
@@ -855,6 +1292,9 @@ func preorder(node *TreeNode) {
 	preorder(node.Left)
 	preorder(node.Right)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 Output:
@@ -872,6 +1312,24 @@ Left → Root → Right
 ```
 
 ```go
+// Exact question: How does `inorder` solve Inorder traversal?
+//
+// Possible answer: Use `inorder` to format and write the demonstrated value to standard output.
+//
+// Output format: `inorder` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `node == nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func inorder(node *TreeNode) {
 	if node == nil {
 		return
@@ -881,6 +1339,9 @@ func inorder(node *TreeNode) {
 	fmt.Println(node.Val)
 	inorder(node.Right)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 Output:
@@ -898,6 +1359,24 @@ Left → Right → Root
 ```
 
 ```go
+// Exact question: How does `postorder` solve Postorder traversal?
+//
+// Possible answer: Use `postorder` to format and write the demonstrated value to standard output.
+//
+// Output format: `postorder` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `node == nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func postorder(node *TreeNode) {
 	if node == nil {
 		return
@@ -907,6 +1386,9 @@ func postorder(node *TreeNode) {
 	postorder(node.Right)
 	fmt.Println(node.Val)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 Output:
@@ -956,6 +1438,27 @@ depth = 1 + maximum(left depth, right depth)
 ```
 
 ```go
+// Exact question: How does `maxDepth`, `max` solve Recursive contract?
+//
+// Possible answer: Use `maxDepth`, `max` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `maxDepth`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `node == nil` checks whether the referenced value exists before it is used.
+// - `a > b` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `node` points to a TreeNode value that the function reads or updates.
+// - `leftDepth` marks the current left boundary or left-side value.
+// - `rightDepth` marks the current right boundary or right-side value.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func maxDepth(node *TreeNode) int {
 	if node == nil {
 		return 0
@@ -973,6 +1476,9 @@ func max(a, b int) int {
 	}
 	return b
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 ```mermaid
@@ -1035,6 +1541,28 @@ This is backtracking.
 The standard pattern is:
 
 ```go
+// Exact question: How can Backtracking mental model be solved using backtracking?
+//
+// Possible answer: Choose an option, recurse, then undo the choice before trying the next option.
+//
+// Output format: `backtrack` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `path` is a slice: the index identifies an element or state, and the stored item has type Choice.
+// - `choices` is a slice: the index identifies an element or state, and the stored item has type Choice.
+//
+// Boundary checks:
+// - `solutionComplete(path)` decides whether the branch or loop should continue for the current input.
+// - `!isValid(choice, path)` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `path` is a slice: the index identifies an element or state, and the stored item has type Choice.
+// - `choices` is a slice: the index identifies an element or state, and the stored item has type Choice.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 func backtrack(path []Choice, choices []Choice) {
 	if solutionComplete(path) {
 		saveCopy(path)
@@ -1056,6 +1584,9 @@ func backtrack(path []Choice, choices []Choice) {
 		path = path[:len(path)-1]
 	}
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Remember:
@@ -1105,6 +1636,28 @@ flowchart TD
 ## Go implementation
 
 ```go
+// Exact question: How does `subsets` solve Generate all subsets?
+//
+// Possible answer: Use `subsets` with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: Return the `[][]int` value from `subsets`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+//
+// Boundary checks:
+// - `index == len(nums)` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `result` is a two-dimensional table; indexes select a row and column, while cells hold computed values.
+// - `path` is a slice; indexes identify positions and elements hold the corresponding values.
+// - `backtrack` holds the intermediate value produced by `func(index int`.
+// - `subset` holds the intermediate value produced by `append([]int(nil), path...`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Return the value produced after the state updates are complete.
 func subsets(nums []int) [][]int {
 	result := make([][]int, 0)
 	path := make([]int, 0)
@@ -1131,6 +1684,9 @@ func subsets(nums []int) [][]int {
 	backtrack(0)
 	return result
 }
+
+// time complexity: O(2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Why copy the path?
@@ -1138,7 +1694,27 @@ func subsets(nums []int) [][]int {
 This is wrong:
 
 ```go
+// Exact question: Why copy the path?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 result = append(result, path)
+
+// time complexity: O(1) amortized -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) amortized -> only a fixed number of scalar variables or references is kept.
 ```
 
 The underlying array may be reused and modified later.
@@ -1146,8 +1722,28 @@ The underlying array may be reused and modified later.
 Instead:
 
 ```go
+// Exact question: Why copy the path?
+//
+// Possible answer: Use the fragment with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `subset` holds the intermediate value produced by `append([]int(nil), path...`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
 subset := append([]int(nil), path...)
 result = append(result, subset)
+
+// time complexity: O(n * 2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
 ## Complexity
@@ -1199,6 +1795,30 @@ flowchart TD
 ## Go implementation
 
 ```go
+// Exact question: How does `permute` solve Permutations?
+//
+// Possible answer: Use `permute` to iterate through the input once, updating the running state for each element.
+//
+// Output format: Return the `[][]int` value from `permute`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+//
+// Boundary checks:
+// - `len(path) == len(nums)` decides whether the branch or loop should continue for the current input.
+// - `used[i]` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `result` is a two-dimensional table; indexes select a row and column, while cells hold computed values.
+// - `path` is a slice; indexes identify positions and elements hold the corresponding values.
+// - `used` is a slice; indexes identify positions and elements hold the corresponding values.
+// - `backtrack` holds the intermediate value produced by `func(`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func permute(nums []int) [][]int {
 	result := make([][]int, 0)
 	path := make([]int, 0, len(nums))
@@ -1233,6 +1853,9 @@ func permute(nums []int) [][]int {
 	backtrack()
 	return result
 }
+
+// time complexity: O(n * n!) -> the search may enumerate factorially many orderings, with work at each recursion level.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Complexity
@@ -1288,6 +1911,28 @@ flowchart TD
 ## Go implementation
 
 ```go
+// Exact question: How does `generateParenthesis` solve Generate Parentheses?
+//
+// Possible answer: Use `generateParenthesis` with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: Return the `[]string` value from `generateParenthesis`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `len(current) == 2*n` decides whether the branch or loop should continue for the current input.
+// - `open < n` decides whether the branch or loop should continue for the current input.
+// - `close < open` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+// - `result` is a slice whose elements hold the ordered values produced or awaiting processing.
+// - `backtrack` holds the intermediate value produced by `func(current []byte, open, close int`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Return the value produced after the state updates are complete.
 func generateParenthesis(n int) []string {
 	result := make([]string, 0)
 
@@ -1314,6 +1959,9 @@ func generateParenthesis(n int) []string {
 	backtrack(make([]byte, 0, 2*n), 0, 0)
 	return result
 }
+
+// time complexity: O(2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Interview insight
@@ -1352,6 +2000,31 @@ Move to the next candidate
 ## Go implementation
 
 ```go
+// Exact question: How does `combinationSum` solve Combination Sum?
+//
+// Possible answer: Use `combinationSum` to iterate through the input once, updating the running state for each element.
+//
+// Output format: Return the `[][]int` value from `combinationSum`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `candidates` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+//
+// Boundary checks:
+// - `remaining == 0` handles the smallest valid state or recursive base case.
+// - `remaining < 0` rejects or terminates a state that has moved below the valid range.
+//
+// Key variables:
+// - `candidates` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+// - `result` is a two-dimensional table; indexes select a row and column, while cells hold computed values.
+// - `path` is a slice; indexes identify positions and elements hold the corresponding values.
+// - `backtrack` holds the intermediate value produced by `func(start, remaining int`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func combinationSum(candidates []int, target int) [][]int {
 	result := make([][]int, 0)
 	path := make([]int, 0)
@@ -1380,18 +2053,61 @@ func combinationSum(candidates []int, target int) [][]int {
 	backtrack(0, target)
 	return result
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Why call:
 
 ```go
+// Exact question: How does this Go example demonstrate Combination Sum?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 backtrack(i, remaining-value)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 instead of:
 
 ```go
+// Exact question: How does this Go example demonstrate Combination Sum?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 backtrack(i+1, remaining-value)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Because the same number may be reused.
@@ -1427,12 +2143,33 @@ Any additional data structures
 ## Linear recursion
 
 ```go
+// Exact question: How does `solve` solve Linear recursion?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: `solve` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(n int) {
 	if n == 0 {
 		return
 	}
 	solve(n - 1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Recurrence:
@@ -1451,6 +2188,24 @@ Space: O(n)
 ## Binary tree recursion
 
 ```go
+// Exact question: How does `solve` solve Binary tree recursion?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: `solve` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(n int) {
 	if n == 0 {
 		return
@@ -1459,6 +2214,9 @@ func solve(n int) {
 	solve(n - 1)
 	solve(n - 1)
 }
+
+// time complexity: O(2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Recurrence:
@@ -1485,6 +2243,24 @@ A critical distinction:
 Consider:
 
 ```go
+// Exact question: How does `f` solve Understanding recursion trees?
+//
+// Possible answer: Use `f` to compare the current values and return or update state when the condition matches.
+//
+// Output format: `f` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func f(n int) {
 	if n == 0 {
 		return
@@ -1493,6 +2269,9 @@ func f(n int) {
 	f(n - 1)
 	f(n - 1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 At each level, the number of calls doubles.
@@ -1529,6 +2308,26 @@ flowchart TD
 A tail-recursive function performs the recursive call as its final operation.
 
 ```go
+// Exact question: How does `factorialTail` solve Tail recursion?
+//
+// Possible answer: Use `factorialTail` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `factorialTail`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+// - `accumulator` is the int input used by this example.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+// - `accumulator` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func factorialTail(n, accumulator int) int {
 	if n <= 1 {
 		return accumulator
@@ -1536,12 +2335,35 @@ func factorialTail(n, accumulator int) int {
 
 	return factorialTail(n-1, accumulator*n)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Usage:
 
 ```go
+// Exact question: How does this Go example demonstrate Tail recursion?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `result` holds the answer computed for the current operation.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 result := factorialTail(5, 1)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Some languages optimize tail recursion and reuse the same stack frame.
@@ -1557,10 +2379,30 @@ For simple linear operations in Go, loops are generally preferable.
 ## Mistake 1: Missing the base case
 
 ```go
+// Exact question: How does `countdown` solve Mistake 1: Missing the base case?
+//
+// Possible answer: Use `countdown` to format and write the demonstrated value to standard output.
+//
+// Output format: `countdown` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
 func countdown(n int) {
 	fmt.Println(n)
 	countdown(n - 1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 This never stops.
@@ -1570,6 +2412,24 @@ This never stops.
 ## Mistake 2: Input does not move toward the base case
 
 ```go
+// Exact question: How does `countdown` solve Mistake 2: Input does not move toward the base case?
+//
+// Possible answer: Use `countdown` to compare the current values and return or update state when the condition matches.
+//
+// Output format: `countdown` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func countdown(n int) {
 	if n == 0 {
 		return
@@ -1577,6 +2437,9 @@ func countdown(n int) {
 
 	countdown(n)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 `n` never changes.
@@ -1588,9 +2451,29 @@ func countdown(n int) {
 For factorial:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 3: Wrong base-case result?
+//
+// Possible answer: Use the fragment to compare the current values and return or update state when the condition matches.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 if n == 0 {
 	return 0
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 This makes every factorial result zero.
@@ -1598,9 +2481,29 @@ This makes every factorial result zero.
 Correct:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 3: Wrong base-case result?
+//
+// Possible answer: Use the fragment to compare the current values and return or update state when the condition matches.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 if n == 0 {
 	return 1
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Because:
@@ -1616,6 +2519,24 @@ n × 1 = n
 Wrong:
 
 ```go
+// Exact question: How does `factorial` solve Mistake 4: Forgetting to use the recursive result?
+//
+// Possible answer: Use `factorial` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `factorial`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func factorial(n int) int {
 	if n <= 1 {
 		return 1
@@ -1624,12 +2545,35 @@ func factorial(n int) int {
 	factorial(n - 1)
 	return n
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 Correct:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 4: Forgetting to use the recursive result?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 return n * factorial(n-1)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 ---
@@ -1639,8 +2583,28 @@ return n * factorial(n-1)
 Wrong backtracking:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 5: Modifying shared state without undoing?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 path = append(path, choice)
 backtrack()
+
+// time complexity: O(1) amortized -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) amortized -> only a fixed number of scalar variables or references is kept.
 ```
 
 The choice remains in `path`.
@@ -1648,9 +2612,29 @@ The choice remains in `path`.
 Correct:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 5: Modifying shared state without undoing?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 path = append(path, choice)
 backtrack()
 path = path[:len(path)-1]
+
+// time complexity: O(1) amortized -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) amortized -> only a fixed number of scalar variables or references is kept.
 ```
 
 ---
@@ -1660,14 +2644,54 @@ path = path[:len(path)-1]
 Wrong:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 6: Saving the same mutable path?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 result = append(result, path)
+
+// time complexity: O(1) amortized -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) amortized -> only a fixed number of scalar variables or references is kept.
 ```
 
 Correct:
 
 ```go
+// Exact question: How does this Go example demonstrate Mistake 6: Saving the same mutable path?
+//
+// Possible answer: Use the fragment with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `copyOfPath` holds the intermediate value produced by `append([]int(nil), path...`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
 copyOfPath := append([]int(nil), path...)
 result = append(result, copyOfPath)
+
+// time complexity: O(1) amortized -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) amortized -> only a fixed number of scalar variables or references is kept.
 ```
 
 ---
@@ -1702,6 +2726,28 @@ Consider:
 Add logging at function entry and exit.
 
 ```go
+// Exact question: How to debug recursion?
+//
+// Possible answer: Use `factorial` to format and write the demonstrated value to standard output.
+//
+// Output format: Return an `int` value from `factorial`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+// - `depth` is the int input used by this example.
+//
+// Boundary checks:
+// - `n <= 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+// - `depth` is the int input used by this example.
+// - `indent` holds the intermediate value produced by `strings.Repeat(" ", depth`.
+// - `result` holds the answer computed for the current operation.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func factorial(n int, depth int) int {
 	indent := strings.Repeat("  ", depth)
 	fmt.Printf("%senter factorial(%d)\n", indent, n)
@@ -1715,6 +2761,9 @@ func factorial(n int, depth int) int {
 	fmt.Printf("%sreturn %d\n", indent, result)
 	return result
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 Output:
@@ -1766,6 +2815,27 @@ Left subtree and right subtree...
 ## Pattern 1: Process a sequence
 
 ```go
+// Exact question: How does `process` solve Pattern 1: Process a sequence?
+//
+// Possible answer: Use `process` with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: `process` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `index` is the int input used by this example.
+//
+// Boundary checks:
+// - `index == len(nums)` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `index` is the int input used by this example.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Return the value produced after the state updates are complete.
 func process(nums []int, index int) {
 	if index == len(nums) {
 		return
@@ -1774,11 +2844,33 @@ func process(nums []int, index int) {
 	// Process nums[index]
 	process(nums, index+1)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Pattern 2: Return an answer
 
 ```go
+// Exact question: How does `solve` solve Pattern 2: Return an answer?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `solve`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+// - `smallerAnswer` tracks the best or final answer found so far.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(n int) int {
 	if n == 0 {
 		return baseValue
@@ -1787,11 +2879,32 @@ func solve(n int) int {
 	smallerAnswer := solve(n - 1)
 	return combine(n, smallerAnswer)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Pattern 3: Binary choice
 
 ```go
+// Exact question: How does `choose` solve Pattern 3: Binary choice?
+//
+// Possible answer: Use `choose` to compare the current values and return or update state when the condition matches.
+//
+// Output format: `choose` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `index` is the int input used by this example.
+//
+// Boundary checks:
+// - `index == n` keeps indexes or pointers within the portion of the input still being processed.
+//
+// Key variables:
+// - `index` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func choose(index int) {
 	if index == n {
 		saveAnswer()
@@ -1806,11 +2919,33 @@ func choose(index int) {
 	choose(index + 1)
 	path = path[:len(path)-1]
 }
+
+// time complexity: O(2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Pattern 4: Loop over choices
 
 ```go
+// Exact question: How does `backtrack` solve Pattern 4: Loop over choices?
+//
+// Possible answer: Use `backtrack` to iterate through the input once, updating the running state for each element.
+//
+// Output format: `backtrack` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `start` is the int input used by this example.
+//
+// Boundary checks:
+// - `complete()` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `start` is the int input used by this example.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Return the value produced after the state updates are complete.
 func backtrack(start int) {
 	if complete() {
 		saveAnswer()
@@ -1823,11 +2958,34 @@ func backtrack(start int) {
 		undoChoice(i)
 	}
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Pattern 5: Tree recursion
 
 ```go
+// Exact question: How does `solve` solve Pattern 5: Tree recursion?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return a `Result` value from `solve`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `node == nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `node` points to a TreeNode value that the function reads or updates.
+// - `left` marks the current left boundary or left-side value.
+// - `right` marks the current right boundary or right-side value.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(node *TreeNode) Result {
 	if node == nil {
 		return baseResult
@@ -1838,11 +2996,36 @@ func solve(node *TreeNode) Result {
 
 	return combine(node, left, right)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 ## Pattern 6: Graph DFS
 
 ```go
+// Exact question: How can Pattern 6: Graph DFS be solved using depth-first search?
+//
+// Possible answer: Follow one path at a time with recursion or a stack, marking nodes to avoid revisits.
+//
+// Output format: `dfs` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `node` is the int input used by this example.
+// - `graph` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+// - `visited` is a slice: the index identifies an element or state, and the stored item has type bool.
+//
+// Boundary checks:
+// - `visited[node]` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `node` is the int input used by this example.
+// - `graph` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 func dfs(node int, graph [][]int, visited []bool) {
 	if visited[node] {
 		return
@@ -1854,6 +3037,9 @@ func dfs(node int, graph [][]int, visited []bool) {
 		dfs(neighbor, graph, visited)
 	}
 }
+
+// time complexity: O(V + E) -> each reachable vertex is processed once and each edge is examined once.
+// space complexity: O(V) -> the visited state, queue, stack, or result can hold one entry per vertex.
 ```
 
 ---
@@ -2042,6 +3228,28 @@ For example, generating every permutation requires producing `n!` unique outputs
 Maintain a visited set.
 
 ```go
+// Exact question: How do you prevent cycles in recursive graph traversal?
+//
+// Possible answer: Use `dfs` to iterate through the input once, updating the running state for each element.
+//
+// Output format: `dfs` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `node` is the int input used by this example.
+// - `graph` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+// - `visited` is a slice: the index identifies an element or state, and the stored item has type bool.
+//
+// Boundary checks:
+// - `visited[node]` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `node` is the int input used by this example.
+// - `graph` is a two-dimensional slice: row and column indexes identify positions, and each cell stores a value.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 func dfs(node int, graph [][]int, visited []bool) {
 	if visited[node] {
 		return
@@ -2053,6 +3261,9 @@ func dfs(node int, graph [][]int, visited []bool) {
 		dfs(neighbor, graph, visited)
 	}
 }
+
+// time complexity: O(2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
 Without `visited`, a cycle such as:
@@ -2132,7 +3343,27 @@ All decisions have been made.
 ## Step 4: Save a copy
 
 ```go
+// Exact question: How does this Go example demonstrate Step 4: Save a copy?
+//
+// Possible answer: Use the fragment with a slice whose indexes identify positions and whose elements hold their values.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `subset` holds the intermediate value produced by `append([]int(nil), path...`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
 subset := append([]int(nil), path...)
+
+// time complexity: O(n * 2^n) -> the recursion can branch into two choices at each of `n` levels.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
 ## Step 5: Analyze complexity
@@ -2263,6 +3494,24 @@ Undo
 ## Basic recursion
 
 ```go
+// Exact question: How does `solve` solve Basic recursion?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `solve`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `n` is the int input used by this example.
+//
+// Boundary checks:
+// - `n == 0` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `n` is the int input used by this example.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(n int) int {
 	if n == 0 {
 		return base
@@ -2270,11 +3519,34 @@ func solve(n int) int {
 
 	return combine(n, solve(n-1))
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Tree recursion
 
 ```go
+// Exact question: How does `solve` solve Tree recursion?
+//
+// Possible answer: Use `solve` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `int` value from `solve`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `node` points to a TreeNode value that the function reads or updates.
+//
+// Boundary checks:
+// - `node == nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `node` points to a TreeNode value that the function reads or updates.
+// - `left` marks the current left boundary or left-side value.
+// - `right` marks the current right boundary or right-side value.
+//
+// Logic:
+// 1. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 2. Return the value produced after the state updates are complete.
 func solve(node *TreeNode) int {
 	if node == nil {
 		return 0
@@ -2285,11 +3557,34 @@ func solve(node *TreeNode) int {
 
 	return combine(node, left, right)
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(h) -> the recursion stack grows with the height of the traversed tree or Trie.
 ```
 
 ## Backtracking
 
 ```go
+// Exact question: How does `backtrack` solve Backtracking?
+//
+// Possible answer: Choose an option, recurse, then undo the choice before trying the next option.
+//
+// Output format: `backtrack` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - `complete()` decides whether the branch or loop should continue for the current input.
+// - `!valid(choice)` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Iterate through the required elements or states in the order shown.
+// 2. Recursively reduce the current problem to smaller calls until a base condition is reached.
+// 3. Return the value produced after the state updates are complete.
 func backtrack() {
 	if complete() {
 		saveCopy()
@@ -2306,6 +3601,9 @@ func backtrack() {
 		undoChoice(choice)
 	}
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the recursion stack and any cache can grow to one entry per input state.
 ```
 
 ## Complexity
