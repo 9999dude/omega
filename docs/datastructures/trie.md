@@ -1,364 +1,196 @@
-# Trie — Explained Like You’re Five
+# Tries — A Compact Interview Guide
 
-A **Trie**—pronounced “try”—is a tree used to store words **character by character**.
+A trie stores strings by sharing their prefixes. Each path represents a prefix, and a terminal marker distinguishes a complete word from a path that merely exists.
 
-Imagine a cupboard with drawers:
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 Trie Interview Questions](#top-10-trie-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-* First drawer: first letter
-* Inside it: drawer for the second letter
-* Inside that: drawer for the third letter
-* Continue until the word finishes
-
-Suppose we store:
-
-```text
-car
-cat
-care
-dog
-```
-
-Instead of storing each word independently, the Trie shares common beginnings:
-
-```mermaid
-graph TD
-    R["Root"] --> C["c"]
-    R --> D["d"]
-
-    C --> A["a"]
-    A --> R1["r ✓ car"]
-    A --> T["t ✓ cat"]
-    R1 --> E["e ✓ care"]
-
-    D --> O["o"]
-    O --> G["g ✓ dog"]
-```
-
-The prefix `ca` is stored only once and shared by:
-
-* `car`
-* `cat`
-* `care`
-
-That shared-prefix structure is the main idea behind a Trie.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
 
-# 1. Why Do We Need a Trie?
+## Mental model
 
-Suppose you have one million words and someone types:
+Trie edges are character keys and child pointers are values. Traversal cost depends on query length rather than the total number of stored words.
 
-```text
-app
-```
-
-You want to find:
-
-```text
-apple
-application
-apply
-appointment
-```
-
-You could check every word:
-
-```text
-Does apple start with app?
-Does banana start with app?
-Does application start with app?
-...
-```
-
-But that may require scanning the entire dictionary.
-
-A Trie lets you directly follow:
-
-```text
-root → a → p → p
-```
-
-Once you reach the `app` node, everything below it starts with `app`.
-
-```mermaid
-graph TD
-    R["Root"] --> A["a"]
-    A --> P1["p"]
-    P1 --> P2["p ✓ app"]
-
-    P2 --> L["l"]
-    L --> E["e ✓ apple"]
-    L --> Y["y ✓ apply"]
-
-    P2 --> O["o"]
-    O --> I["i"]
-    I --> N["n"]
-    N --> T["t"]
-    T --> M["m"]
-    M --> E2["e"]
-    E2 --> N2["n"]
-    N2 --> T2["t ✓ appointment"]
-```
-
-A Trie is useful when the problem contains ideas such as:
-
-* Prefix search
-* Autocomplete
-* Dictionary lookup
-* Spell checking
-* Word search on a board
-* Routing by prefixes
-* Searching many words simultaneously
-* Wildcard word matching
-
----
-
-# 2. The Baby Mental Model
-
-Think of a Trie as a **word road map**.
-
-Each letter is a road.
-
-```text
-Root
- └── c
-      └── a
-           ├── r
-           └── t
-```
-
-To search for `cat`, walk along:
-
-```text
-root → c → a → t
-```
-
-If any road does not exist, the word does not exist.
-
-However, reaching the last letter is not enough.
-
-For example, suppose the Trie contains:
-
-```text
-apple
-```
-
-The path for `app` exists:
-
-```text
-root → a → p → p
-```
-
-But `app` may not itself be a stored word.
-
-Therefore, every Trie node usually contains an `isEnd` marker:
-
-```text
-isEnd = true
-```
-
-This means:
-
-> A complete word finishes at this node.
-
----
-
-# 3. What Does a Trie Node Contain?
-
-Every node normally contains two things:
-
-```text
-1. Children
-2. End-of-word marker
-```
-
-Conceptually:
-
-```go
-type TrieNode struct {
-    children map[rune]*TrieNode
-    isEnd    bool
-}
-```
-
-For English lowercase letters, children can also be stored in an array:
-
-```go
-type TrieNode struct {
-    children [26]*TrieNode
-    isEnd    bool
-}
-```
-
-The array index is calculated as:
-
-```go
-index := character - 'a'
-```
-
-Examples:
-
-```text
-'a' - 'a' = 0
-'b' - 'a' = 1
-'c' - 'a' = 2
-...
-'z' - 'a' = 25
-```
-
----
-
-# 4. Trie Operations
-
-The three essential operations are:
-
-```text
-Insert(word)
-Search(word)
-StartsWith(prefix)
-```
-
----
-
-## 4.1 Insert
-
-Suppose we insert:
-
-```text
-cat
-```
-
-Start at the root:
-
-```text
-1. Look for child 'c'
-2. Create it if missing
-3. Move to 'c'
-4. Look for child 'a'
-5. Create it if missing
-6. Move to 'a'
-7. Look for child 't'
-8. Create it if missing
-9. Mark 't' as the end of a word
-```
+| Real system | How the topic appears |
+| --- | --- |
+| Autocomplete | Complete words from a typed prefix |
+| Routers | Longest-prefix matching |
+| Spell checking | Detect words and candidate prefixes |
+| Security | Match domain or path prefix rules |
 
 ```mermaid
 flowchart TD
-    A["Start at root"] --> B["Read next character"]
-    B --> C{"Child exists?"}
-    C -- No --> D["Create child node"]
-    C -- Yes --> E["Move to child"]
-    D --> E
-    E --> F{"More characters?"}
-    F -- Yes --> B
-    F -- No --> G["Mark isEnd = true"]
+    T["Tries"]
+    T --> R0["Children map"]
+    T --> R1["Children array"]
+    T --> R2["Terminal flag"]
+    T --> R3["Pass count"]
 ```
 
-### Example
-
-Before inserting `car`:
-
-```text
-root
-```
-
-After inserting `car`:
-
-```text
-root
- └── c
-      └── a
-           └── r*
-```
-
-The `*` means `isEnd = true`.
-
-After inserting `cat`:
-
-```text
-root
- └── c
-      └── a
-           ├── r*
-           └── t*
-```
-
-The nodes for `c` and `a` are reused.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. Words beginning with the same letters walk together until they need different branches.
 
 ---
 
-## 4.2 Search
+## Representation and core operations
 
-To search for `cat`:
+The path and endpoint state are separate. Reaching all query characters proves a prefix exists; exact search also requires a terminal marker.
 
-```text
-root → c → a → t
+| Representation | Role |
+| --- | --- |
+| Children map | Rune keys map to child-node pointers |
+| Children array | Alphabet indexes map to child pointers |
+| Terminal flag | Endpoint represents a complete stored word |
+| Pass count | Number of inserted words sharing a prefix |
+
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Insert word | O(L) | Create or follow L character edges |
+| Exact search | O(L) | Follow path and check terminal |
+| Prefix search | O(P) | Follow P prefix characters |
+| Autocomplete | O(P+output) | Find prefix then enumerate descendants |
+| Delete | O(L) | Clear terminal and prune unused nodes |
+
+```mermaid
+flowchart LR
+    A0["Insert word"]
+    A0 --> A1["Exact search"]
+    A1 --> A2["Prefix search"]
+    A2 --> A3["Autocomplete"]
+    A3 --> A4["Delete"]
 ```
 
-Two conditions must be true:
+> **Baby analogy:** Imagine a word tree made from shared letter branches. Follow one letter branch at a time; a finish sticker says whether the path is a whole word.
 
-1. Every character path exists.
-2. The final node has `isEnd = true`.
+---
+
+## Interview patterns and complexity
+
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Many prefix queries | Trie | [Implement Trie](#implement-trie), [Search Suggestions](#search-suggestions), [Count Words with a Prefix](#count-words-with-a-prefix) |
+| Wildcard characters | DFS over matching child edges | [Add and Search Words with Wildcards](#add-and-search-words-with-wildcards) |
+| Board dictionary search | Trie-pruned backtracking | [Word Search II](#word-search-ii) |
+| Shortest dictionary root | Stop at first terminal prefix | [Replace Words](#replace-words) |
+| Bitwise maximum XOR | Binary bit trie | [Maximum XOR of Two Numbers](#maximum-xor-of-two-numbers) |
+| Mutation or structure choice | Prune nodes or compare alternatives | [Delete a Trie Word](#delete-a-trie-word), [Exact Search versus Prefix Search](#exact-search-versus-prefix-search), [Choose Trie or Hash Map](#choose-trie-or-hash-map) |
+
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Insert or search | O(L) | One edge per query character |
+| Node storage | O(total characters) | Unshared suffix characters create nodes |
+| Array children | Large fixed factor | One slot per alphabet symbol |
+| Map children | Sparse dynamic factor | Only existing edges stored |
 
 ```mermaid
 flowchart TD
-    A["Start at root"] --> B["Read next character"]
-    B --> C{"Child exists?"}
-    C -- No --> D["Return false"]
-    C -- Yes --> E["Move to child"]
-    E --> F{"More characters?"}
-    F -- Yes --> B
-    F -- No --> G{"isEnd true?"}
-    G -- Yes --> H["Return true"]
-    G -- No --> D
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Many prefix queries"| P0["Trie"]
+    Q -->|"Wildcard characters"| P1["DFS over matching child edges"]
+    Q -->|"Board dictionary search"| P2["Trie-pruned backtracking"]
+    Q -->|"Shortest dictionary root"| P3["Stop at first terminal prefix"]
+    Q -->|"Bitwise maximum XOR"| P4["Binary bit trie"]
 ```
 
-### Important distinction
-
-Suppose only `apple` was inserted.
-
-```text
-Search("app")       → false
-StartsWith("app")   → true
-Search("apple")     → true
-```
-
-Why?
-
-The path `a → p → p` exists, but `app` was not marked as a complete word.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. Prefix clues suggest a trie, wildcard clues branch, and board clues combine the trie with backtracking.
 
 ---
 
-## 4.3 StartsWith
+## Problem-solving checklist and common mistakes
 
-`StartsWith` checks only whether the path exists.
+Before coding:
 
-It does not care whether the last node represents a complete word.
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
 
-```text
-Stored word: apple
+Common mistakes:
+- Treating a prefix endpoint as a complete word without checking terminal.
+- Using a fixed array without validating the alphabet.
+- Deleting nodes still shared by another word.
+- Returning map-based autocomplete in a claimed deterministic order.
+- Forgetting to restore board cells during backtracking.
+- Ignoring Unicode when indexing letters.
 
-StartsWith("app") → true
-StartsWith("apx") → false
+```mermaid
+flowchart LR
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
 ```
 
-Mental model:
-
-```text
-Search:
-"Is this exact house located here?"
-
-StartsWith:
-"Does any road continue from this location?"
-```
+> **Baby analogy:** Imagine a word tree made from shared letter branches. A path can exist without a finish sticker, just as cat can be a prefix path without being stored as a word.
 
 ---
 
-# 5. Complete Trie Implementation in Go
+## Top 10 Trie Interview Questions
 
-This version supports Unicode characters because it uses `rune`.
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
+
+```mermaid
+flowchart LR
+    Q0["Implement Trie"]
+    Q0 --> Q1["Word Search II"]
+    Q1 --> Q2["Add and Search Words with Wildcards"]
+    Q2 --> Q3["Replace Words"]
+    Q3 --> Q4["Search Suggestions"]
+```
+
+> **Baby analogy:** Imagine a word tree made from shared letter branches. These ten puzzles are practice cards; each card teaches one reusable move.
+
+### Implement Trie
+
+```mermaid
+flowchart TD
+    subgraph PROCESS["Detailed algorithm flow: Implement Trie"]
+        direction TD
+        I["Input"]
+        I --> S0["Store one map edge per rune and mark terminal nodes"]
+        S0 --> S1["insert creates missing edges"]
+        S1 --> S2["search and prefix lookup follow existing edges"]
+        S2 --> O["Return result"]
+    end
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Autocomplete services store searchable dictionaries.
+- Routing systems organize prefix rules.
 
 ```go
+// Exact question: Implement a trie that inserts words, tests exact-word membership, and tests whether any stored word starts with a prefix.
+//
+// Example: Insert car, cat, and care -> Search(car) is true, Search(ca) is false, and StartsWith(ca) is true.
+//
+// Possible answer: Store one map edge per rune and mark terminal nodes; insert creates missing edges, while search and prefix lookup follow existing edges.
+//
+// Output format: Return the `*Trie` value from `NewTrie`; the function does not print the answer.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - `!exists` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `current` holds the value for the state currently being calculated.
+// - `node` is the endpoint reached after following every rune edge in the exact word.
+// - `trie` owns the root node; its child-map keys are runes and its values are pointers to the next prefix nodes.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 package main
 
 import "fmt"
@@ -437,584 +269,183 @@ func main() {
 	fmt.Println(trie.Search("care"))      // true
 	fmt.Println(trie.StartsWith("dog"))   // false
 }
+
+// time complexity: O(L) -> each insert, exact search, or prefix search follows one edge per rune in a length-`L` input.
+// space complexity: O(L) -> insertion can create one trie node per new rune; lookup itself uses O(1) auxiliary space.
 ```
 
-Notice that both `Search` and `StartsWith` reuse:
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Implement Trie" is one small game played with the same pieces and rules.
 
-```go
-findNode()
-```
-
-The only difference is:
-
-```go
-Search:
-node != nil && node.isEnd
-
-StartsWith:
-node != nil
-```
-
----
-
-# 6. How Is Trie Complexity Calculated?
-
-Let:
-
-```text
-L = number of characters in the word
-```
-
-For example:
-
-```text
-word = "apple"
-L = 5
-```
-
-## Insert
-
-We visit each character once:
-
-```text
-a → p → p → l → e
-```
-
-Therefore:
-
-```text
-Time: O(L)
-```
-
-## Search
-
-Again, we visit each character once:
-
-```text
-Time: O(L)
-```
-
-## StartsWith
-
-We visit each character in the prefix:
-
-```text
-Time: O(P)
-```
-
-Where `P` is the prefix length.
-
-## Space
-
-Suppose the inserted words contain a total of `N` characters.
-
-In the worst case, no words share prefixes:
-
-```text
-dog
-cat
-sun
-```
-
-The Trie may create approximately one node for every character:
-
-```text
-Space: O(N)
-```
-
-More precisely:
-
-```text
-Space = O(total number of unique prefix nodes)
-```
-
----
-
-## Complexity Table
-
-| Operation     |       Time | Reason                            |
-| ------------- | ---------: | --------------------------------- |
-| Insert word   |     `O(L)` | Visit every character             |
-| Search word   |     `O(L)` | Follow every character            |
-| Prefix search |     `O(P)` | Follow every prefix character     |
-| Delete word   |     `O(L)` | Follow and possibly remove nodes  |
-| Autocomplete  | `O(P + R)` | Find prefix, then collect results |
-| Space         |     `O(N)` | Nodes for stored characters       |
-
-Here:
-
-```text
-L = word length
-P = prefix length
-R = work required to collect matching results
-N = total inserted characters
-```
-
----
-
-# 7. Trie vs Hash Map
-
-You may ask:
-
-> Why not store all words in a hash set?
-
-A hash set is excellent for exact lookup:
-
-```text
-Does "apple" exist?
-```
-
-Average:
-
-```text
-O(1)
-```
-
-But it is not naturally designed for:
-
-```text
-Give me every word starting with "app"
-```
-
-You may need to scan all words.
-
-| Requirement        |                     Hash Set |             Trie |
-| ------------------ | ---------------------------: | ---------------: |
-| Exact word lookup  |                    Excellent |        Excellent |
-| Prefix lookup      |  Poor without extra indexing |        Excellent |
-| Autocomplete       | Requires scanning or sorting |          Natural |
-| Memory efficiency  |                 Often better |      Often worse |
-| Shared prefixes    |                           No |              Yes |
-| Wildcard traversal |                    Difficult | Natural with DFS |
-
-A Trie trades extra memory for efficient prefix-based operations.
-
----
-
-# 8. Trie vs Binary Search Tree
-
-A balanced BST storing words can search in approximately:
-
-```text
-O(log W × L)
-```
-
-Where:
-
-```text
-W = number of words
-L = string-comparison cost
-```
-
-A Trie searches based mostly on word length:
-
-```text
-O(L)
-```
-
-Trie performance does not directly depend on how many words are stored.
-
-That is an important interview point.
-
----
-
-# 9. Autocomplete
-
-Suppose the Trie contains:
-
-```text
-app
-apple
-apply
-apt
-banana
-```
-
-Input prefix:
-
-```text
-ap
-```
-
-First, navigate to the node for `ap`.
-
-Then run DFS below it.
-
-```mermaid
-graph TD
-    AP["ap"] --> P["p ✓ app"]
-    AP --> T["t ✓ apt"]
-
-    P --> L["l"]
-    L --> E["e ✓ apple"]
-    L --> Y["y ✓ apply"]
-```
-
-Results:
-
-```text
-app
-apple
-apply
-apt
-```
-
-The algorithm has two stages:
-
-```text
-1. Follow the prefix: O(P)
-2. DFS through descendants: O(R)
-```
-
-Total:
-
-```text
-O(P + R)
-```
-
-Basic Go implementation:
-
-```go
-func (t *Trie) Autocomplete(prefix string) []string {
-	node := t.findNode(prefix)
-	if node == nil {
-		return nil
-	}
-
-	results := make([]string, 0)
-	t.collectWords(node, []rune(prefix), &results)
-
-	return results
-}
-
-func (t *Trie) collectWords(
-	node *TrieNode,
-	current []rune,
-	results *[]string,
-) {
-	if node.isEnd {
-		*results = append(*results, string(current))
-	}
-
-	for char, child := range node.children {
-		current = append(current, char)
-		t.collectWords(child, current, results)
-		current = current[:len(current)-1]
-	}
-}
-```
-
-The pattern:
-
-```text
-Choose character
-Explore child
-Remove character
-```
-
-is standard DFS/backtracking.
-
----
-
-# 10. Word Search with a Trie
-
-Consider this board:
-
-```text
-o a a n
-e t a e
-i h k r
-i f l v
-```
-
-Dictionary:
-
-```text
-oath
-pea
-eat
-rain
-```
-
-You could search for every word independently.
-
-But that repeats a lot of work.
-
-Instead:
-
-1. Insert all words into a Trie.
-2. Start DFS from every board cell.
-3. Follow only characters that exist in the Trie.
-4. Stop immediately when the current prefix is impossible.
+### Word Search II
 
 ```mermaid
 flowchart TD
-    A["Start from board cell"] --> B{"Character exists in Trie?"}
-    B -- No --> C["Stop this DFS path"]
-    B -- Yes --> D["Move to Trie child"]
-    D --> E{"Node ends a word?"}
-    E -- Yes --> F["Record word"]
-    E -- No --> G["Continue"]
-    F --> G
-    G --> H["Explore up/down/left/right"]
-    H --> B
+    I["Inputs and starting state: <strong>board</strong> , <strong>children</strong> , <strong>word</strong>"]
+    B["Boundary checks<br/>Empty rows, jagged row lengths, out-of-bounds moves, and reused cells are skipped.<br/>A terminal flag is cleared after output to prevent duplicate results from different <strong>board</strong> paths."]
+    I --> B
+
+    subgraph PROCESS["Recursive DFS region"]
+        direction TD
+        S0["Insert every dictionary <strong>word</strong> into the trie."]
+        S1["Start DFS at each cell, following only matching trie edges and restoring cells after backt"]
+        S0 --> S1
+        S2["Start DFS at each cell, following only matching trie edges and restoring cells after backtracking."]
+        S1 --> S2
+    end
+
+    B --> S0
+    S2 --> O["Return each found dictionary <strong>word</strong> at most once."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-This is called **prefix pruning**.
+**Where it is used in real life:**
 
-Suppose DFS has created:
+- Puzzle engines find dictionary words on letter boards.
+- OCR cleanup searches plausible words across neighboring character cells.
 
-```text
-qzx
+```go
+// Exact question: Which dictionary words can be formed by adjacent board cells without reusing a cell in one word?
+//
+// Example: Input board [[o,a,a,n],[e,t,a,e],[i,h,k,r],[i,f,l,v]] and words [oath, pea, eat, rain] -> output oath and eat.
+//
+// Possible answer: Build a trie of all words and run DFS while pruning any board path absent from the trie.
+//
+// Output format: Return each found dictionary word at most once.
+//
+// Inline descriptions:
+// - Trie nodes represent only dictionary prefixes, so DFS abandons impossible character paths immediately.
+//
+// Boundary checks:
+// - Empty rows, jagged row lengths, out-of-bounds moves, and reused cells are skipped.
+// - A terminal flag is cleared after output to prevent duplicate results from different board paths.
+//
+// Key variables:
+// - `board` is a two-dimensional slice whose row and column indexes are cells and whose elements are runes.
+// - `children` is a map whose rune keys are next letters and whose values are trie-node pointers.
+// - `word` stores a complete dictionary value only at terminal nodes.
+// - Rune zero temporarily marks a board cell as used by the current DFS path.
+//
+// Logic:
+// 1. Insert every dictionary word into the trie.
+// 2. Start DFS at each cell, following only matching trie edges and restoring cells after backtracking.
+type BoardTrieNode struct {
+	children map[rune]*BoardTrieNode
+	word     string
+}
+
+func findBoardWords(board [][]rune, words []string) []string {
+	root := &BoardTrieNode{children: make(map[rune]*BoardTrieNode)}
+	for _, word := range words {
+		node := root
+		for _, character := range word {
+			if node.children[character] == nil {
+				node.children[character] = &BoardTrieNode{children: make(map[rune]*BoardTrieNode)}
+			}
+			node = node.children[character]
+		}
+		node.word = word
+	}
+
+	result := []string{}
+	directions := [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+	var search func(int, int, *BoardTrieNode)
+	search = func(row, column int, parent *BoardTrieNode) {
+		if row < 0 || row >= len(board) || column < 0 || column >= len(board[row]) {
+			return
+		}
+		character := board[row][column]
+		if character == 0 {
+			return
+		}
+		node := parent.children[character]
+		if node == nil {
+			return
+		}
+		if node.word != "" {
+			result = append(result, node.word)
+			node.word = ""
+		}
+		board[row][column] = 0
+		for _, direction := range directions {
+			search(row+direction[0], column+direction[1], node)
+		}
+		board[row][column] = character
+	}
+
+	for row := range board {
+		for column := range board[row] {
+			search(row, column, root)
+		}
+	}
+	return result
+}
+
+// time complexity: O(W + R*C*4^L) -> in the worst case `W` builds the trie and DFS branches four ways to maximum word length `L`.
+// space complexity: O(W + L) -> trie nodes store dictionary runes and DFS uses at most one word-length path.
 ```
 
-If no dictionary word begins with `qzx`, stop immediately.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Word Search II" is one small game played with the same pieces and rules.
 
-Without a Trie, the algorithm may continue exploring a useless path.
-
----
-
-# 11. The Core Trie Interview Patterns
-
-## Pattern 1: Exact word and prefix lookup
-
-Clues:
-
-```text
-insert
-search
-startsWith
-dictionary
-prefix
-```
-
-Use a normal Trie.
-
-Typical problem:
-
-```text
-Implement Trie
-```
-
----
-
-## Pattern 2: Wildcard characters
-
-Example:
-
-```text
-Search("b.d")
-```
-
-The `.` can represent any character.
-
-If the character is normal:
-
-```text
-Follow one child
-```
-
-If the character is `.`:
-
-```text
-Try every child using DFS
-```
+### Add and Search Words with Wildcards
 
 ```mermaid
 flowchart TD
-    A["Current pattern character"] --> B{"Is it '.'?"}
-    B -- No --> C["Follow matching child"]
-    B -- Yes --> D["Try every child"]
-    D --> E["DFS on remaining pattern"]
-    C --> E
+    I["Inputs and starting state: <strong>node</strong> , <strong>pattern</strong> , <strong>index</strong> , <strong>char</strong>"]
+    B["Boundary checks<br/><strong>index</strong> equals len(<strong>pattern</strong>) keeps indexes or pointers within the portion of the input still being processed."]
+    I --> B
+
+    subgraph PROCESS["Recursive DFS region"]
+        direction TD
+        S0["Follow the named child for a literal rune, but recursively try every"]
+        S1["child for ., accepting only a terminal <strong>node</strong> after all <strong>pattern</strong> runes are consumed"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return a <strong>bool</strong> value from <strong>searchPattern</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Typical problem:
+**Where it is used in real life:**
 
-```text
-Design Add and Search Words Data Structure
-```
-
----
-
-## Pattern 3: Prefix replacement
-
-Dictionary roots:
-
-```text
-cat
-bat
-rat
-```
-
-Sentence:
-
-```text
-the cattle was rattled by the battery
-```
-
-Replace every word with its shortest matching root:
-
-```text
-the cat was rat by the bat
-```
-
-For each sentence word:
-
-1. Walk through the Trie.
-2. Stop at the first `isEnd`.
-3. Return that shortest root.
-4. If no root exists, keep the original word.
-
-Typical problem:
-
-```text
-Replace Words
-```
-
----
-
-## Pattern 4: Board DFS plus Trie
-
-Clues:
-
-```text
-2D board
-dictionary of many words
-adjacent cells
-find all valid words
-```
-
-Use:
-
-```text
-Trie + DFS + backtracking
-```
-
-Typical problem:
-
-```text
-Word Search II
-```
-
----
-
-## Pattern 5: Ranked autocomplete
-
-Basic autocomplete returns every word under a prefix.
-
-A real autocomplete system may also need:
-
-```text
-frequency
-popularity
-recent searches
-top K results
-lexicographic order
-```
-
-Each Trie node may store extra information:
+- Dictionary tools support unknown-character queries.
+- Security scanners match path patterns with wildcard positions.
 
 ```go
+// Exact question: Given a trie and a pattern where `.` matches any one rune, return whether the pattern matches a complete stored word.
+//
+// Example: Add bad, dad, and mad -> Search(.ad) and Search(b..) are true, while Search(pad) is false.
+//
+// Possible answer: Follow the named child for a literal rune, but recursively try every child for `.`, accepting only a terminal node after all pattern runes are consumed.
+//
+// Output format: Return a `bool` value from `searchPattern`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `node` points to a TrieNode value that the function reads or updates.
+// - `pattern` is a slice: the index identifies an element or state, and the stored item has type rune.
+// - `index` is the int input used by this example.
+//
+// Boundary checks:
+// - `index == len(pattern)` keeps indexes or pointers within the portion of the input still being processed.
+// - `char != '.'` decides whether the branch or loop should continue for the current input.
+// - `!exists` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `node` points to a TrieNode value that the function reads or updates.
+// - `pattern` is a slice: the index identifies an element or state, and the stored item has type rune.
+// - `char` holds the intermediate value produced by `pattern[index]`.
+//
+// Logic:
+// 1. Create or use a slice so indexes identify positions and elements store their data or state.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Recursively reduce the current problem to smaller calls until a base condition is reached.
 type TrieNode struct {
 	children map[rune]*TrieNode
 	isEnd    bool
-
-	topSuggestions []Suggestion
 }
-```
 
-This avoids performing a full DFS for every keystroke.
-
-Typical problem:
-
-```text
-Autocomplete System
-```
-
----
-
-# 12. Common Problem 1: Implement Trie
-
-## Requirements
-
-Implement:
-
-```text
-insert(word)
-search(word)
-startsWith(prefix)
-```
-
-## Main interview test
-
-The interviewer wants to see whether you understand:
-
-```text
-Path exists ≠ complete word exists
-```
-
-Example:
-
-```text
-Insert("apple")
-
-Search("app")       → false
-StartsWith("app")   → true
-```
-
-## Common mistake
-
-Returning `true` from `Search` simply because the path exists.
-
-Incorrect:
-
-```go
-return node != nil
-```
-
-Correct:
-
-```go
-return node != nil && node.isEnd
-```
-
----
-
-# 13. Common Problem 2: Design Add and Search Words
-
-Operations:
-
-```text
-addWord("bad")
-addWord("dad")
-addWord("mad")
-
-search("pad") → false
-search("bad") → true
-search(".ad") → true
-search("b..") → true
-```
-
-The important part is the wildcard.
-
-## Mental model
-
-For a normal character:
-
-```text
-There is one possible road.
-```
-
-For `.`:
-
-```text
-Every child road is possible.
-```
-
-Go-style recursive logic:
-
-```go
 func searchPattern(node *TrieNode, pattern []rune, index int) bool {
 	if index == len(pattern) {
 		return node.isEnd
@@ -1039,825 +470,651 @@ func searchPattern(node *TrieNode, pattern []rune, index int) bool {
 
 	return false
 }
+
+// time complexity: O(b^L) -> in the worst case, `L` wildcard positions explore up to `b` child branches at each level.
+// space complexity: O(L) -> recursion keeps at most one call frame per pattern rune along the current path.
 ```
 
-Worst-case complexity can become large because every `.` may branch into many children.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Add and Search Words with Wildcards" is one small game played with the same pieces and rules.
 
-If the alphabet size is `A` and there are many wildcards:
-
-```text
-Worst case: O(A^L)
-```
-
-The actual search is often much smaller because nonexistent branches are pruned.
-
----
-
-# 14. Common Problem 3: Replace Words
-
-Dictionary:
-
-```text
-["cat", "bat", "rat"]
-```
-
-Sentence:
-
-```text
-"the cattle was rattled by the battery"
-```
-
-For `cattle`:
-
-```text
-c → a → t
-```
-
-The `t` node is a complete root, so return:
-
-```text
-cat
-```
-
-Do not continue to search for a longer root.
-
-Important interview phrase:
-
-> Stop at the first end-of-word node because the shortest root is required.
-
-Complexity:
-
-Let:
-
-```text
-C = total characters in the sentence
-```
-
-Trie lookup processes each character at most once until a root is found:
-
-```text
-Time: O(C)
-```
-
-Ignoring output construction details.
-
----
-
-# 15. Common Problem 4: Word Search II
-
-This is one of the most important Trie interview problems.
-
-## Naive approach
-
-For each dictionary word:
-
-```text
-Run board DFS to search for that word
-```
-
-If there are many words, board traversal is repeated.
-
-## Better approach
-
-```text
-1. Put all words into one Trie.
-2. Explore the board once using Trie paths.
-3. Prune paths that cannot form any dictionary word.
-```
-
-## State needed during DFS
-
-Usually:
-
-```text
-row
-column
-current Trie node
-visited cells
-current path or stored complete word
-```
-
-## Common optimization
-
-Store the complete word at the terminal Trie node:
-
-```go
-type TrieNode struct {
-	children map[byte]*TrieNode
-	word     string
-}
-```
-
-Instead of reconstructing the path, when you reach a word node:
-
-```go
-if node.word != "" {
-	results = append(results, node.word)
-	node.word = "" // prevent duplicates
-}
-```
-
-## Another optimization
-
-Remove empty Trie branches after they are fully explored.
-
-This reduces future DFS work.
-
----
-
-# 16. Common Problem 5: Autocomplete System
-
-A production-like autocomplete problem is not merely:
-
-```text
-Find all words with prefix
-```
-
-It may ask:
-
-```text
-Return the top three sentences
-Sort by frequency
-Break ties lexicographically
-Update frequency after input '#'
-```
-
-A possible design:
+### Replace Words
 
 ```mermaid
-graph TD
-    I["User types character"] --> P["Update current prefix"]
-    P --> T["Navigate Trie"]
-    T --> C["Read candidate sentences"]
-    C --> S["Sort by frequency"]
-    S --> K["Return top K"]
+flowchart TD
+    I["Inputs and starting state: <strong>roots</strong> , <strong>words</strong> , <strong>children</strong> , <strong>terminal</strong>"]
+    B["Boundary checks<br/>A missing trie edge keeps the original word.<br/>An empty root can replace every word if explicitly present."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Build a trie from dictionary <strong>roots</strong>."]
+        S1["Follow each word until the shortest <strong>terminal</strong> root or a missing edge is reached."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return a parallel slice containing replaced <strong>words</strong> in their original positions."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Two common designs exist.
+**Where it is used in real life:**
 
-## Design A: DFS on every query
+- Text normalization replaces derived terms with canonical roots.
+- Search preprocessing reduces words to known dictionary stems.
 
-At each keystroke:
+```go
+// Exact question: Replace every word with the shortest dictionary root that is its prefix.
+//
+// Example: Input roots [cat, bat, rat] and sentence 'the cattle was rattled by the battery' -> output 'the cat was rat by the bat'.
+//
+// Possible answer: Insert roots into a trie and stop each word traversal at the first terminal node.
+//
+// Output format: Return a parallel slice containing replaced words in their original positions.
+//
+// Inline descriptions:
+// - First terminal endpoint means shortest root because traversal advances one rune at a time.
+//
+// Boundary checks:
+// - A missing trie edge keeps the original word.
+// - An empty root can replace every word if explicitly present.
+//
+// Key variables:
+// - `roots` and `words` are slices whose indexes are input positions and whose elements are string values.
+// - `children` maps rune edge keys to child-node pointers; `terminal` marks a complete root.
+// - `prefix` stores runes followed for the current candidate replacement.
+//
+// Logic:
+// 1. Build a trie from dictionary roots.
+// 2. Follow each word until the shortest terminal root or a missing edge is reached.
+type ReplacementTrieNode struct {
+	children map[rune]*ReplacementTrieNode
+	terminal bool
+}
 
-1. Find prefix node.
-2. DFS all descendants.
-3. Sort candidates.
-4. Return top K.
+func replaceWithRoots(roots, words []string) []string {
+	root := &ReplacementTrieNode{children: make(map[rune]*ReplacementTrieNode)}
+	for _, dictionaryRoot := range roots {
+		node := root
+		for _, character := range dictionaryRoot {
+			if node.children[character] == nil {
+				node.children[character] = &ReplacementTrieNode{children: make(map[rune]*ReplacementTrieNode)}
+			}
+			node = node.children[character]
+		}
+		node.terminal = true
+	}
 
-Simpler, but potentially expensive.
+	replaced := make([]string, len(words))
+	for index, word := range words {
+		node := root
+		prefix := []rune{}
+		found := node.terminal
+		for _, character := range word {
+			if found || node.children[character] == nil {
+				break
+			}
+			node = node.children[character]
+			prefix = append(prefix, character)
+			found = node.terminal
+		}
+		replaced[index] = word
+		if found {
+			replaced[index] = string(prefix)
+		}
+	}
+	return replaced
+}
 
-## Design B: Cache top K at every node
-
-Each node stores its best suggestions.
-
-Query:
-
-```text
-O(P)
+// time complexity: O(D + T) -> average-case child-map access inserts `D` dictionary runes and follows at most `T` word runes.
+// space complexity: O(D + T) -> trie nodes store roots and returned strings can contain input-scale text.
 ```
 
-But insertion and frequency updates become more expensive.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Replace Words" is one small game played with the same pieces and rules.
 
-This is a common system-design trade-off:
-
-```text
-More memory and update cost
-in exchange for
-faster reads
-```
-
----
-
-# 17. Trie Deletion
-
-Deletion is less frequently asked but worth understanding.
-
-Suppose the Trie stores:
-
-```text
-car
-care
-cat
-```
-
-Delete:
-
-```text
-care
-```
-
-You cannot delete the shared nodes:
-
-```text
-c → a → r
-```
-
-because `car` still needs them.
-
-Only the `e` node may be removed.
+### Search Suggestions
 
 ```mermaid
-graph TD
-    R["Root"] --> C["c"]
-    C --> A["a"]
-    A --> RR["r ✓ car"]
-    A --> T["t ✓ cat"]
-    RR -. "delete unused child" .-> E["e ✓ care"]
+flowchart TD
+    I["Inputs and starting state: <strong>children</strong> , <strong>terminal</strong> , <strong>path</strong> , <strong>results</strong>"]
+    B["Boundary checks<br/>A non-positive <strong>limit</strong> or missing prefix returns an empty slice.<br/>The DFS stops immediately once the requested number of <strong>results</strong> is reached."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Follow the prefix to its endpoint."]
+        S1["Explore descendant edges, appending and backtracking <strong>path</strong> runes until the <strong>limit</strong> is reached"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return at most <strong>limit</strong> completions; map iteration means their order is unspecified."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Deletion rules:
+**Where it is used in real life:**
 
-1. Find the word.
-2. Mark its final node as not ending a word.
-3. Walking backward, delete a node only when:
-
-   * It has no children.
-   * It does not end another word.
-
----
-
-# 18. Array Children vs Map Children
-
-## Array implementation
+- Search boxes suggest completions after each prefix.
+- Command palettes filter actions from partial input.
 
 ```go
-children [26]*TrieNode
-```
-
-Advantages:
-
-* Fast direct indexing
-* Predictable lookup
-* Good for lowercase English letters
-
-Disadvantages:
-
-* Every node reserves 26 child pointers
-* Wastes memory when most nodes have few children
-* Not suitable for arbitrary Unicode without a very large structure
-
-## Map implementation
-
-```go
-children map[rune]*TrieNode
-```
-
-Advantages:
-
-* Stores only existing children
-* Supports larger character sets
-* Easier for general input
-
-Disadvantages:
-
-* Hash map overhead
-* Usually slower than direct array indexing
-* More allocations
-
-Interview choice:
-
-```text
-Lowercase English letters only → [26]*TrieNode
-General characters or sparse alphabet → map
-```
-
----
-
-# 19. The Most Important Trie Mental Model
-
-Remember this sentence:
-
-> A Trie stores every prefix as a path.
-
-For the word:
-
-```text
-apple
-```
-
-The Trie implicitly contains the paths:
-
-```text
-a
-ap
-app
-appl
-apple
-```
-
-But only selected paths are marked as complete words.
-
-```text
-Path exists      → prefix exists
-isEnd is true    → complete word exists
-```
-
-This distinction solves most Trie confusion.
-
----
-
-# 20. How to Recognize a Trie Problem
-
-Consider using a Trie when the question includes:
-
-```text
-Many words
-Repeated prefix queries
-Autocomplete
-Dictionary roots
-Starts with
-Wildcard word matching
-Find several words on a board
-Common prefixes
-Prefix-based routing
-```
-
-Do not automatically use a Trie just because strings are involved.
-
-For example:
-
-```text
-Two Sum with strings
-Valid Anagram
-Palindrome checking
-```
-
-These generally do not require a Trie.
-
----
-
-# 21. Interview Solution Template
-
-Use this thinking process.
-
-## Step 1: Identify the repeated work
-
-Ask:
-
-```text
-Are we repeatedly comparing the same prefixes?
-```
-
-## Step 2: Define TrieNode
-
-Usually:
-
-```text
-children
-isEnd
-```
-
-Sometimes also:
-
-```text
-word
-frequency
-top suggestions
-count
-```
-
-## Step 3: Define the alphabet
-
-Ask:
-
-```text
-Only lowercase English letters?
-Case-sensitive?
-Unicode?
-```
-
-This determines array versus map.
-
-## Step 4: Implement navigation once
-
-Create a helper:
-
-```go
-findNode(text)
-```
-
-Reuse it for:
-
-```text
-search
-startsWith
-autocomplete
-```
-
-## Step 5: Add DFS when necessary
-
-DFS is needed for:
-
-```text
-wildcards
-autocomplete
-board search
-finding all words
-```
-
-## Step 6: State complexity using word length
-
-Say:
-
-```text
-Insert and search are O(L), where L is the word length.
-```
-
-Not simply:
-
-```text
-O(1)
-```
-
----
-
-# 22. Common Interview Mistakes
-
-## Mistake 1: Forgetting `isEnd`
-
-Without `isEnd`, you cannot distinguish:
-
-```text
-app
-apple
-```
-
-when only `apple` was inserted.
-
----
-
-## Mistake 2: Treating `Search` and `StartsWith` identically
-
-```text
-Search requires isEnd.
-StartsWith does not.
-```
-
----
-
-## Mistake 3: Rebuilding common prefixes
-
-The whole purpose is to reuse them.
-
----
-
-## Mistake 4: Using an array without validating input
-
-This calculation:
-
-```go
-index := char - 'a'
-```
-
-is only safe when `char` is between `a` and `z`.
-
----
-
-## Mistake 5: Forgetting backtracking
-
-During board search:
-
-```text
-Mark cell visited
-Explore neighbors
-Unmark cell before returning
-```
-
-Otherwise, the cell remains incorrectly blocked for other paths.
-
----
-
-## Mistake 6: Returning duplicate words
-
-In Word Search II, the same word may be found through multiple paths.
-
-Common fixes:
-
-```text
-Use a set
-or
-clear the terminal node's stored word after finding it
-```
-
----
-
-## Mistake 7: Claiming Trie space is always smaller
-
-Tries share prefixes, but each node has object and pointer overhead.
-
-A Trie can consume substantially more memory than storing strings in a hash set.
-
----
-
-# 23. Mock Interview Questions
-
-## Question 1
-
-You insert:
-
-```text
-apple
-```
-
-What are the results?
-
-```text
-Search("apple")
-Search("app")
-StartsWith("app")
-StartsWith("apple")
-```
-
-### Answer
-
-```text
-Search("apple")       → true
-Search("app")         → false
-StartsWith("app")     → true
-StartsWith("apple")   → true
-```
-
----
-
-## Question 2
-
-Why do we need `isEnd`?
-
-### Answer
-
-Because a path may represent only a prefix.
-
-If `apple` exists, the path for `app` exists, but `app` may not be a complete stored word.
-
----
-
-## Question 3
-
-What is the complexity of inserting a word?
-
-### Answer
-
-```text
-O(L)
-```
-
-where `L` is the number of characters in the word.
-
-Each character is processed once.
-
----
-
-## Question 4
-
-Does Trie search depend on the number of stored words?
-
-### Answer
-
-Not directly.
-
-The search follows the characters of the query, so the complexity is primarily:
-
-```text
-O(L)
-```
-
-However, implementation details such as hash-map lookup, alphabet size and memory behavior affect constants.
-
----
-
-## Question 5
-
-How would you support `.` as any character?
-
-### Answer
-
-Use DFS.
-
-For a normal character, follow one matching child.
-
-For `.`, recursively try all children.
-
----
-
-## Question 6
-
-How would you return all words beginning with `app`?
-
-### Answer
-
-1. Navigate to the node for `app`.
-2. Run DFS from that node.
-3. Record every path ending at an `isEnd` node.
-
-Complexity:
-
-```text
-O(P + R)
-```
-
-where `P` is the prefix length and `R` is the work required to collect results.
-
----
-
-## Question 7
-
-When should you use a map instead of an array for children?
-
-### Answer
-
-Use a map when:
-
-* The alphabet is large.
-* The Trie is sparse.
-* Unicode or arbitrary characters are supported.
-
-Use a fixed array when the alphabet is small and known, such as lowercase English letters.
-
----
-
-## Question 8
-
-Why is Trie useful for Word Search II?
-
-### Answer
-
-It allows many dictionary words to be searched together and stops DFS as soon as the current board path is not a prefix of any dictionary word.
-
-This is called prefix pruning.
-
----
-
-## Question 9
-
-Can a hash set replace a Trie?
-
-### Answer
-
-For exact word lookup, often yes.
-
-For efficient prefix lookup, autocomplete or wildcard traversal, a Trie is more natural.
-
----
-
-## Question 10
-
-How would you make autocomplete faster?
-
-### Answer
-
-Store top-ranked suggestions at every Trie node.
-
-This increases memory and update cost but makes queries faster.
-
----
-
-# 24. Coding Mock Question
-
-Implement:
-
-```go
-type Trie interface {
-	Insert(word string)
-	Search(word string) bool
-	StartsWith(prefix string) bool
+// Exact question: Return up to `limit` stored words that begin with a supplied prefix.
+//
+// Example: Input words [car, card, care, cat], prefix = car, and limit = 3 -> output contains car, card, and care in any order.
+//
+// Possible answer: Walk to the prefix node, then DFS through its descendants to collect terminal paths.
+//
+// Output format: Return at most `limit` completions; map iteration means their order is unspecified.
+//
+// Inline descriptions:
+// - Prefix lookup avoids traversing branches that cannot produce a matching completion.
+//
+// Boundary checks:
+// - A non-positive limit or missing prefix returns an empty slice.
+// - The DFS stops immediately once the requested number of results is reached.
+//
+// Key variables:
+// - `children` maps next-rune keys to child-node pointer values.
+// - `terminal` marks paths that are complete stored words.
+// - `path` is a rune slice whose indexes are word positions and whose elements form the current completion.
+// - `results` stores completed string values.
+//
+// Logic:
+// 1. Follow the prefix to its endpoint.
+// 2. Explore descendant edges, appending and backtracking path runes until the limit is reached.
+type AutocompleteTrieNode struct {
+	children map[rune]*AutocompleteTrieNode
+	terminal bool
 }
+
+func autocomplete(root *AutocompleteTrieNode, prefix string, limit int) []string {
+	results := []string{}
+	if root == nil || limit <= 0 {
+		return results
+	}
+	node := root
+	path := []rune(prefix)
+	for _, character := range path {
+		node = node.children[character]
+		if node == nil {
+			return results
+		}
+	}
+	var collect func(*AutocompleteTrieNode)
+	collect = func(current *AutocompleteTrieNode) {
+		if current == nil || len(results) >= limit {
+			return
+		}
+		if current.terminal {
+			results = append(results, string(path))
+		}
+		for character, child := range current.children {
+			path = append(path, character)
+			collect(child)
+			path = path[:len(path)-1]
+		}
+	}
+	collect(node)
+	return results
+}
+
+// time complexity: O(P + S) -> average-case child-map access follows `P` prefix runes and explores `S` descendant nodes.
+// space complexity: O(L + K) -> DFS path length is at most `L` and up to `K` completion strings are returned.
 ```
 
-Follow-up questions an interviewer may ask:
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Search Suggestions" is one small game played with the same pieces and rules.
 
-1. Support deletion.
-2. Return the number of words with a prefix.
-3. Return all matching words.
-4. Support `.` wildcard.
-5. Make it case-insensitive.
-6. Support Unicode.
-7. Return top five autocomplete suggestions.
-8. Make it concurrency-safe.
-9. Reduce memory consumption.
-10. Serialize and deserialize the Trie.
+### Delete a Trie Word
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>children</strong> , <strong>terminal</strong> , <strong>characters</strong>"]
+    B["Boundary checks<br/>A missing edge reports that the word was not stored.<br/>A word that is only a prefix is not deleted unless its endpoint is <strong>terminal</strong>."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Recurse to the word endpoint and clear its <strong>terminal</strong> marker."]
+        S1["While unwinding, remove only nonterminal child nodes with no remaining edges."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return whether the exact word existed and was deleted."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Dictionaries remove entries while preserving shared prefixes.
+- Rule engines retire one prefix rule without deleting related rules.
+
+```go
+// Exact question: How can a trie delete one word without removing prefixes still needed by other words?
+//
+// Example: Insert car, care, and cat, then delete car -> Search(car) is false while care and cat remain searchable.
+//
+// Possible answer: Clear the terminal marker, then prune a node only when it has no children and represents no other word.
+//
+// Output format: Return whether the exact word existed and was deleted.
+//
+// Inline descriptions:
+// - Recursive return state tells the parent whether a now-unused child edge can be removed.
+//
+// Boundary checks:
+// - A missing edge reports that the word was not stored.
+// - A word that is only a prefix is not deleted unless its endpoint is terminal.
+//
+// Key variables:
+// - `children` maps rune keys to child-node pointers and preserves paths shared by other words.
+// - `terminal` records exact-word membership at an endpoint.
+// - `characters` is a rune slice whose indexes are word positions and whose elements select edges.
+//
+// Logic:
+// 1. Recurse to the word endpoint and clear its terminal marker.
+// 2. While unwinding, remove only nonterminal child nodes with no remaining edges.
+type DeletionTrieNode struct {
+	children map[rune]*DeletionTrieNode
+	terminal bool
+}
+
+func deleteTrieWord(root *DeletionTrieNode, word string) bool {
+	characters := []rune(word)
+	var remove func(*DeletionTrieNode, int) (bool, bool)
+	remove = func(node *DeletionTrieNode, index int) (bool, bool) {
+		if node == nil {
+			return false, false
+		}
+		if index == len(characters) {
+			if !node.terminal {
+				return false, false
+			}
+			node.terminal = false
+			return true, len(node.children) == 0
+		}
+		character := characters[index]
+		deleted, pruneChild := remove(node.children[character], index+1)
+		if !deleted {
+			return false, false
+		}
+		if pruneChild {
+			delete(node.children, character)
+		}
+		return true, !node.terminal && len(node.children) == 0
+	}
+	deleted, _ := remove(root, 0)
+	return deleted
+}
+
+// time complexity: O(L) -> average-case child-map access follows and may unwind across the `L` word runes once.
+// space complexity: O(L) -> recursion holds at most one frame per word rune.
+```
+
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Delete a Trie Word" is one small game played with the same pieces and rules.
+
+### Maximum XOR of Two Numbers
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>nums</strong> , <strong>candidate</strong>"]
+    B["Boundary checks<br/>Fewer than two numbers cannot form a pair.<br/>This focused example treats inputs as non-negative 32-bit values and reads bits 30 through zero."]
+    I --> B
+
+    subgraph PROCESS["BFS and queue-processing region"]
+        direction TD
+        S0["Insert all numbers from high bit to low bit."]
+        S1["Query each number while preferring the opposite bit at every level."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the largest pairwise XOR value; inputs with fewer than two values return zero."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Network and numeric analytics maximize bitwise difference.
+- Compression research compares values through bit-prefix structure.
+
+```go
+// Exact question: What is the maximum XOR obtainable from any two non-negative integers using a bitwise trie?
+//
+// Example: Input numbers = [3,10,5,25,2,8] -> output 28 from 5 XOR 25.
+//
+// Possible answer: Insert every number by bits, then greedily follow the opposite bit when querying each number.
+//
+// Output format: Return the largest pairwise XOR value; inputs with fewer than two values return zero.
+//
+// Inline descriptions:
+// - Opposite bits set the current XOR bit to one, so they are preferred from most significant to least significant.
+//
+// Boundary checks:
+// - Fewer than two numbers cannot form a pair.
+// - This focused example treats inputs as non-negative 32-bit values and reads bits 30 through zero.
+//
+// Key variables:
+// - `nums` is a slice whose indexes are input positions and whose elements are non-negative integer keys.
+// - `child[0]` and `child[1]` are trie edges keyed by bit value and pointing to the next bit-level node.
+// - `candidate` accumulates the XOR value produced by one query path.
+//
+// Logic:
+// 1. Insert all numbers from high bit to low bit.
+// 2. Query each number while preferring the opposite bit at every level.
+type BitTrieNode struct {
+	child [2]*BitTrieNode
+}
+
+func maximumPairXOR(nums []int) int {
+	if len(nums) < 2 {
+		return 0
+	}
+	root := &BitTrieNode{}
+	for _, number := range nums {
+		node := root
+		for bit := 30; bit >= 0; bit-- {
+			value := (number >> bit) & 1
+			if node.child[value] == nil {
+				node.child[value] = &BitTrieNode{}
+			}
+			node = node.child[value]
+		}
+	}
+	best := 0
+	for _, number := range nums {
+		node, candidate := root, 0
+		for bit := 30; bit >= 0; bit-- {
+			value := (number >> bit) & 1
+			opposite := value ^ 1
+			if node.child[opposite] != nil {
+				candidate |= 1 << bit
+				node = node.child[opposite]
+			} else {
+				node = node.child[value]
+			}
+		}
+		if candidate > best {
+			best = candidate
+		}
+	}
+	return best
+}
+
+// time complexity: O(n * B) -> each of `n` numbers is inserted and queried across fixed bit width `B=31`.
+// space complexity: O(n * B) -> insertion may create one bit-trie node per number per bit.
+```
+
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Maximum XOR of Two Numbers" is one small game played with the same pieces and rules.
+
+### Count Words with a Prefix
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>children</strong> , <strong>passCount</strong> , <strong>node</strong>"]
+    B["Boundary checks<br/>A missing prefix edge returns zero.<br/>The root count includes all inserted words, so an empty prefix returns the dictionary size."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Increment pass counts along every inserted path."]
+        S1["Follow a query prefix and return its endpoint count."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the number of inserted words beginning with the prefix."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Search analytics counts indexed terms under a prefix.
+- Autocomplete ranks prefixes by dictionary volume.
+
+```go
+// Exact question: How many stored words share a requested prefix?
+//
+// Example: Insert app, apple, ape, and bat; prefix ap -> output 3.
+//
+// Possible answer: Store a pass count in every trie node and return the count at the prefix endpoint.
+//
+// Output format: Return the number of inserted words beginning with the prefix.
+//
+// Inline descriptions:
+// - Updating counts during insertion makes the later prefix query depend only on prefix length.
+//
+// Boundary checks:
+// - A missing prefix edge returns zero.
+// - The root count includes all inserted words, so an empty prefix returns the dictionary size.
+//
+// Key variables:
+// - `children` is a map whose rune keys label edges and whose pointer values identify prefix nodes.
+// - `passCount` is the number of inserted words whose paths include a node.
+// - `node` is the current endpoint while inserting or querying.
+//
+// Logic:
+// 1. Increment pass counts along every inserted path.
+// 2. Follow a query prefix and return its endpoint count.
+type CountingTrieNode struct {
+	children  map[rune]*CountingTrieNode
+	passCount int
+}
+
+func (root *CountingTrieNode) InsertForCounting(word string) {
+	if root.children == nil {
+		root.children = make(map[rune]*CountingTrieNode)
+	}
+	root.passCount++
+	node := root
+	for _, character := range word {
+		if node.children[character] == nil {
+			node.children[character] = &CountingTrieNode{children: make(map[rune]*CountingTrieNode)}
+		}
+		node = node.children[character]
+		node.passCount++
+	}
+}
+
+func (root *CountingTrieNode) CountPrefix(prefix string) int {
+	if root == nil {
+		return 0
+	}
+	node := root
+	for _, character := range prefix {
+		node = node.children[character]
+		if node == nil {
+			return 0
+		}
+	}
+	return node.passCount
+}
+
+// time complexity: O(L) -> average-case child-map access follows the `L` supplied runes once.
+// space complexity: O(L) -> insertion may create one node per new rune, while a query uses O(1) auxiliary space.
+```
+
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Count Words with a Prefix" is one small game played with the same pieces and rules.
+
+### Exact Search versus Prefix Search
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>children</strong> , <strong>terminal</strong> , <strong>node</strong>"]
+    B["Boundary checks<br/>A missing edge returns false, false.<br/>An empty query inspects the root's path and <strong>terminal</strong> state."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Follow the query path."]
+        S1["Report path existence separately from <strong>terminal</strong>-word existence."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return two booleans: whether the path exists and whether it is a complete stored word."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Routers distinguish a complete route from an intermediate prefix.
+- Spell checkers distinguish complete words from valid beginnings.
+
+```go
+// Exact question: What is the difference between exact search and prefix search in a trie?
+//
+// Example: After storing car, query ca -> path exists true and complete word false; query car -> true, true.
+//
+// Possible answer: Both follow the same character path, but exact search also requires the endpoint's terminal marker.
+//
+// Output format: Return two booleans: whether the path exists and whether it is a complete stored word.
+//
+// Inline descriptions:
+// - The pair makes the endpoint-state distinction explicit for an interview answer.
+//
+// Boundary checks:
+// - A missing edge returns `false, false`.
+// - An empty query inspects the root's path and terminal state.
+//
+// Key variables:
+// - `children` maps rune edge keys to child-node pointer values.
+// - `terminal` records complete-word membership at the endpoint.
+// - `node` is the state after consuming all query runes.
+//
+// Logic:
+// 1. Follow the query path.
+// 2. Report path existence separately from terminal-word existence.
+type MockTrieNode struct {
+	children map[rune]*MockTrieNode
+	terminal bool
+}
+
+func triePathAndWord(root *MockTrieNode, query string) (bool, bool) {
+	if root == nil {
+		return false, false
+	}
+	node := root
+	for _, character := range query {
+		node = node.children[character]
+		if node == nil {
+			return false, false
+		}
+	}
+	return true, node.terminal
+}
+
+// time complexity: O(L) -> average-case child-map access follows one edge for each of `L` runes.
+// space complexity: O(1) -> only one current-node pointer is retained.
+```
+
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Exact Search versus Prefix Search" is one small game played with the same pieces and rules.
+
+### Choose Trie or Hash Map
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>query</strong>"]
+    B["Boundary checks<br/>An unknown <strong>query</strong> type returns a clarification result."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Map prefix families to a trie and exact independent keys to a hash map."]
+    end
+
+    B --> S0
+    S0 --> O["Return 'trie', 'hash map', or 'clarify <strong>query</strong>'."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- System designers choose between exact lookup and prefix navigation.
+- Memory planning compares shared prefixes with direct whole-key indexing.
+
+```go
+// Exact question: Should a word problem use a trie or a hash map?
+//
+// Example: Input query = autocomplete -> output trie; input query = exact key -> output hash map.
+//
+// Possible answer: Use a trie for shared-prefix traversal and a hash map for independent exact-key lookup.
+//
+// Output format: Return `"trie"`, `"hash map"`, or `"clarify query"`.
+//
+// Inline descriptions:
+// - Exact membership alone does not need character-by-character prefix state.
+//
+// Boundary checks:
+// - An unknown query type returns a clarification result.
+//
+// Key variables:
+// - `query` describes whether keys are requested as full independent values or reusable prefixes.
+// - The returned string names the most direct lookup structure.
+//
+// Logic:
+// 1. Map prefix families to a trie and exact independent keys to a hash map.
+func chooseTrieOrHashMap(query string) string {
+	switch query {
+	case "prefix", "autocomplete", "wildcard characters":
+		return "trie"
+	case "exact key", "frequency by full word":
+		return "hash map"
+	default:
+		return "clarify query"
+	}
+}
+
+// time complexity: O(1) -> a fixed set of query labels is checked.
+// space complexity: O(1) -> selection allocates neither structure.
+```
+
+> **Baby analogy:** Imagine a word tree made from shared letter branches. "Choose Trie or Hash Map" is one small game played with the same pieces and rules.
 
 ---
 
-# 25. Advanced Trie Variations
+## Interview checklist and next steps
 
-Once the normal Trie is clear, related structures become easier.
+Use this answer order during an interview:
 
-## Compressed Trie or Radix Tree
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
 
-Chains with only one child are compressed.
+Recommended practice order:
+1. [Implement Trie](#implement-trie)
+2. [Word Search II](#word-search-ii)
+3. [Add and Search Words with Wildcards](#add-and-search-words-with-wildcards)
+4. [Replace Words](#replace-words)
+5. [Search Suggestions](#search-suggestions)
+6. [Delete a Trie Word](#delete-a-trie-word)
+7. [Maximum XOR of Two Numbers](#maximum-xor-of-two-numbers)
+8. [Count Words with a Prefix](#count-words-with-a-prefix)
+9. [Exact Search versus Prefix Search](#exact-search-versus-prefix-search)
+10. [Choose Trie or Hash Map](#choose-trie-or-hash-map)
 
-Instead of:
+Continue with: Concatenated Words, Stream of Characters, Palindrome Pairs, Longest Word in Dictionary, Compressed Radix Tree.
 
-```text
-c → o → m → p → u → t → e
+```mermaid
+flowchart LR
+    Q0["Implement Trie"]
+    Q0 --> Q1["Word Search II"]
+    Q1 --> Q2["Add and Search Words with Wildcards"]
+    Q2 --> Q3["Replace Words"]
+    Q3 --> Q4["Search Suggestions"]
+    Q4 --> Q5["Delete a Trie Word"]
+    Q5 --> Q6["Maximum XOR of Two Numbers"]
+    Q6 --> Q7["Count Words with a Prefix"]
+    Q7 --> Q8["Exact Search versus Prefix Search"]
+    Q8 --> Q9["Choose Trie or Hash Map"]
 ```
 
-store:
-
-```text
-compute
-```
-
-as one edge.
-
-This saves memory and traversal overhead.
-
----
-
-## Ternary Search Tree
-
-Each node contains:
-
-```text
-character
-left child
-equal child
-right child
-```
-
-It combines ideas from:
-
-```text
-Trie + Binary Search Tree
-```
-
----
-
-## Bitwise Trie
-
-Stores numbers bit by bit:
-
-```text
-0 or 1
-```
-
-Used in problems such as:
-
-```text
-Maximum XOR of Two Numbers
-```
-
-Mental model:
-
-```text
-Normal Trie → characters
-Bitwise Trie → bits
-```
-
----
-
-# 26. Problem Priority for Interviews
-
-Study them in this order:
-
-| Priority | Problem                     | Main concept               |
-| -------: | --------------------------- | -------------------------- |
-|        1 | Implement Trie              | Insert, search, startsWith |
-|        2 | Design Add and Search Words | Wildcard DFS               |
-|        3 | Replace Words               | Shortest prefix            |
-|        4 | Word Search II              | Trie + board DFS           |
-|        5 | Autocomplete System         | Ranking and caching        |
-|        6 | Maximum XOR of Two Numbers  | Bitwise Trie               |
-
----
-
-# 27. Final Cheat Sheet
-
-```text
-TRIE = PREFIX TREE
-
-Node contains:
-- children
-- isEnd
-
-Insert:
-- Follow/create one node per character
-- Mark final node as isEnd
-
-Search:
-- Every character path must exist
-- Final node must have isEnd = true
-
-StartsWith:
-- Every prefix character path must exist
-- isEnd is irrelevant
-
-Complexity:
-- Insert: O(L)
-- Search: O(L)
-- Prefix search: O(P)
-- Space: O(total unique prefix characters)
-
-DFS with Trie:
-- Autocomplete
-- Wildcard search
-- Word Search II
-
-Main mental model:
-- Path exists = prefix exists
-- isEnd = complete word exists
-```
-
-The central interview insight is:
-
-> A Trie avoids repeating prefix comparisons by turning each shared prefix into a shared path.
+> **Baby analogy:** Imagine a word tree made from shared letter branches. Pack the same checklist every time so no important interview step is forgotten.

@@ -8,7 +8,7 @@
       <p>{{.Article.Description}}</p>
       <div class="article-meta"><span>{{.Article.ReadMinutes}} min read</span><span>{{.Article.WordCount}} words</span><span>Markdown source</span></div>
     </header>
-    <div class="markdown-body">{{.Article.Content}}</div>
+    <div class="markdown-body"{{if eq .Article.Section "datastructures"}} data-code-wrap="true"{{end}}>{{.Article.Content}}</div>
     <nav class="article-pagination" aria-label="Article pagination">
       {{with .Article.Previous}}<a href="/docs/{{.Slug}}"><small>← Previous</small><strong>{{.Title}}</strong></a>{{else}}<span></span>{{end}}
       {{with .Article.Next}}<a class="next" href="/docs/{{.Slug}}"><small>Next →</small><strong>{{.Title}}</strong></a>{{end}}

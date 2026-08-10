@@ -1,1228 +1,234 @@
-# Arrays and Slices — Explained Simply
+# Arrays and Slices — A Compact Interview Guide
 
-## 1. The simplest mental model
+Arrays place values in indexed order. Go slices add a small descriptor over a backing array so the visible length can change while storage may still be shared.
 
-Imagine a row of numbered lockers:
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 Array Interview Questions](#top-10-array-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-```text
-Index:     0      1      2      3      4
-        +------+------+------+------+------+
-Value:  |  10  |  20  |  30  |  40  |  50  |
-        +------+------+------+------+------+
-```
-
-Each locker:
-
-* Has a fixed position called an **index**
-* Stores one value
-* Can be accessed directly using its index
-
-```go
-numbers := []int{10, 20, 30, 40, 50}
-
-fmt.Println(numbers[0]) // 10
-fmt.Println(numbers[3]) // 40
-```
-
-The first position is index `0`, not index `1`.
-
-```mermaid
-flowchart LR
-    A["Index 0<br/>10"] --> B["Index 1<br/>20"]
-    B --> C["Index 2<br/>30"]
-    C --> D["Index 3<br/>40"]
-    D --> E["Index 4<br/>50"]
-```
-
-The most important property is:
-
-> An array stores elements next to each other, allowing direct access to any position.
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
-
-# 2. Why do we need arrays?
-
-Suppose you want to store the marks of five students.
-
-Without an array:
-
-```go
-student1 := 90
-student2 := 75
-student3 := 82
-student4 := 94
-student5 := 68
-```
-
-This becomes difficult to process.
-
-With an array or slice:
-
-```go
-marks := []int{90, 75, 82, 94, 68}
-
-for _, mark := range marks {
-    fmt.Println(mark)
-}
-```
-
-Arrays and slices make it easy to:
-
-* Store many related values
-* Process values using loops
-* Sort and search data
-* Find maximums and minimums
-* Calculate sums
-* Compare neighboring values
-* Implement stacks, queues, heaps and matrices
-* Solve most interview problems
-
-Many data structures eventually use an array internally.
-
-```mermaid
-flowchart TD
-    A["Array / Slice"] --> B["Stack"]
-    A --> C["Queue"]
-    A --> D["Heap"]
-    A --> E["Hash Table Buckets"]
-    A --> F["Matrix"]
-    A --> G["Dynamic Array"]
-```
-
----
-
-# 3. Array versus slice in Go
-
-In many programming languages, the word “array” is also used loosely for a dynamic list.
-
-In Go, arrays and slices are different.
-
-## Go array
-
-An array has a fixed size.
-
-```go
-numbers := [5]int{10, 20, 30, 40, 50}
-```
-
-The size is part of its type:
-
-```go
-var a [3]int
-var b [5]int
-```
-
-`[3]int` and `[5]int` are different types.
-
-You cannot resize an array after creating it.
-
----
-
-## Go slice
-
-A slice is a flexible view over an underlying array.
-
-```go
-numbers := []int{10, 20, 30}
-numbers = append(numbers, 40)
-```
-
-Slices are used much more commonly in normal Go programs.
-
-```go
-var array [5]int
-var slice []int
-```
-
-The easiest mental model is:
-
-> An array is the actual row of lockers.
-> A slice is a small controller that describes which lockers you can currently see.
-
-A Go slice internally contains approximately three pieces of information:
-
-```text
-Pointer: Where the underlying array starts
-Length:  How many elements are currently visible
-Capacity: How much space is available before reallocation
-```
-
-```mermaid
-flowchart LR
-    S["Slice header<br/>pointer<br/>length = 3<br/>capacity = 5"]
-    S --> A0["10"]
-    A0 --> A1["20"]
-    A1 --> A2["30"]
-    A2 --> A3["unused"]
-    A3 --> A4["unused"]
-```
-
-Example:
-
-```go
-numbers := make([]int, 3, 5)
-
-fmt.Println(len(numbers)) // 3
-fmt.Println(cap(numbers)) // 5
-```
-
-The underlying array has space for five elements, but the slice currently exposes three.
-
----
-
-# 4. How array access is calculated
-
-Array elements are stored consecutively in memory.
-
-Suppose each value takes four bytes.
-
-```text
-Base address = 1000
-Element size = 4 bytes
-```
-
-The memory address of an element is:
-
-```text
-address = baseAddress + index × elementSize
-```
-
-For index `3`:
-
-```text
-address = 1000 + 3 × 4
-        = 1012
-```
-
-```mermaid
-flowchart LR
-    A["Index 0<br/>Address 1000"] --> B["Index 1<br/>Address 1004"]
-    B --> C["Index 2<br/>Address 1008"]
-    C --> D["Index 3<br/>Address 1012"]
-    D --> E["Index 4<br/>Address 1016"]
-```
-
-The computer does not need to examine indexes `0`, `1` and `2` before reaching index `3`.
-
-It calculates the address directly.
-
-That is why accessing an array element is:
-
-```text
-O(1)
-```
-
-```go
-value := numbers[3]
-```
-
-Regardless of whether the array contains 10 elements or 10 million elements, the address calculation requires approximately the same amount of work.
-
----
-
-# 5. Important terminology
-
-Consider:
-
-```go
-numbers := []int{10, 20, 30, 40, 50}
-```
-
-| Term        | Meaning                                           |
-| ----------- | ------------------------------------------------- |
-| Element     | A value stored in the slice, such as `30`         |
-| Index       | The position of an element, such as `2`           |
-| Length      | Number of currently accessible elements           |
-| Capacity    | Available backing-array space                     |
-| Subarray    | Continuous section of an array                    |
-| Subsequence | Elements in order, but not necessarily continuous |
-| Prefix      | Section beginning at index `0`                    |
-| Suffix      | Section ending at the last index                  |
-
-Examples:
-
-```text
-Array:       [1, 2, 3, 4, 5]
-
-Subarray:    [2, 3, 4]
-Subsequence: [1, 3, 5]
-Prefix:      [1, 2, 3]
-Suffix:      [4, 5]
-```
-
-This distinction matters considerably in interviews.
-
----
-
-# 6. Array and slice complexity
-
-Let `n` be the number of elements.
-
-| Operation             |      Time complexity | Reason                      |
-| --------------------- | -------------------: | --------------------------- |
-| Access by index       |               `O(1)` | Address calculated directly |
-| Update by index       |               `O(1)` | Direct access               |
-| Search unsorted array |               `O(n)` | May examine every element   |
-| Append to slice       |     Amortized `O(1)` | Occasionally reallocates    |
-| Insert at beginning   |               `O(n)` | Existing elements must move |
-| Insert in middle      |               `O(n)` | Later elements must move    |
-| Delete from middle    |               `O(n)` | Later elements must move    |
-| Copy array            |               `O(n)` | Every element is copied     |
-| Traverse array        |               `O(n)` | Every element is visited    |
-| Sort                  | Usually `O(n log n)` | Depends on algorithm        |
-
-## Why is append only amortized `O(1)`?
-
-When a slice has spare capacity:
-
-```text
-[10, 20, 30, _, _]
-```
-
-Appending `40` is cheap:
-
-```text
-[10, 20, 30, 40, _]
-```
-
-But when the backing array is full:
-
-```text
-[10, 20, 30]
-```
-
-Go may need to:
-
-1. Allocate a larger array
-2. Copy existing values
-3. Add the new value
-4. Point the slice to the new array
-
-```mermaid
-flowchart TD
-    A["Backing array full<br/>10, 20, 30"] --> B["Allocate larger array"]
-    B --> C["Copy 10, 20, 30"]
-    C --> D["Append 40"]
-    D --> E["Slice points to new array"]
-```
-
-One append can therefore be `O(n)`, but most appends are cheap. Across many appends, the average is called **amortized `O(1)`**.
-
----
-
-# 7. Go slice behavior you must understand
-
-## 7.1 Slices can share the same backing array
-
-```go
-numbers := []int{10, 20, 30, 40, 50}
-part := numbers[1:4]
-
-fmt.Println(part) // [20 30 40]
-```
-
-`part` is usually not a complete copy. It refers to the same backing array.
-
-```go
-part[0] = 999
-
-fmt.Println(numbers) // [10 999 30 40 50]
-```
-
-```mermaid
-flowchart TD
-    S1["numbers<br/>len=5"] --> A0["10"]
-    S1 --> A1["999"]
-    S1 --> A2["30"]
-    S1 --> A3["40"]
-    S1 --> A4["50"]
-
-    S2["part<br/>len=3"] --> A1
-    S2 --> A2
-    S2 --> A3
-```
-
-Mental model:
-
-> Two remote controls can point to the same television.
-
-Changing the television through one remote is visible through the other.
-
----
-
-## 7.2 Copying a slice variable does not copy the elements
-
-```go
-a := []int{10, 20, 30}
-b := a
-
-b[0] = 999
-
-fmt.Println(a) // [999 20 30]
-```
-
-The slice header is copied, but both slices refer to the same backing array.
-
-To create an independent copy:
-
-```go
-a := []int{10, 20, 30}
-
-b := make([]int, len(a))
-copy(b, a)
-
-b[0] = 999
-
-fmt.Println(a) // [10 20 30]
-fmt.Println(b) // [999 20 30]
-```
-
----
-
-## 7.3 Array assignment copies the entire array
-
-```go
-a := [3]int{10, 20, 30}
-b := a
-
-b[0] = 999
-
-fmt.Println(a) // [10 20 30]
-fmt.Println(b) // [999 20 30]
-```
-
-Because arrays are values in Go, assigning one array to another copies all elements.
-
----
-
-## 7.4 Slice bounds
-
-For:
-
-```go
-numbers := []int{10, 20, 30, 40, 50}
-```
-
-This:
-
-```go
-part := numbers[1:4]
-```
-
-means:
-
-```text
-Start at index 1
-Stop before index 4
-```
-
-Result:
-
-```text
-[20, 30, 40]
-```
-
-The general format is:
-
-```go
-slice[start:end]
-```
-
-The start is inclusive. The end is exclusive.
-
----
-
-# 8. The main array interview patterns
-
-Most array interview problems are not completely new problems.
-
-They usually belong to one of these patterns:
-
-```mermaid
-flowchart TD
-    A["Array problem"] --> B{"What is being asked?"}
-
-    B -->|"Visit every value"| C["Traversal"]
-    B -->|"Compare ends or pairs"| D["Two pointers"]
-    B -->|"Continuous changing range"| E["Sliding window"]
-    B -->|"Many range sums"| F["Prefix sum"]
-    B -->|"Many range updates"| G["Difference array"]
-    B -->|"Maximum continuous sum"| H["Kadane's algorithm"]
-    B -->|"Modify without extra array"| I["In-place modification"]
-    B -->|"Fast value lookup"| J["Hash map / set"]
-    B -->|"Sorted data"| K["Binary search / two pointers"]
-```
-
-The primary interview skill is not memorizing code.
-
-It is recognizing which pattern applies.
-
----
-
-# 9. Pattern 1: Traversal
 
 ## Mental model
 
-Walk past every locker and inspect it.
+An index identifies a position, and the element at that position holds a value. Random access is fast because the address is calculated directly from the base address, element size, and index.
 
-```mermaid
-flowchart LR
-    A["Start"] --> B["Index 0"]
-    B --> C["Index 1"]
-    C --> D["Index 2"]
-    D --> E["Index 3"]
-    E --> F["End"]
-```
-
-Basic traversal:
-
-```go
-numbers := []int{4, 2, 8, 1}
-
-for i := 0; i < len(numbers); i++ {
-    fmt.Println(numbers[i])
-}
-```
-
-Using `range`:
-
-```go
-for index, value := range numbers {
-    fmt.Println(index, value)
-}
-```
-
-## Example: Find maximum
-
-```go
-func maxValue(numbers []int) int {
-    maximum := numbers[0]
-
-    for _, number := range numbers[1:] {
-        if number > maximum {
-            maximum = number
-        }
-    }
-
-    return maximum
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-## Common traversal questions
-
-* Find maximum or minimum
-* Calculate total sum
-* Count even numbers
-* Find first occurrence
-* Verify whether an array is sorted
-* Count frequency
-* Find a missing value
-
----
-
-# 10. Pattern 2: Two pointers
-
-Two pointers means maintaining two indexes instead of repeatedly scanning the array.
-
-```text
-left                            right
-  ↓                               ↓
-[ 1, 2, 3, 4, 5, 6, 7, 8 ]
-```
-
-The pointers usually:
-
-* Move toward each other
-* Move in the same direction
-* Represent a valid range
-* Separate processed and unprocessed elements
-
----
-
-## 10.1 Opposite-direction pointers
-
-Useful for:
-
-* Sorted pair sum
-* Palindrome checking
-* Container With Most Water
-* Reversing an array
+| Real system | How the topic appears |
+| --- | --- |
+| Image processing | Pixels stored in row-major order |
+| Metrics | Time-series samples stored by time position |
+| Databases | Contiguous pages and column batches |
+| Networking | Packet bytes and buffers |
 
 ```mermaid
 flowchart TD
-    A["left at beginning<br/>right at end"] --> B{"Condition satisfied?"}
-    B -->|"Yes"| C["Return or record answer"]
-    B -->|"No"| D{"Which pointer should move?"}
-    D --> E["Move left rightward"]
-    D --> F["Move right leftward"]
-    E --> B
-    F --> B
+    T["Arrays and slices"]
+    T --> R0["Go array NT"]
+    T --> R1["Go slice T"]
+    T --> R2["Index"]
+    T --> R3["Backing array"]
 ```
 
-### Example: Pair sum in a sorted array
-
-```go
-func hasPairWithSum(numbers []int, target int) bool {
-    left := 0
-    right := len(numbers) - 1
-
-    for left < right {
-        sum := numbers[left] + numbers[right]
-
-        if sum == target {
-            return true
-        }
-
-        if sum < target {
-            left++
-        } else {
-            right--
-        }
-    }
-
-    return false
-}
-```
-
-Why does this work?
-
-Suppose the sum is too small:
-
-```text
-numbers[left] + numbers[right] < target
-```
-
-Because the array is sorted, moving `right` left would only make the sum smaller.
-
-Therefore, we must increase `left`.
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-A brute-force pair comparison would take `O(n²)`.
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. The box number is the index, while the toy inside is the value; do not confuse the label with the toy.
 
 ---
 
-## 10.2 Same-direction pointers
+## Representation and core operations
 
-Useful for:
+Separate the logical slice from its physical backing array. Two slices can expose different ranges while still mutating the same storage.
 
-* Remove duplicates
-* Move zeroes
-* Partition values
-* Remove a target value
-* Compact an array
+| Representation | Role |
+| --- | --- |
+| Go array [N]T | Fixed length; assignment copies all elements |
+| Go slice []T | Pointer, length, and capacity describing a backing array |
+| Index | Zero-based position, not the stored value |
+| Backing array | Contiguous element storage that slices may share |
 
-Mental model:
-
-```text
-write = where the next valid value should go
-read  = searches for valid values
-```
-
-### Example: Move Zeroes
-
-Input:
-
-```text
-[0, 1, 0, 3, 12]
-```
-
-Output:
-
-```text
-[1, 3, 12, 0, 0]
-```
-
-```go
-func moveZeroes(numbers []int) {
-    write := 0
-
-    for read := 0; read < len(numbers); read++ {
-        if numbers[read] != 0 {
-            numbers[write] = numbers[read]
-            write++
-        }
-    }
-
-    for write < len(numbers) {
-        numbers[write] = 0
-        write++
-    }
-}
-```
-
-Visualization:
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Read or write by index | O(1) | Calculate one element address |
+| Append | Amortized O(1) | Reuse capacity or allocate and copy |
+| Insert or delete in middle | O(n) | Shift later elements |
+| Linear search | O(n) | Inspect values until a match |
+| Copy n elements | O(n) | Duplicate the selected range |
 
 ```mermaid
 flowchart LR
-    A["Read every value"] --> B{"Non-zero?"}
-    B -->|"Yes"| C["Write at write pointer"]
-    C --> D["Move write pointer"]
-    B -->|"No"| E["Skip"]
-    D --> F["Continue"]
-    E --> F
+    A0["Read or write by index"]
+    A0 --> A1["Append"]
+    A1 --> A2["Insert or delete in middle"]
+    A2 --> A3["Linear search"]
+    A3 --> A4["Copy n elements"]
 ```
 
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. Opening one known box is immediate, but inserting a new box in the middle makes every later box slide over.
 
 ---
 
-# 11. Pattern 3: Sliding window
+## Interview patterns and complexity
 
-Sliding window is used for a continuous section of an array or string.
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Pair or opposite ends | Two pointers | [Container With Most Water](#container-with-most-water), [Two Sum II](#two-sum-ii-on-a-sorted-array) |
+| Contiguous range | Sliding window or prefix sum | [Maximum Subarray](#maximum-subarray), [Range Sum Query](#range-sum-query) |
+| Best ending at each index | Kadane dynamic programming | [Best Time to Buy and Sell Stock](#best-time-to-buy-and-sell-stock), [Maximum Subarray](#maximum-subarray) |
+| Value to earlier index | Hash map | [Two Sum](#two-sum) |
+| In-place rearrangement | Read and write pointers | [Move Zeroes](#move-zeroes), [Rotate Array](#rotate-array), [Merge Sorted Array](#merge-sorted-array) |
 
-Example:
-
-```text
-Array:  [2, 1, 5, 1, 3, 2]
-Window:       [5, 1, 3]
-```
-
-Instead of recalculating every window from the beginning, update the previous result.
-
-## Mental model
-
-Imagine looking through a window that moves across a long wall.
-
-```mermaid
-flowchart LR
-    A["Window 1<br/>2, 1, 5"] --> B["Remove 2<br/>Add 1"]
-    B --> C["Window 2<br/>1, 5, 1"]
-    C --> D["Remove 1<br/>Add 3"]
-    D --> E["Window 3<br/>5, 1, 3"]
-```
-
----
-
-## 11.1 Fixed-size sliding window
-
-Problem:
-
-> Find the maximum sum of any subarray of size `k`.
-
-Brute force:
-
-* Calculate every window independently
-* Each window takes `O(k)`
-* Total: `O(n × k)`
-
-Sliding window:
-
-```go
-func maxWindowSum(numbers []int, k int) int {
-    if len(numbers) < k {
-        return 0
-    }
-
-    windowSum := 0
-
-    for i := 0; i < k; i++ {
-        windowSum += numbers[i]
-    }
-
-    maximum := windowSum
-
-    for right := k; right < len(numbers); right++ {
-        windowSum += numbers[right]
-        windowSum -= numbers[right-k]
-
-        if windowSum > maximum {
-            maximum = windowSum
-        }
-    }
-
-    return maximum
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
-
----
-
-## 11.2 Variable-size sliding window
-
-Useful when the problem asks:
-
-* Longest subarray satisfying a condition
-* Shortest subarray satisfying a condition
-* Longest substring without repetition
-* Maximum consecutive values under a limit
-
-General template:
-
-```go
-left := 0
-
-for right := 0; right < len(numbers); right++ {
-    // Add numbers[right] to the window.
-
-    for windowIsInvalid {
-        // Remove numbers[left] from the window.
-        left++
-    }
-
-    // Record answer for the valid window.
-}
-```
-
-Mental model:
-
-```text
-Expand right to explore.
-Shrink left to repair.
-```
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Index access | O(1) | Address arithmetic is direct |
+| Full scan | O(n) | Each element may be visited |
+| Sort | O(n log n) | Comparison sorting |
+| Returned array | O(n) | Output stores n values |
 
 ```mermaid
 flowchart TD
-    A["Move right pointer"] --> B["Add new element"]
-    B --> C{"Window valid?"}
-    C -->|"Yes"| D["Update answer"]
-    C -->|"No"| E["Remove left element"]
-    E --> F["Move left pointer"]
-    F --> C
-    D --> A
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Pair or opposite ends"| P0["Two pointers"]
+    Q -->|"Contiguous range"| P1["Sliding window or prefix sum"]
+    Q -->|"Best ending at each index"| P2["Kadane dynamic programming"]
+    Q -->|"Value to earlier index"| P3["Hash map"]
+    Q -->|"In-place rearrangement"| P4["Read and write pointers"]
 ```
+
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. Different clues tell you whether to use two hands, a moving window, or a notebook of earlier positions.
 
 ---
 
-# 12. Pattern 4: Prefix sum
+## Problem-solving checklist and common mistakes
 
-Prefix sum helps answer range-sum questions quickly.
+Before coding:
 
-Consider:
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
 
-```text
-numbers = [2, 4, 1, 3, 5]
-```
+Common mistakes:
 
-Create:
-
-```text
-prefix = [0, 2, 6, 7, 10, 15]
-```
-
-Where:
-
-```text
-prefix[i] = sum of elements before index i
-```
+- Using an index without checking bounds.
+- Assuming copying a slice copies its elements.
+- Forgetting that append may replace the backing array.
+- Using zero as the initial best value when every input can be negative.
+- Moving a pointer without proving discarded candidates cannot win.
 
 ```mermaid
 flowchart LR
-    A["prefix[0] = 0"] --> B["prefix[1] = 2"]
-    B --> C["prefix[2] = 6"]
-    C --> D["prefix[3] = 7"]
-    D --> E["prefix[4] = 10"]
-    E --> F["prefix[5] = 15"]
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
 ```
 
-To find the sum from index `1` to index `3`:
-
-```text
-[4, 1, 3]
-```
-
-Calculate:
-
-```text
-prefix[4] - prefix[1]
-= 10 - 2
-= 8
-```
-
-The formula for an inclusive range `[left, right]` is:
-
-```text
-rangeSum = prefix[right + 1] - prefix[left]
-```
-
-## Why does subtraction work?
-
-```text
-prefix[right + 1] = everything before and including right
-prefix[left]      = everything before left
-```
-
-Subtracting removes the unwanted prefix.
-
-```go
-func buildPrefixSum(numbers []int) []int {
-    prefix := make([]int, len(numbers)+1)
-
-    for i, number := range numbers {
-        prefix[i+1] = prefix[i] + number
-    }
-
-    return prefix
-}
-
-func rangeSum(prefix []int, left, right int) int {
-    return prefix[right+1] - prefix[left]
-}
-```
-
-Complexity:
-
-```text
-Build prefix array: O(n)
-Each range query:   O(1)
-Extra space:        O(n)
-```
-
-Without prefix sums, each range query could take `O(n)`.
-
-## Common prefix-sum problems
-
-* Range Sum Query
-* Subarray Sum Equals K
-* Find equilibrium index
-* Count subarrays with a target sum
-* Two-dimensional matrix range sum
-* Running Sum of 1D Array
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. Check the first and last box labels before reaching, or your hand goes outside the shelf.
 
 ---
 
-# 13. Pattern 5: Difference array
+## Top 10 Array Interview Questions
 
-Prefix sums answer many range queries.
-
-Difference arrays handle many range updates.
-
-Suppose:
-
-```text
-numbers = [0, 0, 0, 0, 0]
-```
-
-You are told:
-
-> Add `3` to every position from index `1` to index `3`.
-
-A direct update would modify:
-
-```text
-[0, 3, 3, 3, 0]
-```
-
-For one update, this is fine.
-
-For thousands of updates over very large ranges, it becomes expensive.
-
-## Difference-array idea
-
-Instead of updating every element:
-
-* Start adding at `left`
-* Stop adding after `right`
-
-```text
-difference[left] += value
-difference[right + 1] -= value
-```
-
-Example:
-
-```text
-Add 3 from index 1 to index 3
-
-difference = [0, +3, 0, 0, -3]
-```
-
-Now calculate the running sum:
-
-```text
-index 0: 0
-index 1: 0 + 3 = 3
-index 2: 3 + 0 = 3
-index 3: 3 + 0 = 3
-index 4: 3 - 3 = 0
-```
-
-Result:
-
-```text
-[0, 3, 3, 3, 0]
-```
-
-```mermaid
-flowchart LR
-    A["Start update at left<br/>+3"] --> B["Effect continues"]
-    B --> C["Effect continues"]
-    C --> D["Effect continues"]
-    D --> E["Stop after right<br/>-3"]
-```
-
-General implementation:
-
-```go
-func applyRangeUpdates(
-    size int,
-    updates [][3]int,
-) []int {
-    difference := make([]int, size+1)
-
-    for _, update := range updates {
-        left := update[0]
-        right := update[1]
-        value := update[2]
-
-        difference[left] += value
-
-        if right+1 < size {
-            difference[right+1] -= value
-        }
-    }
-
-    result := make([]int, size)
-    running := 0
-
-    for i := 0; i < size; i++ {
-        running += difference[i]
-        result[i] = running
-    }
-
-    return result
-}
-```
-
-Complexity:
-
-```text
-Each range update: O(1)
-Final reconstruction: O(n)
-Space: O(n)
-```
-
-Common problems:
-
-* Corporate Flight Bookings
-* Car Pooling
-* Range Addition
-* Calendar occupancy
-* Capacity changes over time
-
----
-
-# 14. Pattern 6: Kadane’s algorithm
-
-Kadane’s algorithm finds the maximum sum of a continuous subarray.
-
-Example:
-
-```text
-[-2, 1, -3, 4, -1, 2, 1, -5, 4]
-```
-
-Best subarray:
-
-```text
-[4, -1, 2, 1]
-```
-
-Sum:
-
-```text
-6
-```
-
-## Baby mental model
-
-You are carrying a bag containing your current sum.
-
-At every number, ask:
-
-> Is my existing bag helping me, or should I throw it away and start again here?
-
-For each number:
-
-```text
-current = max(number, current + number)
-best    = max(best, current)
-```
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
 
 ```mermaid
 flowchart TD
-    A["Read next number"] --> B{"Continue old subarray<br/>or start new one?"}
-    B --> C["current = max(number, current + number)"]
-    C --> D["best = max(best, current)"]
-    D --> E{"More numbers?"}
-    E -->|"Yes"| A
-    E -->|"No"| F["Return best"]
+    subgraph ROW1["Questions 1 through 5"]
+        direction LR
+        Q0["Two Sum"] --> Q1["Best Time to Buy and Sell Stock"]
+        Q1 --> Q2["Maximum Subarray"]
+        Q2 --> Q3["Product of Array Except Self"]
+        Q3 --> Q4["Move Zeroes"]
+    end
+
+    subgraph ROW2["Questions 6 through 10"]
+        direction LR
+        Q5["Rotate Array"] --> Q6["Merge Sorted Array"]
+        Q6 --> Q7["Container With Most Water"]
+        Q7 --> Q8["Two Sum II on a Sorted Array"]
+        Q8 --> Q9["Range Sum Query"]
+    end
+
+    Q4 --> Q5
+
+    style ROW1 fill:transparent,stroke:#a89984,stroke-width:1px,stroke-dasharray:2 4
+    style ROW2 fill:transparent,stroke:#a89984,stroke-width:1px,stroke-dasharray:2 4
 ```
 
-Implementation:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. These ten puzzles are practice cards; each card teaches one reusable move.
 
-```go
-func maximumSubarray(numbers []int) int {
-    current := numbers[0]
-    best := numbers[0]
-
-    for i := 1; i < len(numbers); i++ {
-        current = max(numbers[i], current+numbers[i])
-        best = max(best, current)
-    }
-
-    return best
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-## Why reset the subarray?
-
-Suppose:
-
-```text
-current sum = -10
-next number = 5
-```
-
-Continuing gives:
-
-```text
--10 + 5 = -5
-```
-
-Starting fresh gives:
-
-```text
-5
-```
-
-The negative prefix only damages every future subarray. It should be discarded.
-
----
-
-# 15. Pattern 7: In-place modification
-
-“In-place” means modifying the original array instead of creating another full array.
-
-Usually:
-
-```text
-Extra space = O(1)
-```
-
-Examples:
-
-* Move Zeroes
-* Rotate Array
-* Remove Duplicates
-* Reverse Array
-* Merge Sorted Array
-* Partition values
-
-## Reverse an array in place
-
-```go
-func reverse(numbers []int) {
-    left := 0
-    right := len(numbers) - 1
-
-    for left < right {
-        numbers[left], numbers[right] =
-            numbers[right], numbers[left]
-
-        left++
-        right--
-    }
-}
-```
+### Two Sum
 
 ```mermaid
-flowchart LR
-    A["1"] --- B["2"]
-    B --- C["3"]
-    C --- D["4"]
-    D --- E["5"]
+flowchart TD
+    I["Input: <strong>numbers</strong> and <strong>target</strong>"] --> R["Create the map <strong>seen</strong><br/>key = distinct number already visited<br/>value = that number's earlier index"]
 
-    L["left"] --> A
-    R["right"] --> E
+    subgraph LOOP["Loop: for index, number := range <strong>numbers</strong>"]
+        direction TD
+        C["Read current number<br/><strong>needed</strong> = <strong>target</strong> - number"]
+        L["Look up <strong>seen</strong>[<strong>needed</strong>]"]
+        F{"Was <strong>needed</strong> found?"}
+        P["previousIndex = the earlier index stored under <strong>needed</strong>"]
+        B["Match found<br/>stop the loop immediately"]
+        S["Store <strong>seen</strong>[number] = index"]
+        A["No match yet<br/>continue with the next index"]
+
+        C --> L
+        L --> F
+        F -->|"Yes"| P
+        P --> B
+        F -->|"No"| S
+        S --> A
+    end
+
+    R --> C
+    B --> O["Return [previousIndex, index]"]
+    A -->|"after the final index"| X["No pair exists: return nil"]
+
+    style LOOP fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-After swapping:
+**Where it is used in real life:**
 
-```text
-[5, 2, 3, 4, 1]
-```
-
-Continue inward until the pointers meet.
-
----
-
-# 16. Core interview problems
-
-## 16.1 Two Sum
-
-### Problem
-
-Given:
-
-```text
-numbers = [2, 7, 11, 15]
-target = 9
-```
-
-Return the indexes of two values whose sum is `9`.
-
-Answer:
-
-```text
-[0, 1]
-```
-
-Because:
-
-```text
-2 + 7 = 9
-```
-
-### Pattern
-
-Array traversal plus hash map.
-
-For each number:
-
-```text
-needed = target - current
-```
-
-Check whether `needed` has already been seen.
+- Payment systems find two charges that reconcile to a target total.
+- Inventory systems pair two item costs that fit an exact budget.
 
 ```go
+// Exact question: Given an integer slice and a target, return the indexes of two distinct elements whose values add to the target, or return nil when no pair exists.
+//
+// Example: Input numbers = [2, 7, 11, 15] and target = 9 -> output [0, 1] because numbers[0] + numbers[1] = 9.
+//
+// Possible answer: Scan once while mapping each seen value to its index; before storing the current value, look up the complement `target-number`.
+//
+// Output format: Return the `[]int` value from `twoSum`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `numbers` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `numbers` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+// - `seen` maps each previously visited number key to the index where that value appeared. seen[number_from_slice]= index_from_slice -> why do we want to store the number in the index? because the returned pair must be distinct.
+// - `needed` holds the intermediate value produced by `target - number`.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Create or use a slice so indexes identify positions and elements store their data or state.
+// 3. Iterate through the required elements or states in the order shown.
 func twoSum(numbers []int, target int) []int {
     seen := make(map[int]int)
 
     for index, number := range numbers {
         needed := target - number
 
+        // previousIndex -> the value stored at seen[needed] which is the previous index in (numbers []int)
         if previousIndex, exists := seen[needed]; exists {
             return []int{previousIndex, index}
         }
@@ -1232,54 +238,91 @@ func twoSum(numbers []int, target int) []int {
 
     return nil
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Two Sum" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(n)
+### Best Time to Buy and Sell Stock
+
+```mermaid
+flowchart TD
+    I["Input: daily <strong>prices</strong>"] --> E{"Does <strong>prices</strong> contain fewer than two days?"}
+    E -->|"Yes"| Z["A legal buy-then-sell pair is impossible<br/>return 0"]
+    E -->|"No"| S["Initialize <strong>minimumPrice</strong> = <strong>prices</strong>[0]<br/><strong>bestProfit</strong> = 0"]
+
+    subgraph LOOP["Loop: inspect every later <strong>price</strong> in <strong>prices</strong>[1:]"]
+        direction TD
+        P["Calculate <strong>profit</strong> = <strong>price</strong> - <strong>minimumPrice</strong>"]
+        B{"Is <strong>profit</strong> greater than <strong>bestProfit</strong>?"}
+        U["Update <strong>bestProfit</strong> = <strong>profit</strong>"]
+        M{"Is <strong>price</strong> lower than <strong>minimumPrice</strong>?"}
+        L["Update <strong>minimumPrice</strong> = <strong>price</strong>"]
+        N["Keep the current minimum<br/>continue with the next day"]
+
+        P --> B
+        B -->|"Yes"| U
+        B -->|"No"| M
+        U --> M
+        M -->|"Yes"| L
+        M -->|"No"| N
+        L --> N
+    end
+
+    S --> P
+    N -->|"after the final <strong>price</strong>"| O["Return <strong>bestProfit</strong>"]
+
+    style LOOP fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Interview recognition:
+**Where it is used in real life:**
 
-> Pair sum, unsorted input, need original indexes → hash map.
-
-For sorted input, consider two pointers instead.
-
----
-
-## 16.2 Best Time to Buy and Sell Stock
-
-### Problem
-
-```text
-prices = [7, 1, 5, 3, 6, 4]
-```
-
-Best action:
-
-```text
-Buy at 1
-Sell at 6
-Profit = 5
-```
-
-You must buy before selling.
-
-### Mental model
-
-Walk through the days while remembering:
-
-* Cheapest price seen so far
-* Best profit possible so far
+- Trading analysis finds the best historical single buy-and-sell interval.
+- Capacity planners compare an earlier low demand point with a later peak.
 
 ```go
+// Exact question: Given daily stock prices, return the maximum profit from buying once and selling once on a later day; return zero when no profit is possible.
+//
+// Example: Input prices = [7, 1, 5, 3, 6, 4] -> output 5 by buying at 1 and selling later at 6.
+//
+// Possible answer: Track the lowest earlier price and compare every current price with it to update the best legal sell profit.
+//
+// Output format: Return an `int` value from `maxProfit`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `prices` is a slice of daily prices: its index is the day, and `prices[day]` is the price stored for that day.
+// - The slice order matters because the buy day must appear before the sell day.
+//
+// Boundary checks:
+// - Fewer than two prices cannot form a buy-then-sell pair, so the function returns zero.
+// - `profit > bestProfit` replaces the answer only when the current sell day produces a larger profit.
+// - `price < minimumPrice` records a cheaper buying opportunity for future days, not the current day retroactively.
+//
+// Key variables:
+// - `prices` holds price values; indexes represent chronological days rather than keys or IDs.
+// - `price` is the selling price on the day currently being inspected.
+// - `minimumPrice` is the lowest price seen strictly before or on the current scan position.
+// - `profit` is the profit from selling at `price` after buying at `minimumPrice`.
+// - `bestProfit` is the largest legal single-transaction profit found so far.
+//
+// Logic:
+// 1. Reject an input that has no possible pair of days.
+// 2. Treat the first price as the cheapest buying price known so far.
+// 3. For every later day, calculate the profit from the cheapest earlier buy.
+// 4. Update the best profit, then update the minimum price for future sell days.
+// 5. Return zero when prices never rise; otherwise return the best profit.
 func maxProfit(prices []int) int {
+    if len(prices) < 2 {
+        return 0
+    }
+
     minimumPrice := prices[0]
     bestProfit := 0
 
     for _, price := range prices[1:] {
+        // minimumPrice comes from an earlier day, so this profit always obeys buy-before-sell order.
         profit := price - minimumPrice
 
         if profit > bestProfit {
@@ -1293,85 +336,375 @@ func maxProfit(prices []int) int {
 
     return bestProfit
 }
+
+// time complexity: O(n) -> each of the `n` daily prices is inspected at most once.
+// space complexity: O(1) -> `minimumPrice`, `profit`, and `bestProfit` use a fixed amount of extra memory.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Best Time to Buy and Sell Stock" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(1)
+### Maximum Subarray
+
+```mermaid
+flowchart TD
+    I["Input: integer slice <strong>numbers</strong>"] --> E{"Is <strong>numbers</strong> empty?"}
+    E -->|"Yes"| Z["No non-empty subarray exists<br/>return 0 for this defensive implementation"]
+    E -->|"No"| S["Initialize <strong>current</strong> = <strong>numbers</strong>[0]<br/><strong>best</strong> = <strong>numbers</strong>[0]"]
+
+    subgraph LOOP["Loop: for <strong>i</strong> from 1 through len(<strong>numbers</strong>)-1"]
+        direction TD
+        C["Read <strong>numbers</strong>[<strong>i</strong>]<br/>extended sum = <strong>current</strong> + <strong>numbers</strong>[<strong>i</strong>]"]
+        D{"Is starting at <strong>numbers</strong>[<strong>i</strong>]<br/>better than extending the earlier subarray?"}
+        R["Restart: <strong>current</strong> = <strong>numbers</strong>[<strong>i</strong>]"]
+        X["Extend: <strong>current</strong> = <strong>current</strong> + <strong>numbers</strong>[<strong>i</strong>]"]
+        B{"Is <strong>current</strong> greater than <strong>best</strong>?"}
+        U["Update <strong>best</strong> = <strong>current</strong>"]
+        N["Keep <strong>best</strong><br/>continue with the next index"]
+
+        C --> D
+        D -->|"Restart"| R
+        D -->|"Extend"| X
+        R --> B
+        X --> B
+        B -->|"Yes"| U
+        B -->|"No"| N
+        U --> N
+    end
+
+    S --> C
+    N -->|"after the final index"| O["Return <strong>best</strong>"]
+
+    style LOOP fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-This is similar to Kadane’s algorithm because you maintain the best answer ending at the current position.
+**Where it is used in real life:**
 
----
-
-## 16.3 Maximum Subarray
-
-Pattern:
-
-```text
-Kadane’s algorithm
-```
-
-Important question:
-
-> Is the requested subarray continuous?
-
-If yes, Kadane may apply.
+- Analytics finds the most profitable continuous time period.
+- Monitoring finds the contiguous interval with the strongest cumulative signal.
 
 ```go
+// Exact question: Given an integer slice, return the largest sum of any non-empty contiguous subarray.
+//
+// Example: Input numbers = [-2, 1, -3, 4, -1, 2, 1, -5, 4] -> output 6 from the contiguous subarray [4, -1, 2, 1].
+//
+// Possible answer: Apply Kadane's algorithm: at each index, either start a new subarray or extend the best subarray ending at the previous index.
+//
+// Output format: Return an `int` value from `maxSubArray`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `numbers` is a slice of signed values; an index is a position, and `numbers[index]` is the value stored there.
+// - A valid subarray uses consecutive indexes and must contain at least one value.
+//
+// Boundary checks:
+// - The LeetCode problem guarantees a non-empty slice; the defensive empty check returns zero before reading `numbers[0]`.
+// - Initializing from `numbers[0]`, rather than zero, correctly handles an input containing only negative values.
+//
+// Key variables:
+// - `numbers` holds array values; its indexes define which values are contiguous.
+// - `i` is the index currently being considered as the end of a subarray.
+// - `current` is the largest sum of a non-empty subarray that must end at index `i`.
+// - `best` is the largest subarray sum found across every ending index inspected so far.
+//
+// Logic:
+// 1. Seed both states with the first value so negative-only inputs remain valid.
+// 2. At each later index, compare starting a new subarray with extending the previous one.
+// 3. Store the better choice in `current`; this preserves the best sum ending exactly at this index.
+// 4. Compare `current` with the global `best` and keep the larger value.
+// 5. Return `best` after every possible ending index has been processed.
 func maxSubArray(numbers []int) int {
+    if len(numbers) == 0 {
+        return 0
+    }
+
     current := numbers[0]
     best := numbers[0]
 
     for i := 1; i < len(numbers); i++ {
+        // Either discard the earlier sum or extend it with the current value.
         current = max(numbers[i], current+numbers[i])
         best = max(best, current)
     }
 
     return best
 }
+
+// time complexity: O(n) -> each of the `n` values becomes the current subarray endpoint once.
+// space complexity: O(1) -> the algorithm keeps only `current`, `best`, and the loop index.
 ```
 
----
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Maximum Subarray" is one small game played with the same pieces and rules.
 
-## 16.4 Rotate Array
+### Product of Array Except Self
 
-Input:
+```mermaid
+flowchart TD
+    I["Input: integer slice <strong>numbers</strong>"] --> R["Create <strong>result</strong> with len(<strong>numbers</strong>) slots<br/>initialize <strong>prefixProduct</strong> = 1"]
 
-```text
-numbers = [1, 2, 3, 4, 5, 6, 7]
-k = 3
+    subgraph PREFIX["First loop: scan left to right with <strong>i</strong>"]
+        direction TD
+        P1["Store <strong>result</strong>[<strong>i</strong>] = <strong>prefixProduct</strong><br/>this excludes <strong>numbers</strong>[<strong>i</strong>]"]
+        P2["Include the current value for later indexes<br/><strong>prefixProduct</strong> *= <strong>numbers</strong>[<strong>i</strong>]"]
+        P3["Continue with the next <strong>i</strong>"]
+
+        P1 --> P2
+        P2 --> P3
+    end
+
+    P3 -->|"after the final left-to-right index"| S["Initialize <strong>suffixProduct</strong> = 1"]
+
+    subgraph SUFFIX["Second loop: scan right to left with <strong>i</strong>"]
+        direction TD
+        S1["Multiply <strong>result</strong>[<strong>i</strong>] by <strong>suffixProduct</strong><br/>left product × right product"]
+        S2["Include the current value for earlier indexes<br/><strong>suffixProduct</strong> *= <strong>numbers</strong>[<strong>i</strong>]"]
+        S3["Continue with the previous <strong>i</strong>"]
+
+        S1 --> S2
+        S2 --> S3
+    end
+
+    R --> P1
+    S --> S1
+    S3 -->|"after index 0"| O["Return <strong>result</strong>"]
+
+    style PREFIX fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+    style SUFFIX fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Output:
+**Where it is used in real life:**
 
-```text
-[5, 6, 7, 1, 2, 3, 4]
-```
-
-### In-place reversal technique
-
-1. Reverse the entire array
-2. Reverse the first `k` elements
-3. Reverse the remaining elements
-
-```text
-Original:
-[1, 2, 3, 4, 5, 6, 7]
-
-Reverse all:
-[7, 6, 5, 4, 3, 2, 1]
-
-Reverse first 3:
-[5, 6, 7, 4, 3, 2, 1]
-
-Reverse remaining:
-[5, 6, 7, 1, 2, 3, 4]
-```
+- Reliability models calculate combined factors while excluding one component at a time.
+- Feature pipelines compute leave-one-out products without repeated full scans.
 
 ```go
+// Exact question: Return an output slice where each index contains the product of every input value except the value at that index, without using division.
+//
+// Example: Input numbers = [1, 2, 3, 4] -> output [24, 12, 8, 6].
+//
+// Possible answer: Store each index's left-prefix product, then sweep from right to left while multiplying by a running suffix product.
+//
+// Output format: Return the `[]int` value from `productExceptSelf`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `numbers` is the input slice: each index identifies one input value that must be excluded from the matching output slot.
+// - `result` is the output slice: `result[i]` stores the product of every input value except `numbers[i]`.
+//
+// Boundary checks:
+// - An empty input returns an empty output because both loops execute zero times.
+// - A one-element input returns `[1]`; one is the multiplicative identity of the empty set of other values.
+// - The method does not divide, so inputs containing one or more zeroes are handled correctly.
+//
+// Key variables:
+// - `numbers` holds input values; its indexes are positions, not keys.
+// - `result[i]` stores the product of all input values except `numbers[i]`; its indexes match the input indexes.
+// - `i` identifies the output slot being assembled during each directional scan.
+// - `prefixProduct` is the product of every value strictly to the left of `i`.
+// - `suffixProduct` is the product of every value strictly to the right of `i`.
+//
+// Logic:
+// 1. Create an output slice with exactly one slot for every input index.
+// 2. Scan left to right and store each index's product of values to its left.
+// 3. Scan right to left while carrying the product of values to the current index's right.
+// 4. Multiply the stored left product by the running right product.
+// 5. Return the completed output without ever multiplying a slot by its own input value.
+func productExceptSelf(numbers []int) []int {
+    result := make([]int, len(numbers))
+
+    prefixProduct := 1
+
+    for i := 0; i < len(numbers); i++ {
+        // Write before multiplying by numbers[i], so this slot excludes its own value. -> This is the critcal step
+        // | `i` | Stored in `result[i]` | Updated `prefixProduct` |
+        // |---:|---:|---:|
+        // | 0 | `1` | `1 × 1 = 1` |
+        // | 1 | `1` | `1 × 2 = 2` |
+        // | 2 | `2` | `2 × 3 = 6` |
+        // | 3 | `6` | `6 × 4 = 24` |
+        result[i] = prefixProduct
+        prefixProduct *= numbers[i]
+    }
+
+    suffixProduct := 1
+
+    for i := len(numbers) - 1; i >= 0; i-- {
+        // suffixProduct still contains only values strictly to the right of i.
+        // -> This is the critcal step
+        // | `i` | Existing left product | Right product | New `result[i]` |
+        // |---:|---:|---:|---:|
+        // | 3 | `6` | `1` | `6 × 1 = 6` |
+        // | 2 | `2` | `4` | `2 × 4 = 8` |
+        // | 1 | `1` | `12` | `1 × 12 = 12` |
+        // | 0 | `1` | `24` | `1 × 24 = 24` |
+        result[i] *= suffixProduct
+        suffixProduct *= numbers[i]
+    }
+
+    return result
+}
+
+// time complexity: O(n) -> two directional scans perform 2n iterations, which simplifies to O(n).
+// space complexity: O(n) -> the returned `result` has n slots; auxiliary working space excluding the output is O(1).
+```
+
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Product of Array Except Self" is one small game played with the same pieces and rules.
+
+### Move Zeroes
+
+```mermaid
+flowchart TD
+    I["Input: mutable slice <strong>numbers</strong>"] --> W["Initialize destination index <strong>write</strong> = 0"]
+
+    subgraph READ["First loop: scan every source index <strong>read</strong>"]
+        direction TD
+        V["Read <strong>numbers</strong>[<strong>read</strong>]"]
+        D{"Is <strong>numbers</strong>[<strong>read</strong>] non-zero?"}
+        C["Copy forward<br/><strong>numbers</strong>[<strong>write</strong>] = <strong>numbers</strong>[<strong>read</strong>]"]
+        A["Advance destination<br/><strong>write</strong>++"]
+        S["Leave <strong>write</strong> unchanged<br/>skip this zero"]
+        N["Continue with the next <strong>read</strong>"]
+
+        V --> D
+        D -->|"Yes"| C
+        C --> A
+        A --> N
+        D -->|"No"| S
+        S --> N
+    end
+
+    subgraph FILL["Second loop: while <strong>write</strong> is less than len(<strong>numbers</strong>)"]
+        direction TD
+        Z["Set <strong>numbers</strong>[<strong>write</strong>] = 0"]
+        ZN["Advance <strong>write</strong>++<br/>continue until the slice is full"]
+
+        Z --> ZN
+    end
+
+    W --> V
+    N -->|"after the final <strong>read</strong> index"| Z
+    ZN -->|"when <strong>write</strong> reaches len(<strong>numbers</strong>)"| O["Done: <strong>numbers</strong> was changed in place"]
+
+    style READ fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+    style FILL fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Sparse-data pipelines compact meaningful values while preserving their order.
+- Buffer cleanup moves empty slots behind active records.
+
+```go
+// Exact question: Move every zero to the end of the slice in place while preserving the relative order of all non-zero values.
+//
+// Example: Input numbers = [0, 1, 0, 3, 12] -> mutate it to [1, 3, 12, 0, 0].
+//
+// Possible answer: Write non-zero values forward with a write index, then fill every remaining position with zero.
+//
+// Output format: `moveZeroes` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `numbers` is a mutable slice: indexes are positions, and each position stores an integer value.
+// - The function changes the existing backing array and does not allocate or return another slice.
+//
+// Boundary checks:
+// - An empty slice executes neither loop and remains unchanged.
+// - `numbers[read] != 0` ensures only meaningful values are copied into the compacted prefix.
+// - `write < len(numbers)` prevents the zero-filling pass from writing beyond the final valid index.
+// - Inputs containing no zeroes or only zeroes preserve the required relative order.
+//
+// Key variables:
+// - `numbers` holds values, not map keys; its indexes identify both source and destination positions.
+// - `read` scans every original position exactly once.
+// - `write` is the next destination index for a non-zero value, then the first position that must be filled with zero.
+//
+// Logic:
+// 1. Start `write` at the first slice position.
+// 2. Scan with `read`; copy each non-zero value to `numbers[write]` and advance `write`.
+// 3. Because reads occur from left to right, copied non-zero values keep their original order.
+// 4. After compaction, fill every slot from `write` through the end with zero.
+// 5. Finish with the same slice length and backing array.
+func moveZeroes(numbers []int) {
+    write := 0
+
+    for read := 0; read < len(numbers); read++ {
+        if numbers[read] != 0 {
+            // write never moves ahead of read, so this overwrite cannot destroy unread data.
+            numbers[write] = numbers[read]
+            write++
+        }
+    }
+
+    for write < len(numbers) {
+        numbers[write] = 0
+        write++
+    }
+}
+
+// time complexity: O(n) -> at most n reads compact values and at most n writes fill the remaining slots.
+// space complexity: O(1) -> compaction uses only the `read` and `write` indexes beside the input slice.
+```
+
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Move Zeroes" is one small game played with the same pieces and rules.
+
+### Rotate Array
+
+```mermaid
+flowchart TD
+    I["Input: mutable <strong>numbers</strong> and <strong>right</strong>-shift count <strong>k</strong>"] --> N["Calculate <strong>n</strong> = len(<strong>numbers</strong>)"]
+    N --> E{"Is <strong>n</strong> equal to 0?"}
+    E -->|"Yes"| Z["Nothing can be rotated<br/>return without taking <strong>k</strong> modulo zero"]
+    E -->|"No"| K["Normalize oversized rotations<br/><strong>k</strong> = <strong>k</strong> % <strong>n</strong>"]
+
+    subgraph STEPS["Three reversal steps — each <strong>reverseRange</strong> call swaps outer indexes while <strong>left</strong> is less than <strong>right</strong>"]
+        direction TD
+        R1["Reverse the complete slice<br/><strong>reverseRange</strong>(<strong>numbers</strong>, 0, <strong>n</strong>-1)"]
+        R2["Reverse the first <strong>k</strong> positions<br/><strong>reverseRange</strong>(<strong>numbers</strong>, 0, <strong>k</strong>-1)"]
+        R3["Reverse positions <strong>k</strong> through <strong>n</strong>-1<br/><strong>reverseRange</strong>(<strong>numbers</strong>, <strong>k</strong>, <strong>n</strong>-1)"]
+
+        R1 --> R2
+        R2 --> R3
+    end
+
+    K --> R1
+    R3 --> O["Done: <strong>numbers</strong> is rotated <strong>right</strong> by <strong>k</strong> positions"]
+
+    style STEPS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Circular schedules shift assignments by a fixed offset.
+- Ring-buffer views rotate the logical starting position.
+
+```go
+// Exact question: Rotate an integer slice to the right by `k` positions in place.
+//
+// Example: Input numbers = [1, 2, 3, 4, 5, 6, 7] and k = 3 -> mutate it to [5, 6, 7, 1, 2, 3, 4].
+//
+// Possible answer: Normalize `k`, reverse the entire slice, then reverse the first `k` values and the remaining values separately.
+//
+// Output format: `rotate` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `numbers` is a mutable slice: each index is a position and each element is the integer value stored there.
+// - `k` is the requested number of positions to shift every value to the right.
+// - `reverseRange` reverses one inclusive index range within the same backing array.
+//
+// Boundary checks:
+// - `n == 0` returns before `k %= n`, avoiding division by zero for an empty slice.
+// - `k %= n` converts rotations larger than the slice into their equivalent in-range shift.
+// - `left < right` stops each reversal when its two indexes meet or cross; it also makes an empty range such as `0..-1` safe.
+//
+// Key variables:
+// - `numbers` holds the values being reordered; indexes describe positions rather than keys.
+// - `k` is the normalized rotation distance in the range `0` through `n-1`.
+// - `n` is the number of values and establishes the valid indexes `0` through `n-1`.
+// - `left` and `right` identify the next pair of positions that `reverseRange` swaps.
+//
+// Logic:
+// 1. Return immediately for an empty slice, then reduce `k` modulo the slice length.
+// 2. Reverse the entire slice, moving the future rotated prefix to the front in reversed order.
+// 3. Reverse the first `k` values to restore their internal order.
+// 4. Reverse the remaining values to restore their internal order.
+// 5. In each helper call, swap the outer pair and move both indexes inward until they meet.
 func rotate(numbers []int, k int) {
     n := len(numbers)
 
@@ -1381,6 +714,7 @@ func rotate(numbers []int, k int) {
 
     k %= n
 
+    // Example: [1 2 3 4 5], k=2 -> [5 4 3 2 1] -> [4 5 3 2 1] -> [4 5 1 2 3].
     reverseRange(numbers, 0, n-1)
     reverseRange(numbers, 0, k-1)
     reverseRange(numbers, k, n-1)
@@ -1395,61 +729,91 @@ func reverseRange(numbers []int, left, right int) {
         right--
     }
 }
+
+// time complexity: O(n) -> the three reversals swap O(n) values in total.
+// space complexity: O(1) -> rotation uses only `n`, `k`, and two helper indexes beside the input slice.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Rotate Array" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-Important edge case:
-
-```go
-k %= len(numbers)
-```
-
-Without this, rotating an array of length `5` by `12` positions would cause incorrect indexing.
-
----
-
-## 16.5 Merge Sorted Array
-
-You are given two sorted arrays, with extra space at the end of the first array.
-
-```text
-nums1 = [1, 2, 3, 0, 0, 0]
-nums2 = [2, 5, 6]
-```
-
-Result:
-
-```text
-[1, 2, 2, 3, 5, 6]
-```
-
-### Important trick
-
-Merge from the end.
-
-If you merge from the beginning, you may overwrite unprocessed values.
+### Merge Sorted Array
 
 ```mermaid
-flowchart RL
-    A["Write pointer at end"] --> B["Compare largest remaining values"]
-    B --> C["Place larger value"]
-    C --> D["Move corresponding pointer"]
-    D --> B
+flowchart TD
+    I["Input: sorted <strong>nums1</strong> with <strong>m</strong> values<br/>sorted <strong>nums2</strong> with <strong>n</strong> values"] --> S["Initialize source indexes<br/><strong>first</strong> = <strong>m</strong>-1, <strong>second</strong> = <strong>n</strong>-1<br/>destination <strong>write</strong> = <strong>m</strong>+<strong>n</strong>-1"]
+
+    subgraph LOOP["Loop: while <strong>second</strong> is at least 0"]
+        direction TD
+        C{"Is <strong>first</strong> valid and<br/><strong>nums1</strong>[<strong>first</strong>] greater than <strong>nums2</strong>[<strong>second</strong>]?"}
+        W1["Copy the larger <strong>nums1</strong> value<br/><strong>nums1</strong>[<strong>write</strong>] = <strong>nums1</strong>[<strong>first</strong>]"]
+        F1["Move <strong>first</strong> left"]
+        W2["Copy the <strong>nums2</strong> value<br/><strong>nums1</strong>[<strong>write</strong>] = <strong>nums2</strong>[<strong>second</strong>]"]
+        F2["Move <strong>second</strong> left"]
+        D["Move destination left<br/><strong>write</strong>--"]
+        A["Continue comparing the remaining values"]
+
+        C -->|"Yes"| W1
+        W1 --> F1
+        F1 --> D
+        C -->|"No"| W2
+        W2 --> F2
+        F2 --> D
+        D --> A
+    end
+
+    S --> C
+    A -->|"when <strong>second</strong> becomes -1"| O["Done: <strong>nums1</strong> contains all <strong>m</strong>+<strong>n</strong> sorted values"]
+
+    style LOOP fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
+**Where it is used in real life:**
+
+- Storage engines merge sorted runs during compaction.
+- Event systems merge ordered batches by timestamp.
+
 ```go
+// Exact question: Merge sorted `nums2` into sorted `nums1`, whose trailing capacity is large enough to hold both inputs.
+//
+// Example: Input nums1 = [1, 2, 3, 0, 0, 0], m = 3, nums2 = [2, 5, 6], n = 3 -> nums1 becomes [1, 2, 2, 3, 5, 6].
+//
+// Possible answer: Compare both slices from their ends and write the larger value into the final free position of `nums1`.
+//
+// Output format: `merge` has no return value; its observable result is the mutation or output performed in the function body.
+//
+// Inline descriptions:
+// - `nums1` is the destination slice: indexes `0..m-1` hold sorted values and the trailing `n` slots are writable capacity.
+// - `m` is the number of valid sorted values initially stored in `nums1`, not the total slice length.
+// - `nums2` is the source slice: indexes `0..n-1` hold the other sorted values.
+// - `n` is the number of valid values to read from `nums2`.
+//
+// Boundary checks:
+// - `second >= 0` keeps merging until every `nums2` value has been copied.
+// - `first >= 0` is checked before reading `nums1[first]`, preventing access to index -1 after nums1's original values are exhausted.
+// - If `nums2` is exhausted first, the remaining `nums1` values are already in their correct positions.
+// - Writing from the end prevents an unread value in the front of `nums1` from being overwritten.
+//
+// Key variables:
+// - `nums1` holds destination values and spare slots; its indexes are positions, not lookup keys.
+// - `nums2` holds source values that must all be inserted into `nums1`.
+// - `m` and `n` are valid-value counts used to find each slice's last readable index.
+// - `first` points to the largest unmerged original value in `nums1`.
+// - `second` points to the largest unmerged value in `nums2`.
+// - `write` points to the rightmost destination slot that has not been finalized.
+//
+// Logic:
+// 1. Position both read indexes at the ends of their valid sorted values and `write` at the final destination slot.
+// 2. Compare the largest values that have not yet been merged.
+// 3. Copy the larger value into `nums1[write]` and move that value's source index left.
+// 4. Move `write` left after every copy.
+// 5. Stop after `nums2` is exhausted because any remaining original `nums1` values are already correctly placed.
 func merge(nums1 []int, m int, nums2 []int, n int) {
     first := m - 1
     second := n - 1
     write := m + n - 1
 
     for second >= 0 {
+        // Check first before indexing nums1 so an exhausted first slice safely falls into the else branch.
         if first >= 0 && nums1[first] > nums2[second] {
             nums1[write] = nums1[first]
             first--
@@ -1461,149 +825,86 @@ func merge(nums1 []int, m int, nums2 []int, n int) {
         write--
     }
 }
+
+// time complexity: O(m + n) -> in the worst case each of the m+n valid values is considered once.
+// space complexity: O(1) -> merging reuses nums1's provided capacity and keeps only three indexes.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Merge Sorted Array" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(m + n)
-Space: O(1)
+### Container With Most Water
+
+```mermaid
+flowchart TD
+    I["Input: vertical-line <strong>heights</strong>"] --> S["Initialize <strong>left</strong> = 0<br/><strong>right</strong> = len(<strong>heights</strong>)-1<br/><strong>best</strong> = 0"]
+
+    subgraph LOOP["Loop: while <strong>left</strong> is less than <strong>right</strong>"]
+        direction TD
+        W["Calculate <strong>width</strong> = <strong>right</strong> - <strong>left</strong>"]
+        H["The shorter wall limits the water<br/><strong>height</strong> = min(<strong>heights</strong>[<strong>left</strong>], <strong>heights</strong>[<strong>right</strong>])"]
+        A["Calculate <strong>area</strong> = <strong>width</strong> × <strong>height</strong>"]
+        B{"Is <strong>area</strong> greater than <strong>best</strong>?"}
+        U["Update <strong>best</strong> = <strong>area</strong>"]
+        D{"Is <strong>heights</strong>[<strong>left</strong>] shorter than <strong>heights</strong>[<strong>right</strong>]?"}
+        L["Move <strong>left</strong> rightward"]
+        R["Move <strong>right</strong> leftward"]
+        N["Continue with the narrower candidate pair"]
+
+        W --> H
+        H --> A
+        A --> B
+        B -->|"Yes"| U
+        B -->|"No"| D
+        U --> D
+        D -->|"Yes"| L
+        D -->|"No"| R
+        L --> N
+        R --> N
+    end
+
+    S --> W
+    N -->|"when the pointers meet"| O["Return <strong>best</strong>"]
+
+    style LOOP fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## 16.6 Move Zeroes
-
-Pattern:
-
-```text
-Same-direction two pointers
-```
+- Geometry tools maximize capacity between candidate boundaries.
+- Signal analysis chooses two barriers maximizing distance times limiting height.
 
 ```go
-func moveZeroes(numbers []int) {
-    write := 0
-
-    for _, number := range numbers {
-        if number != 0 {
-            numbers[write] = number
-            write++
-        }
-    }
-
-    for write < len(numbers) {
-        numbers[write] = 0
-        write++
-    }
-}
-```
-
----
-
-## 16.7 Product of Array Except Self
-
-Input:
-
-```text
-[1, 2, 3, 4]
-```
-
-Output:
-
-```text
-[24, 12, 8, 6]
-```
-
-For index `2`:
-
-```text
-1 × 2 × 4 = 8
-```
-
-You cannot use the current element.
-
-### Mental model
-
-For each position:
-
-```text
-answer[i] = product of everything to the left
-          × product of everything to the right
-```
-
-```text
-numbers = [1, 2, 3, 4]
-
-left products:
-[1, 1, 2, 6]
-
-right products:
-[24, 12, 4, 1]
-
-result:
-[24, 12, 8, 6]
-```
-
-```go
-func productExceptSelf(numbers []int) []int {
-    result := make([]int, len(numbers))
-
-    prefixProduct := 1
-
-    for i := 0; i < len(numbers); i++ {
-        result[i] = prefixProduct
-        prefixProduct *= numbers[i]
-    }
-
-    suffixProduct := 1
-
-    for i := len(numbers) - 1; i >= 0; i-- {
-        result[i] *= suffixProduct
-        suffixProduct *= numbers[i]
-    }
-
-    return result
-}
-```
-
-Complexity:
-
-```text
-Time:  O(n)
-Extra space: O(1)
-```
-
-The returned result array normally does not count as auxiliary space.
-
-Pattern:
-
-```text
-Prefix calculation + suffix calculation
-```
-
----
-
-## 16.8 Container With Most Water
-
-Given heights:
-
-```text
-[1, 8, 6, 2, 5, 4, 8, 3, 7]
-```
-
-Choose two lines that hold the most water.
-
-Area:
-
-```text
-width × minimum(leftHeight, rightHeight)
-```
-
-Why minimum?
-
-Because water spills over the shorter wall.
-
-```go
+// Exact question: Given vertical line heights, return the maximum water area formed by two lines and the x-axis.
+//
+// Example: Input heights = [1, 8, 6, 2, 5, 4, 8, 3, 7] -> output 49 from indexes 1 and 8.
+//
+// Possible answer: Start at both ends, calculate the current area, and move the shorter line because only a taller replacement can improve that limiting height.
+//
+// Output format: Return an `int` value from `maxArea`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `heights` is a slice of wall heights: each index is a horizontal position and its stored value is that wall's height.
+// - Two indexes define a container whose width is their distance and whose usable height is the shorter wall.
+//
+// Boundary checks:
+// - With fewer than two heights, `left < right` is false and the function safely returns zero.
+// - `left < right` also guarantees two distinct wall indexes for every calculated area.
+// - `area > best` replaces the answer only when the current pair holds more water.
+// - Moving the shorter wall is the only move that can increase the limiting height enough to offset the reduced width.
+//
+// Key variables:
+// - `heights` holds wall-height values; its indexes provide horizontal positions rather than keys.
+// - `left` and `right` identify the current candidate pair of walls.
+// - `width` is the distance between those two indexes.
+// - `height` is the smaller of the two wall values and therefore the water-level limit.
+// - `area` is the capacity of the current pair, and `best` is the largest capacity found so far.
+//
+// Logic:
+// 1. Start with the widest possible pair: the first and last indexes.
+// 2. Calculate its width, limiting height, and area, then update `best` when needed.
+// 3. Discard the shorter wall by moving only its pointer inward.
+// 4. Repeat until the pointers meet; every discarded pair is dominated by the shorter wall already examined.
+// 5. Return the largest area encountered.
 func maxArea(heights []int) int {
     left := 0
     right := len(heights) - 1
@@ -1618,6 +919,7 @@ func maxArea(heights []int) int {
             best = area
         }
 
+        // Keeping the shorter wall while reducing width cannot produce a larger area.
         if heights[left] < heights[right] {
             left++
         } else {
@@ -1627,527 +929,232 @@ func maxArea(heights []int) int {
 
     return best
 }
+
+// time complexity: O(n) -> one pointer moves inward on every iteration, so there are at most n-1 iterations.
+// space complexity: O(1) -> only two pointers and a fixed set of area variables are stored.
 ```
 
-Complexity:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Container With Most Water" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(1)
-```
-
-### Why move the shorter wall?
-
-The current area is limited by the shorter wall.
-
-Moving the taller wall:
-
-* Reduces the width
-* Does not improve the limiting height
-
-Only moving the shorter wall gives a chance to find a taller limiting wall.
-
----
-
-# 17. Pattern recognition table
-
-| Problem wording               | Likely pattern                |
-| ----------------------------- | ----------------------------- |
-| “Find a value at index…”      | Direct array access           |
-| “Process every element…”      | Traversal                     |
-| “Pair in sorted array…”       | Two pointers                  |
-| “Pair in unsorted array…”     | Hash map                      |
-| “Longest continuous…”         | Sliding window                |
-| “Maximum sum of size k…”      | Fixed sliding window          |
-| “Maximum continuous sum…”     | Kadane’s algorithm            |
-| “Many range sum queries…”     | Prefix sum                    |
-| “Count subarrays with sum k…” | Prefix sum + hash map         |
-| “Many range additions…”       | Difference array              |
-| “Modify without extra space…” | In-place / two pointers       |
-| “Sorted array…”               | Binary search or two pointers |
-| “Rotate/reverse…”             | In-place reversal             |
-| “Everything except current…”  | Prefix and suffix             |
-| “Compare left and right…”     | Opposite-direction pointers   |
-| “Keep valid elements…”        | Read and write pointers       |
-
----
-
-# 18. How to approach an array problem
-
-Use this sequence during an interview.
+### Two Sum II on a Sorted Array
 
 ```mermaid
 flowchart TD
-    A["Understand input and output"] --> B["Ask whether order matters"]
-    B --> C["Ask whether values are sorted"]
-    C --> D["Ask whether result must be continuous"]
-    D --> E["Ask whether extra memory is allowed"]
-    E --> F["Write brute-force solution"]
-    F --> G["Identify repeated work"]
-    G --> H["Choose pattern"]
-    H --> I["State time and space complexity"]
-    I --> J["Code"]
-    J --> K["Test edge cases"]
+    I["Input: sorted <strong>numbers</strong> and <strong>target</strong>"] --> S["Initialize <strong>left</strong> = 0<br/><strong>right</strong> = len(<strong>numbers</strong>)-1"]
+
+    subgraph LOOP["Loop: while <strong>left</strong> is less than <strong>right</strong>"]
+        direction TD
+        A["Calculate <strong>sum</strong> = <strong>numbers</strong>[<strong>left</strong>] + <strong>numbers</strong>[<strong>right</strong>]"]
+        M{"Is <strong>sum</strong> equal to <strong>target</strong>?"}
+        Y["A distinct sorted pair was found<br/>stop immediately"]
+        D{"Is <strong>sum</strong> less than <strong>target</strong>?"}
+        L["Need a larger <strong>sum</strong><br/>move <strong>left</strong> rightward"]
+        R["Need a smaller <strong>sum</strong><br/>move <strong>right</strong> leftward"]
+        N["Continue with the remaining sorted range"]
+
+        A --> M
+        M -->|"Yes"| Y
+        M -->|"No"| D
+        D -->|"Yes"| L
+        D -->|"No"| R
+        L --> N
+        R --> N
+    end
+
+    S --> A
+    Y --> T["Return true"]
+    N -->|"when <strong>left</strong> meets <strong>right</strong>"| F["No distinct pair remains<br/>return false"]
+
+    style LOOP fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Ask yourself:
+**Where it is used in real life:**
 
-### Is the array sorted?
-
-If yes, consider:
-
-* Two pointers
-* Binary search
-* Merge process
-
-### Is the answer a continuous section?
-
-If yes, consider:
-
-* Sliding window
-* Prefix sum
-* Kadane’s algorithm
-
-### Am I repeatedly recalculating the same sum?
-
-Consider:
-
-* Running sum
-* Prefix sum
-* Sliding window
-
-### Do I need fast membership lookup?
-
-Consider:
-
-* Hash set
-* Hash map
-
-### Must I modify the input without extra memory?
-
-Consider:
-
-* Swapping
-* Reversal
-* Read/write pointers
-
----
-
-# 19. Common mistakes
-
-## Mistake 1: Off-by-one errors
-
-Incorrect:
+- Pricing systems find a target pair in an already ordered catalog.
+- Sensor processing matches two sorted readings to a required total.
 
 ```go
-for i := 0; i <= len(numbers); i++ {
-    fmt.Println(numbers[i])
+// Exact question: Given a sorted integer slice and a target, return whether two distinct values add to the target.
+//
+// Example: Input numbers = [2, 7, 11, 15] and target = 9 -> output true because indexes 0 and 1 hold a valid pair.
+//
+// Possible answer: Compare the sum at left and right pointers; move left for a sum that is too small and right for a sum that is too large.
+//
+// Output format: Return a `bool` value from `hasPairWithSum`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `numbers` is a slice whose values are sorted in nondecreasing order; indexes identify positions in that order.
+// - `target` is the required sum of two values stored at distinct indexes.
+//
+// Boundary checks:
+// - Fewer than two values makes `left < right` false, so the function returns false without indexing the slice.
+// - `left < right` guarantees the same element cannot be used twice.
+// - The pointer-discarding logic is valid only because `numbers` is sorted.
+// - Equality returns immediately; otherwise exactly one pointer moves, guaranteeing progress.
+//
+// Key variables:
+// - `numbers` holds sorted values; indexes are positions rather than hash-map keys.
+// - `target` is the value against which every candidate pair sum is compared.
+// - `left` points to the smallest remaining candidate value.
+// - `right` points to the largest remaining candidate value.
+// - `sum` is the value of the current pair `numbers[left] + numbers[right]`.
+//
+// Logic:
+// 1. Place pointers at the smallest and largest values.
+// 2. Return true when their sum equals the target.
+// 3. If the sum is too small, move `left` to the next larger value.
+// 4. If the sum is too large, move `right` to the next smaller value.
+// 5. Return false when the pointers meet without finding a pair.
+func hasPairWithSum(numbers []int, target int) bool {
+    left := 0
+    right := len(numbers) - 1
+
+    for left < right {
+        sum := numbers[left] + numbers[right]
+
+        if sum == target {
+            return true
+        }
+
+        // Sorted order lets one comparison discard every pair using the pointer that moves.
+        if sum < target {
+            left++
+        } else {
+            right--
+        }
+    }
+
+    return false
 }
+
+// time complexity: O(n) -> each pointer crosses the sorted slice at most once.
+// space complexity: O(1) -> the search stores only two pointers and the current sum.
 ```
 
-The last valid index is:
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Two Sum II on a Sorted Array" is one small game played with the same pieces and rules.
 
-```text
-len(numbers) - 1
-```
-
-Correct:
-
-```go
-for i := 0; i < len(numbers); i++ {
-    fmt.Println(numbers[i])
-}
-```
-
----
-
-## Mistake 2: Accessing an empty slice
-
-Incorrect:
-
-```go
-numbers := []int{}
-maximum := numbers[0]
-```
-
-This panics.
-
-Check:
-
-```go
-if len(numbers) == 0 {
-    return 0
-}
-```
-
-The correct empty-input behavior depends on the problem contract.
-
----
-
-## Mistake 3: Forgetting that slices share memory
-
-```go
-original := []int{1, 2, 3}
-copyOfHeader := original
-
-copyOfHeader[0] = 99
-```
-
-Both slices now observe `99`.
-
-Use `copy` for independent storage.
-
----
-
-## Mistake 4: Modifying the slice while ranging incorrectly
-
-```go
-for _, value := range numbers {
-    value = value * 2
-}
-```
-
-This does not update the slice because `value` is a copy.
-
-Correct:
-
-```go
-for i := range numbers {
-    numbers[i] *= 2
-}
-```
-
----
-
-## Mistake 5: Using `O(n²)` when a running value is enough
-
-For every index, recalculating a complete sum often indicates an optimization opportunity.
-
-Look for:
-
-* Prefix sum
-* Sliding window
-* Running minimum
-* Running maximum
-* Hash map
-
----
-
-## Mistake 6: Forgetting all-negative arrays in Kadane
-
-Incorrect initialization:
-
-```go
-best := 0
-```
-
-For:
-
-```text
-[-5, -2, -8]
-```
-
-This would incorrectly return `0`.
-
-Correct:
-
-```go
-current := numbers[0]
-best := numbers[0]
-```
-
-The answer should be `-2`.
-
----
-
-## Mistake 7: Overwriting values during in-place merge
-
-When merging into an array with free space at the end, start writing from the back.
-
----
-
-# 20. Interview mock questions
-
-## Question 1: Why is array access `O(1)`?
-
-A strong answer:
-
-> Array elements are stored contiguously. The address of an element can be calculated directly as the base address plus the index multiplied by the element size. Therefore, accessing an element does not require traversing earlier elements.
-
----
-
-## Question 2: Why is searching an unsorted array `O(n)`?
-
-> Without ordering or an auxiliary index, the target could appear anywhere, including the final position, or may not exist. In the worst case, every element must be examined.
-
----
-
-## Question 3: What is the difference between an array and a slice in Go?
-
-> A Go array has a fixed length, and its length is part of its type. A slice is a descriptor over a backing array containing a pointer, length and capacity. Slices can grow using `append`, although growth may allocate a new backing array.
-
----
-
-## Question 4: Is appending to a slice always `O(1)`?
-
-> No. It is amortized `O(1)`. If capacity is available, append is constant time. If the backing array is full, Go may allocate a larger array and copy the existing elements, making that particular append `O(n)`.
-
----
-
-## Question 5: When would you use two pointers?
-
-> Two pointers are useful when processing sorted arrays, comparing values from both ends, finding pairs, reversing arrays, or compacting valid elements in place.
-
----
-
-## Question 6: Sliding window versus prefix sum?
-
-> Sliding window is useful when incrementally maintaining information for a moving continuous range, especially longest or shortest valid windows. Prefix sums are useful when answering many arbitrary range-sum queries or combining prefix sums with a hash map to count subarrays.
-
----
-
-## Question 7: What makes Kadane’s algorithm work?
-
-> If the maximum sum ending before the current element is negative, carrying that sum forward only makes future subarrays worse. Therefore, the algorithm either extends the previous subarray or starts a new subarray at the current element.
-
----
-
-## Question 8: Why merge sorted arrays from the end?
-
-> Writing from the beginning could overwrite unprocessed values in the first array. Writing from the end uses the available empty space and safely places the largest remaining element.
-
----
-
-## Question 9: What is an in-place algorithm?
-
-> An in-place algorithm modifies the existing data structure while using constant or very small auxiliary memory. It may still use variables and the output array may or may not count, depending on the problem definition.
-
----
-
-## Question 10: What is the difference between a subarray and a subsequence?
-
-> A subarray is continuous. A subsequence preserves relative order but may skip elements.
-
-Example:
-
-```text
-Array:       [1, 2, 3, 4]
-Subarray:    [2, 3]
-Subsequence: [1, 3, 4]
-```
-
----
-
-# 21. Coding mock questions
-
-## Easy
-
-1. Find the largest element.
-2. Reverse an array in place.
-3. Check whether an array is sorted.
-4. Remove a target value in place.
-5. Move all zeroes to the end.
-6. Find the second-largest element.
-7. Merge two sorted arrays.
-8. Find the missing number from `0` to `n`.
-
-## Medium
-
-1. Two Sum
-2. Best Time to Buy and Sell Stock
-3. Maximum Subarray
-4. Product of Array Except Self
-5. Rotate Array
-6. Container With Most Water
-7. Subarray Sum Equals K
-8. Three Sum
-9. Longest Consecutive Sequence
-10. Minimum Size Subarray Sum
-
-## Harder
-
-1. Trapping Rain Water
-2. First Missing Positive
-3. Maximum Product Subarray
-4. Sliding Window Maximum
-5. Median of Two Sorted Arrays
-6. Largest Rectangle in Histogram
-
----
-
-# 22. Mini interview exercise
-
-Consider:
-
-```text
-numbers = [3, 1, 4, 1, 5]
-```
-
-## Exercise 1
-
-What is:
-
-```go
-numbers[2]
-```
-
-Answer:
-
-```text
-4
-```
-
----
-
-## Exercise 2
-
-What is the complexity of accessing `numbers[2]`?
-
-Answer:
-
-```text
-O(1)
-```
-
----
-
-## Exercise 3
-
-What is the complexity of finding whether `5` exists without extra data structures?
-
-Answer:
-
-```text
-O(n)
-```
-
----
-
-## Exercise 4
-
-What pattern would you use to find the maximum sum of any three consecutive numbers?
-
-Answer:
-
-```text
-Fixed-size sliding window
-```
-
----
-
-## Exercise 5
-
-What pattern would you use to answer 100,000 range-sum queries?
-
-Answer:
-
-```text
-Prefix sum
-```
-
----
-
-## Exercise 6
-
-What pattern would you use to find a pair with a target sum in a sorted array?
-
-Answer:
-
-```text
-Two pointers
-```
-
----
-
-## Exercise 7
-
-What pattern would you use to move all zeroes to the end without another array?
-
-Answer:
-
-```text
-Read/write pointers and in-place modification
-```
-
----
-
-# 23. One-page mental model
-
-```text
-ARRAY
-A numbered row of adjacent boxes.
-
-INDEX ACCESS
-Jump directly to a box: O(1).
-
-TRAVERSAL
-Visit every box: O(n).
-
-TWO POINTERS
-Use two fingers to avoid repeated scanning.
-
-SLIDING WINDOW
-Move one continuous viewing window.
-
-PREFIX SUM
-Precalculate totals so range queries become subtraction.
-
-DIFFERENCE ARRAY
-Mark where a range update starts and stops.
-
-KADANE
-Keep a profitable running subarray; abandon a harmful one.
-
-IN-PLACE
-Rearrange existing boxes instead of creating a second row.
-
-GO SLICE
-A pointer, length and capacity describing part of a backing array.
-```
-
----
-
-# 24. Final pattern map
+### Range Sum Query
 
 ```mermaid
-mindmap
-  root((Arrays and Slices))
-    Storage
-      Contiguous memory
-      Index based
-      O(1) access
-    Go Slice
-      Pointer
-      Length
-      Capacity
-      Backing array
-      Append
-    Traversal
-      Sum
-      Min and max
-      Frequency
-    Two Pointers
-      Pair sum
-      Palindrome
-      Move zeroes
-      Reverse
-    Sliding Window
-      Fixed size
-      Variable size
-      Longest range
-    Prefix Sum
-      Range sum
-      Subarray sum
-    Difference Array
-      Range updates
-    Kadane
-      Maximum subarray
-    In Place
-      Rotate
-      Merge
-      Remove duplicates
+flowchart TD
+    I["Build input: integer slice <strong>numbers</strong>"] --> P["Create <strong>prefix</strong> with len(<strong>numbers</strong>)+1 slots<br/><strong>prefix</strong>[0] = 0"]
+
+    subgraph BUILD["Build loop: for <strong>i</strong>, <strong>number</strong> := range <strong>numbers</strong>"]
+        direction TD
+        B["Store the next boundary total<br/><strong>prefix</strong>[<strong>i</strong>+1] = <strong>prefix</strong>[<strong>i</strong>] + <strong>number</strong>"]
+        N["Continue with the next input index"]
+
+        B --> N
+    end
+
+    P --> B
+    N -->|"after the final input value"| R["Prefix table is ready<br/><strong>prefix</strong>[<strong>i</strong>] = sum of <strong>numbers</strong>[0:<strong>i</strong>]"]
+    R --> Q["Query input: inclusive indexes <strong>left</strong> and <strong>right</strong>"]
+    Q --> C["Use boundary after <strong>right</strong><br/><strong>prefix</strong>[<strong>right</strong>+1]"]
+    C --> X["Remove everything before <strong>left</strong><br/><strong>prefix</strong>[<strong>right</strong>+1] - <strong>prefix</strong>[<strong>left</strong>]"]
+    X --> O["Return the inclusive range sum"]
+
+    style BUILD fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-The central interview lesson is:
+**Where it is used in real life:**
 
-> Arrays are simple storage. Most difficult array questions are really tests of whether you recognize traversal, two pointers, sliding window, prefix sum, Kadane’s algorithm or in-place modification.
+- Dashboards answer repeated totals over time intervals.
+- Databases precompute cumulative counts for fast range reports.
+
+```go
+// Exact question: Build a prefix-sum table and use it to return the inclusive sum from index `left` through index `right`.
+//
+// Example: Input numbers = [-2, 0, 3, -5, 2, -1] builds prefix = [0, -2, -2, 1, -4, -2, -3]; querying left = 0 and right = 2 returns 1.
+//
+// Possible answer: Store cumulative sums at boundaries so subtracting `prefix[left]` from `prefix[right+1]` removes everything before the requested range.
+//
+// Output format: `buildPrefixSum` returns an `n+1` length `[]int`; `rangeSum` returns one inclusive range total as an `int`. Neither function prints.
+//
+// Inline descriptions:
+// - `numbers` is the original value slice: its indexes identify elements included in later queries.
+// - `prefix` is a boundary-sum slice: index `i` represents the boundary before `numbers[i]`, not that element's value.
+// - `left` and `right` are inclusive indexes into the original `numbers` slice.
+//
+// Boundary checks:
+// - An empty input builds `[0]`, which correctly represents a total of zero before any values.
+// - `rangeSum` expects `0 <= left <= right < len(prefix)-1`; the caller must enforce this query contract.
+// - The extra prefix slot makes `right+1` valid even when `right` is the final input index.
+//
+// Key variables:
+// - `numbers` holds the original integer values; indexes are positions, not lookup keys.
+// - `prefix[i]` stores the sum of the first `i` input values, so its indexes represent boundaries rather than input elements.
+// - `i` is the current input index, `number` is `numbers[i]`, and `i+1` is the matching ending boundary.
+// - `left` is the first included input index and `right` is the last included input index.
+//
+// Logic:
+// 1. Allocate one extra leading prefix slot whose value is zero.
+// 2. Build each next boundary by adding the current input value to the previous boundary total.
+// 3. For a query, read the total through `right` from `prefix[right+1]`.
+// 4. Subtract `prefix[left]`, which contains exactly the values before the requested range.
+// 5. Reuse the same prefix table to answer later valid queries in constant time.
+func buildPrefixSum(numbers []int) []int {
+    prefix := make([]int, len(numbers)+1)
+
+    for i, number := range numbers {
+        // prefix[i] excludes numbers[i]; prefix[i+1] includes it.
+        prefix[i+1] = prefix[i] + number
+    }
+
+    return prefix
+}
+
+func rangeSum(prefix []int, left, right int) int {
+    // The subtraction cancels numbers[0:left] and keeps numbers[left:right+1].
+    return prefix[right+1] - prefix[left]
+}
+
+// time complexity: O(n) -> building the prefix table visits all `n` values once; each later range query is O(1).
+// space complexity: O(n) -> the returned prefix table stores n+1 boundary totals; each query needs O(1) extra space.
+```
+
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. "Range Sum Query" is one small game played with the same pieces and rules.
+
+---
+
+## Interview checklist and next steps
+
+Use this answer order during an interview:
+
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
+
+Recommended practice order:
+
+1. [Two Sum](#two-sum)
+2. [Best Time to Buy and Sell Stock](#best-time-to-buy-and-sell-stock)
+3. [Maximum Subarray](#maximum-subarray)
+4. [Product of Array Except Self](#product-of-array-except-self)
+5. [Move Zeroes](#move-zeroes)
+6. [Rotate Array](#rotate-array)
+7. [Merge Sorted Array](#merge-sorted-array)
+8. [Container With Most Water](#container-with-most-water)
+9. [Two Sum II on a Sorted Array](#two-sum-ii-on-a-sorted-array)
+10. [Range Sum Query](#range-sum-query)
+
+Continue with: 3Sum, Find Minimum in Rotated Sorted Array, Search in Rotated Sorted Array, Spiral Matrix, Set Matrix Zeroes.
+
+```mermaid
+flowchart LR
+    Q0["Two Sum"]
+    Q0 --> Q1["Best Time to Buy and Sell Stock"]
+    Q1 --> Q2["Maximum Subarray"]
+    Q2 --> Q3["Product of Array Except Self"]
+    Q3 --> Q4["Move Zeroes"]
+    Q4 --> Q5["Rotate Array"]
+    Q5 --> Q6["Merge Sorted Array"]
+    Q6 --> Q7["Container With Most Water"]
+    Q7 --> Q8["Two Sum II on a Sorted Array"]
+    Q8 --> Q9["Range Sum Query"]
+```
+
+> **Baby analogy:** Imagine numbered toy boxes in one straight row. Pack the same checklist every time so no important interview step is forgotten.

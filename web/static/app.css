@@ -209,6 +209,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .markdown-body code { padding: .15em .38em; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--accent-dark); font: .82em/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .markdown-body pre { position: relative; overflow: auto; margin: 1.7em 0; padding: 22px 23px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); border-radius: 6px; background: var(--code); box-shadow: inset 0 1px rgba(255,255,255,.04); }
 .markdown-body pre code { padding: 0; border: 0; background: none; color: var(--gruvbox-fg-1); font-size: 13px; line-height: 1.7; }
+.markdown-body[data-code-wrap="true"] pre { overflow-x: hidden; }
+.markdown-body[data-code-wrap="true"] pre code { white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; }
 .markdown-body pre.highlighted-code { padding-top: 55px; }
 .markdown-body pre code.hljs { display: block; overflow: visible; padding: 0; background: transparent; color: var(--gruvbox-fg-2); }
 .code-language { position: absolute; top: 14px; left: 17px; color: var(--gruvbox-yellow); font: 750 9px/1 Inter, ui-sans-serif, sans-serif; letter-spacing: .14em; text-transform: uppercase; }

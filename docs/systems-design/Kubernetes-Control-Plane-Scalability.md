@@ -739,6 +739,23 @@ The client-go work queue supports rate-limited queueing; current client-go APIs 
 ## 10.2 Reconciliation pseudocode
 
 ```go
+// Exact question: How does `processNextItem` solve Reconciliation pseudocode?
+//
+// Possible answer: Use `processNextItem` with a FIFO queue to process items in discovery order and record each result.
+//
+// Output format: Return a `bool` value from `processNextItem`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `ctx` is the context.Context input used by this example.
+//
+// Boundary checks:
+// - `shutdown` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `ctx` is the context.Context input used by this example.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 func processNextItem(ctx context.Context) bool {
     key, shutdown := queue.Get()
     if shutdown {
@@ -766,6 +783,9 @@ func processNextItem(ctx context.Context) bool {
 
     return true
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Important properties:
@@ -846,6 +866,25 @@ Annotations, timestamps or condition ordering change even when state has not mat
 Only enqueue updates when relevant fields change.
 
 ```go
+// Exact question: How does `shouldEnqueue` solve Event filtering?
+//
+// Possible answer: Use `shouldEnqueue` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return a `bool` value from `shouldEnqueue`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `oldObj` points to a MyResource value that the function reads or updates.
+// - `newObj` points to a MyResource value that the function reads or updates.
+//
+// Boundary checks:
+// - `oldObj.Generation != newObj.Generation` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `oldObj` points to a MyResource value that the function reads or updates.
+// - `newObj` points to a MyResource value that the function reads or updates.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 func shouldEnqueue(oldObj, newObj *MyResource) bool {
     if oldObj.Generation != newObj.Generation {
         return true
@@ -853,6 +892,9 @@ func shouldEnqueue(oldObj, newObj *MyResource) bool {
 
     return relevantDependencyChanged(oldObj, newObj)
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 `metadata.generation` is useful for distinguishing desired-spec changes from many status or metadata changes.
@@ -862,13 +904,50 @@ func shouldEnqueue(oldObj, newObj *MyResource) bool {
 Bad:
 
 ```go
+// Exact question: How does this Go example demonstrate Write status only when it changes?
+//
+// Possible answer: Use the fragment to execute the shown state update directly from top to bottom.
+//
+// Output format: This fragment demonstrates syntax or state updates and does not define a standalone output value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - This fragment operates directly on the values named in each statement; it introduces no separate data structure.
+//
+// Logic:
+// 1. Execute the statements from top to bottom to perform the demonstrated operation.
 status.LastCheckedAt = time.Now()
 client.Status().Update(ctx, obj)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 Better:
 
 ```go
+// Exact question: How does this Go example demonstrate Write status only when it changes?
+//
+// Possible answer: Use the fragment to compare the current values and return or update state when the condition matches.
+//
+// Output format: This is a partial Go fragment; its surrounding function determines the final returned value.
+//
+// Inline descriptions:
+// - The comments in this preface describe how the important expressions and state changes are used.
+//
+// Boundary checks:
+// - `equality.Semantic.DeepEqual(obj.Status, newStatus)` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `newStatus` holds the intermediate value produced by `calculateStatus(obj`.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 newStatus := calculateStatus(obj)
 
 if equality.Semantic.DeepEqual(obj.Status, newStatus) {
@@ -876,6 +955,9 @@ if equality.Semantic.DeepEqual(obj.Status, newStatus) {
 }
 
 patchStatus(obj, newStatus)
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 ### Track observed generation

@@ -4,12 +4,27 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
 
 func main() {
+	// Enable collection of synchronization profiles.
+	// These settings add profiling overhead, so use lower sampling rates
+	// or disable them when they are not needed.
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
+
+	go func() {
+		log.Printf("pprof is available at http://127.0.0.1:6060/debug/pprof/")
+		if err := http.ListenAndServe("127.0.0.1:6060", nil); err != nil {
+			log.Printf("pprof server: %v", err)
+		}
+	}()
+
 	addr := flag.String("addr", envOr("OMEGA_ADDR", ":8080"), "address to listen on")
 	docsDir := flag.String("docs", envOr("OMEGA_DOCS", "docs"), "directory containing Markdown documents")
 	flag.Parse()

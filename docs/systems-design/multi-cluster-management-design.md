@@ -807,6 +807,25 @@ status:
 ## 11.2 Reconciliation pseudocode
 
 ```go
+// Exact question: How does `ReconcileAssignment` solve Reconciliation pseudocode?
+//
+// Possible answer: Use `ReconcileAssignment` to compare the current values and return or update state when the condition matches.
+//
+// Output format: Return an `error` value from `ReconcileAssignment`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `ctx` is the context.Context input used by this example.
+// - `clusterID` is the string input used by this example.
+//
+// Boundary checks:
+// - `err != nil` checks whether the referenced value exists before it is used.
+//
+// Key variables:
+// - `ctx` is the context.Context input used by this example.
+// - `clusterID` is the string input used by this example.
+//
+// Logic:
+// 1. Return the value produced after the state updates are complete.
 func ReconcileAssignment(
     ctx context.Context,
     clusterID string,
@@ -857,6 +876,9 @@ func ReconcileAssignment(
         desired.BundleDigest,
     )
 }
+
+// time complexity: O(1) -> the snippet performs a fixed number of operations independent of input size.
+// space complexity: O(1) -> only a fixed number of scalar variables or references is kept.
 ```
 
 ## 11.3 Idempotency

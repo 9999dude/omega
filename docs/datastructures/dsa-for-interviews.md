@@ -1,869 +1,547 @@
-For software engineering interviews, you should know these **data structures and algorithms** well enough to explain, implement, and analyze time/space complexity.
+# Data Structures and Algorithms for Interviews — A Compact Roadmap
 
-## 1. Complexity Analysis
+This file is the hub for the topic guides in this directory. It explains what to study, how to recognize patterns, and where the authoritative implementations live.
 
-You must be comfortable with:
+- [Mental model](#mental-model)
+- [Core data structures and algorithms](#core-data-structures-and-algorithms)
+- [Pattern recognition and complexity](#pattern-recognition-and-complexity)
+- [Interview workflow and common mistakes](#interview-workflow-and-common-mistakes)
+- [Top 10 mixed interview questions](#top-10-mixed-interview-questions)
+- [Six-week preparation plan](#six-week-preparation-plan)
+- [Senior engineer and engineering manager focus](#senior-engineer-and-engineering-manager-focus)
+- [Final checklist](#final-checklist)
 
-| Topic                       | What to know                                      |
-| --------------------------- | ------------------------------------------------- |
-| Big-O notation              | `O(1)`, `O(log n)`, `O(n)`, `O(n log n)`, `O(n²)` |
-| Time complexity             | How runtime grows with input size                 |
-| Space complexity            | Extra memory used by your solution                |
-| Best / average / worst case | Especially for sorting, hashing, trees            |
-| Amortized analysis          | Example: dynamic array append                     |
-
-Common interview expectation:
-
-```text
-Can you explain why your solution is O(n)?
-Can you reduce it from O(n²) to O(n)?
-Can you trade memory for speed?
-```
+> **Baby analogy:** Think of this directory as a school timetable: each subject has its own classroom, and this roadmap tells you which classroom to visit next.
 
 ---
 
-# Data Structures
+## Mental model
 
-## 2. Arrays / Slices
+Interview preparation is pattern training, not memorizing hundreds of unrelated answers. For each problem, identify the data relationship, choose an invariant, trace boundaries, then communicate complexity.
 
-Very important.
-
-Know:
-
-| Topic                 | Examples                            |
-| --------------------- | ----------------------------------- |
-| Traversal             | Loop through array                  |
-| Two pointers          | Sorted array, palindrome, pair sum  |
-| Sliding window        | Longest substring, max sum subarray |
-| Prefix sum            | Range sum, subarray sum             |
-| Difference array      | Range update problems               |
-| Kadane’s algorithm    | Maximum subarray sum                |
-| In-place modification | Remove duplicates, rotate array     |
-
-Common problems:
-
-```text
-Two Sum
-Best Time to Buy and Sell Stock
-Maximum Subarray
-Rotate Array
-Merge Sorted Array
-Move Zeroes
-Product of Array Except Self
-Container With Most Water
+```mermaid
+flowchart LR
+    N0["Problem statement"]
+    N0 --> N1["Relationship and constraints"]
+    N1 --> N2["Pattern"]
+    N2 --> N3["Invariant"]
+    N3 --> N4["Code"]
+    N4 --> N5["Complexity"]
 ```
+
+> **Baby analogy:** A puzzle box becomes easier when you first decide whether it needs a key, a map, a line, or a stack of pieces.
 
 ---
 
-## 3. Strings
+## Core data structures and algorithms
 
-Very important.
+| Topic | Use it when | Guide |
+| --- | --- | --- |
+| Arrays and slices | Position, contiguous ranges, two pointers, windows | [Array guide](array.md) |
+| Hash maps and sets | Membership, counts, key-to-value lookup | [Hash map guide](hash-map.md) |
+| Linked lists | Pointer rewiring and sequential nodes | [Linked-list guide](linked-list.md) |
+| Stacks | Nested work, reversal, nearest unresolved item | [Stack guide](stack.md) |
+| Queues and deques | FIFO, levels, nearest distance, rolling windows | [Queue guide](queue.md) |
+| Trees | Hierarchy and recursive child answers | [Tree guide](trees.md) |
+| Graphs | General relationships, paths, components, dependencies | [Graph guide](graph.md) |
+| Heaps | Repeated minimum, maximum, top-k, streaming rank | [Heap guide](heap-priority-queues.md) |
+| Tries | Prefix navigation and dictionary pruning | [Trie guide](trie.md) |
+| Strings | Text windows, counts, Unicode, construction | [String guide](strings.md) |
+| Dynamic programming | Repeated states and optimal substructure | [DP guide](dynamic-programming.md) |
+| Complexity | Growth, feasibility, and tradeoffs | [Complexity guide](complexity-analysis.md) |
 
-Know:
-
-| Topic               | Examples                         |
-| ------------------- | -------------------------------- |
-| Character frequency | Anagram, duplicates              |
-| String scanning     | Substring search                 |
-| Sliding window      | Longest substring without repeat |
-| Palindrome checks   | Valid palindrome                 |
-| String builder      | Efficient string construction    |
-| Trie basics         | Prefix search, autocomplete      |
-
-Common problems:
-
-```text
-Valid Anagram
-Longest Substring Without Repeating Characters
-Valid Palindrome
-Group Anagrams
-Longest Palindromic Substring
-Minimum Window Substring
-String Compression
+```mermaid
+flowchart LR
+    N0["Linear data"]
+    N0 --> N1["Hashing"]
+    N1 --> N2["Pointers and worklists"]
+    N2 --> N3["Trees and graphs"]
+    N3 --> N4["Heaps and tries"]
+    N4 --> N5["Dynamic programming"]
 ```
+
+> **Baby analogy:** Each data structure is a different toy container: choose the container that makes the next toy easy to find or move.
 
 ---
 
-## 4. Hash Map / Hash Set
+## Pattern recognition and complexity
 
-Extremely important.
+| Question clue | Likely pattern | Typical complexity | Practice links |
+| --- | --- | --- | --- |
+| Pair in sorted data | Two pointers | O(n) | [Two Sum II](array.md#two-sum-ii-on-a-sorted-array), [Container With Most Water](array.md#container-with-most-water) |
+| Contiguous range | Sliding window or prefix sum | O(n) | [Range Sum Query](array.md#range-sum-query), [Minimum Window Substring](strings.md#minimum-window-substring) |
+| Existence, count, or grouping | Hash map or set | O(n) expected | [Two Sum](hash-map.md#two-sum), [Group Anagrams](hash-map.md#group-anagrams) |
+| Nested or recent unresolved work | Stack | O(n) | [Valid Parentheses](stack.md#valid-parentheses), [Daily Temperatures](stack.md#daily-temperatures) |
+| Level or nearest unweighted state | BFS queue | O(V+E) | [Shortest Distances](graph.md#shortest-distances-in-an-unweighted-graph), [Rotting Oranges](queue.md#rotting-oranges) |
+| Hierarchy or child result | DFS recursion | O(n) | [Maximum Depth](trees.md#maximum-depth-of-binary-tree), [Count Connected Components](graph.md#count-connected-components) |
+| Repeated next minimum or maximum | Heap | O(n log k) or O(n log n) | [Kth Largest Element](heap-priority-queues.md#kth-largest-element-in-an-array), [Merge K Sorted Lists](heap-priority-queues.md#merge-k-sorted-lists) |
+| Prefix query | Trie | O(query length) | [Implement Trie](trie.md#implement-trie), [Search Suggestions](trie.md#search-suggestions) |
+| Repeated subproblem | Dynamic programming | states × transitions | [Climbing Stairs](dynamic-programming.md#climbing-stairs), [Coin Change](dynamic-programming.md#coin-change) |
 
-Know:
-
-| Topic               | What to know               |
-| ------------------- | -------------------------- |
-| Hash map lookup     | Average `O(1)`             |
-| Hash set membership | Duplicate detection        |
-| Frequency counting  | Count chars/numbers        |
-| Index mapping       | Two Sum style problems     |
-| Collision basics    | Why worst case can degrade |
-
-Common problems:
-
-```text
-Two Sum
-Contains Duplicate
-Group Anagrams
-Subarray Sum Equals K
-Longest Consecutive Sequence
-First Unique Character
+```mermaid
+flowchart LR
+    N0["Read constraints"]
+    N0 --> N1["Identify relationship"]
+    N1 --> N2["Estimate feasible complexity"]
+    N2 --> N3["Choose pattern"]
+    N3 --> N4["Verify invariant"]
 ```
+
+> **Baby analogy:** The words in the question are road signs; they point toward the right tool before you write any code.
 
 ---
 
-## 5. Linked List
+## Interview workflow and common mistakes
 
-Important, but less used in real systems.
+Use this workflow:
 
-Know:
+1. Restate the input, output, and constraints.
+2. Give a brute-force baseline.
+3. Name the reusable pattern and invariant.
+4. Describe every map, slice, stack, queue, pointer, or DP state.
+5. Handle empty, one-element, duplicate, overflow, and skewed cases.
+6. Trace one example before finishing the implementation.
+7. State time and space complexity with variable definitions.
 
-| Topic                 | Examples                     |
-| --------------------- | ---------------------------- |
-| Singly linked list    | Basic traversal              |
-| Doubly linked list    | LRU cache                    |
-| Fast and slow pointer | Cycle detection, middle node |
-| Reverse linked list   | Iterative and recursive      |
-| Dummy node            | Cleaner insert/delete logic  |
-| Merge lists           | Sorted linked lists          |
+Common mistakes:
 
-Common problems:
+- Coding before clarifying whether input is sorted, mutable, connected, or unique.
+- Naming a pattern without stating its invariant.
+- Ignoring output space or recursion depth.
+- Claiming average hash behavior as a worst-case guarantee.
+- Memorizing code but being unable to explain why a pointer or state moves.
+- Practicing only successful examples and skipping boundary cases.
 
-```text
-Reverse Linked List
-Detect Cycle
-Merge Two Sorted Lists
-Remove Nth Node From End
-Middle of Linked List
-Add Two Numbers
-LRU Cache
+```mermaid
+flowchart LR
+    N0["Clarify"]
+    N0 --> N1["Baseline"]
+    N1 --> N2["Pattern"]
+    N2 --> N3["Invariant"]
+    N3 --> N4["Boundaries"]
+    N4 --> N5["Trace"]
+    N5 --> N6["Complexity"]
 ```
+
+> **Baby analogy:** Before building a tower, count the blocks, choose the base, and decide what keeps every new layer from falling.
 
 ---
 
-## 6. Stack
+## Top 10 mixed interview questions
 
-Very important.
+The code is not duplicated here. Each problem links to its single authoritative implementation in the corresponding topic guide.
 
-Know:
-
-| Topic                 | Examples             |
-| --------------------- | -------------------- |
-| LIFO behavior         | Last in, first out   |
-| Parentheses matching  | Valid brackets       |
-| Monotonic stack       | Next greater element |
-| DFS implementation    | Graph/tree traversal |
-| Expression evaluation | Calculator problems  |
-
-Common problems:
-
-```text
-Valid Parentheses
-Min Stack
-Daily Temperatures
-Next Greater Element
-Evaluate Reverse Polish Notation
-Largest Rectangle in Histogram
+```mermaid
+flowchart LR
+    N0["Array and hashing"]
+    N0 --> N1["Stack and queue"]
+    N1 --> N2["Trees and graphs"]
+    N2 --> N3["Pointers and heaps"]
+    N3 --> N4["Strings, DP, and tries"]
 ```
+
+> **Baby analogy:** These ten cards sample every important toy box without copying the same toy into this roadmap.
+
+### Two Sum
+
+```mermaid
+flowchart TD
+    I["Problem input for Two Sum"]
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Read each value"]
+        S1["Look up its complement"]
+        S0 --> S1
+        S2["Store the current index"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Array plus hash map
+
+**Where it is used in real life:**
+
+- Payment reconciliation pairs two charges to a target.
+- Catalog systems pair two prices that fit a budget.
+
+[Open the full commented Go solution](array.md#two-sum)
+
+> **Baby analogy:** Keep a notebook of toy prices already seen so the matching price is found immediately.
+
+### Valid Parentheses
+
+```mermaid
+flowchart TD
+    I["Problem input for Valid Parentheses"]
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Push opening bracket"]
+        S1["Match closing bracket"]
+        S0 --> S1
+        S2["Require empty stack"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Matching stack
+
+**Where it is used in real life:**
+
+- Compilers validate nested syntax.
+- Configuration parsers reject malformed grouping.
+
+[Open the full commented Go solution](stack.md#valid-parentheses)
+
+> **Baby analogy:** Stack open boxes and close the newest box first.
+
+### Binary Tree Level Order Traversal
+
+```mermaid
+flowchart TD
+    I["Problem input for Binary Tree Level Order Traversal"]
+
+    subgraph PROCESS["BFS and queue-processing region"]
+        direction TD
+        S0["Queue the root"]
+        S1["Process one level"]
+        S0 --> S1
+        S2["Queue child nodes"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** BFS queue
+
+**Where it is used in real life:**
+
+- Organization charts render employees by level.
+- Hierarchy tools group nodes by depth.
+
+[Open the full commented Go solution](trees.md#binary-tree-level-order-traversal)
+
+> **Baby analogy:** Call children row by row for a class photo.
+
+### Number of Islands
+
+```mermaid
+flowchart TD
+    I["Problem input for Number of Islands"]
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Find unvisited land"]
+        S1["Traverse its neighbors"]
+        S0 --> S1
+        S2["Count one component"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Grid DFS or BFS
+
+**Where it is used in real life:**
+
+- Image processing groups connected regions.
+- Monitoring groups neighboring failed cells.
+
+[Open the full commented Go solution](graph.md#number-of-islands)
+
+> **Baby analogy:** Color every touching square of one island before looking for another island.
+
+### Reverse Linked List
+
+```mermaid
+flowchart TD
+    I["Problem input for Reverse Linked List"]
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Save next node"]
+        S1["Reverse current pointer"]
+        S0 --> S1
+        S2["Advance both pointers"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Pointer rewiring
+
+**Where it is used in real life:**
+
+- Editors reverse history chains for replay.
+- Pipelines reverse linked batches without copying values.
+
+[Open the full commented Go solution](linked-list.md#reverse-linked-list)
+
+> **Baby analogy:** Hold the next train car before reversing the current hook.
+
+### Top K Frequent Elements
+
+```mermaid
+flowchart TD
+    I["Problem input for Top K Frequent Elements"]
+
+    subgraph PROCESS["Heap-processing region"]
+        direction TD
+        S0["Count values"]
+        S1["Keep a heap of candidates"]
+        S0 --> S1
+        S2["Return top k"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Frequency map plus heap
+
+**Where it is used in real life:**
+
+- Search systems surface popular queries.
+- Telemetry systems report busiest labels.
+
+[Open the full commented Go solution](heap-priority-queues.md#top-k-frequent-elements)
+
+> **Baby analogy:** Count every toy, then keep only the k fullest toy baskets.
+
+### Longest Substring Without Repeating Characters
+
+```mermaid
+flowchart TD
+    I["Problem input for Longest Substring Without Repeating Characters"]
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Expand right edge"]
+        S1["Move left past duplicates"]
+        S0 --> S1
+        S2["Record best width"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Sliding window
+
+**Where it is used in real life:**
+
+- Session analysis finds spans without repeated events.
+- Text analysis finds unique-character windows.
+
+[Open the full commented Go solution](strings.md#longest-substring-without-repeating-characters)
+
+> **Baby analogy:** Slide a picture frame over letter tiles and shrink it whenever a duplicate enters.
+
+### Coin Change
+
+```mermaid
+flowchart TD
+    I["Problem input for Coin Change"]
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Define amount state"]
+        S1["Try each coin transition"]
+        S0 --> S1
+        S2["Reuse smaller answers"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Dynamic programming
+
+**Where it is used in real life:**
+
+- Payment systems minimize denominations.
+- Resource packaging minimizes units needed for capacity.
+
+[Open the full commented Go solution](dynamic-programming.md#coin-change)
+
+> **Baby analogy:** Write the cheapest answer for every smaller amount on a sticker and reuse it.
+
+### Group Anagrams
+
+```mermaid
+flowchart TD
+    I["Problem input for Group Anagrams"]
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Build a word signature"]
+        S1["Append to signature group"]
+        S0 --> S1
+        S2["Return all groups"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Canonical key map
+
+**Where it is used in real life:**
+
+- Search systems group terms by letter inventory.
+- Word games cluster rearrangements.
+
+[Open the full commented Go solution](hash-map.md#group-anagrams)
+
+> **Baby analogy:** Put words made from the same letter tiles into one labeled cubby.
+
+### Implement Trie
+
+```mermaid
+flowchart TD
+    I["Problem input for Implement Trie"]
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Follow character edges"]
+        S1["Create missing nodes"]
+        S0 --> S1
+        S2["Mark complete words"]
+        S1 --> S2
+    end
+
+    I --> S0
+    S2 --> O["Return or apply the required result"]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Pattern:** Prefix tree
+
+**Where it is used in real life:**
+
+- Autocomplete stores searchable dictionaries.
+- Routers organize prefix rules.
+
+[Open the full commented Go solution](trie.md#implement-trie)
+
+> **Baby analogy:** Words share the same letter branches until their spellings split.
 
 ---
 
-## 7. Queue / Deque
+## Six-week preparation plan
 
-Important.
+| Week | Focus | Expected outcome |
+| --- | --- | --- |
+| Week 1 | Arrays, strings, hash maps, complexity | Recognize scans, windows, two pointers, and counting |
+| Week 2 | Linked lists, stacks, queues | Control pointers and explicit worklists |
+| Week 3 | Trees, recursion, BFS, DFS | Explain child-return state and level traversal |
+| Week 4 | Graphs, heaps, tries | Choose path, priority, component, and prefix tools |
+| Week 5 | Dynamic programming and mixed medium problems | Define states and transitions without guessing |
+| Week 6 | Timed mocks, review, communication | Produce correct, testable solutions under interview constraints |
 
-Know:
+Suggested minimum practice: 60 focused problems—about 20 easy, 32 medium, and 8 hard—plus repeated re-solves of missed patterns.
 
-| Topic          | Examples                      |
-| -------------- | ----------------------------- |
-| FIFO behavior  | First in, first out           |
-| BFS            | Level-order traversal         |
-| Deque          | Sliding window maximum        |
-| Circular queue | Fixed-size queue              |
-| Priority queue | Usually implemented with heap |
-
-Common problems:
-
-```text
-Binary Tree Level Order Traversal
-Number of Islands
-Rotting Oranges
-Sliding Window Maximum
-Design Circular Queue
+```mermaid
+flowchart LR
+    N0["Week 1 foundations"]
+    N0 --> N1["Week 2 linear structures"]
+    N1 --> N2["Week 3 trees"]
+    N2 --> N3["Week 4 graph families"]
+    N3 --> N4["Week 5 DP"]
+    N4 --> N5["Week 6 mocks"]
 ```
+
+> **Baby analogy:** Learn one shelf of toys each week, then spend the final week practicing how quickly you can choose the right shelf.
 
 ---
 
-## 8. Heap / Priority Queue
+## Senior engineer and engineering manager focus
 
-Very important for medium/hard interviews.
+Senior-level interviews add production judgment:
 
-Know:
+- Compare asymptotic and operational tradeoffs rather than reciting one answer.
+- Discuss memory locality, concurrency, data ownership, failure behavior, and observability.
+- Explain how constraints change the chosen algorithm.
+- Identify when a standard library, database index, queue, cache, or search service should replace custom code.
+- State how you would test correctness, load, skew, malformed input, and recovery.
+- Communicate decisions so another engineer can maintain the implementation.
 
-| Topic                | Examples                    |
-| -------------------- | --------------------------- |
-| Min heap             | Get smallest item           |
-| Max heap             | Get largest item            |
-| Top K                | K largest/frequent elements |
-| Merge K sorted lists | Heap-based merge            |
-| Scheduling           | Meeting rooms, CPU tasks    |
-
-Common problems:
-
-```text
-Kth Largest Element
-Top K Frequent Elements
-Merge K Sorted Lists
-Find Median from Data Stream
-Meeting Rooms II
-Task Scheduler
+```mermaid
+flowchart LR
+    N0["Algorithm correctness"]
+    N0 --> N1["Operational tradeoffs"]
+    N1 --> N2["Failure modes"]
+    N2 --> N3["Observability"]
+    N3 --> N4["Testing"]
+    N4 --> N5["Maintainability"]
 ```
+
+> **Baby analogy:** A senior builder explains not only how to make the toy bridge, but how it behaves when many children use it or one block breaks.
 
 ---
 
-## 9. Trees
+## Final checklist
 
-Very important.
+Before the interview:
 
-Know:
+- Re-solve the top ten without notes.
+- Review one-page complexity tables.
+- Practice explaining maps, slices, pointers, worklists, and DP states.
+- Run timed sessions with explicit boundary tests.
+- Review failures by pattern rather than by problem title.
 
-| Topic                  | Examples                     |
-| ---------------------- | ---------------------------- |
-| Binary tree traversal  | Preorder, inorder, postorder |
-| BFS traversal          | Level order                  |
-| DFS traversal          | Recursive and iterative      |
-| Tree height/depth      | Max depth                    |
-| Balanced tree          | Height-balanced check        |
-| Lowest common ancestor | Common ancestor problems     |
+During the interview:
 
-Common problems:
+- Clarify first.
+- Think aloud with an invariant.
+- Write small, testable steps.
+- Trace boundaries.
+- Finish with complexity and tradeoffs.
 
-```text
-Maximum Depth of Binary Tree
-Invert Binary Tree
-Same Tree
-Subtree of Another Tree
-Binary Tree Level Order Traversal
-Lowest Common Ancestor
-Diameter of Binary Tree
+```mermaid
+flowchart LR
+    N0["Clarify"]
+    N0 --> N1["Invariant"]
+    N1 --> N2["Implement"]
+    N2 --> N3["Test"]
+    N3 --> N4["Complexity"]
+    N4 --> N5["Tradeoffs"]
 ```
 
----
-
-## 10. Binary Search Tree
-
-Important.
-
-Know:
-
-| Topic                | Examples                 |
-| -------------------- | ------------------------ |
-| BST property         | Left < root < right      |
-| Search               | `O(log n)` if balanced   |
-| Insert/delete basics | Structural changes       |
-| Inorder traversal    | Gives sorted order       |
-| Validate BST         | Boundary-based recursion |
-
-Common problems:
-
-```text
-Validate Binary Search Tree
-Kth Smallest Element in BST
-Lowest Common Ancestor of BST
-Search in BST
-Insert into BST
-```
-
----
-
-## 11. Trie
-
-Useful for string-heavy interviews.
-
-Know:
-
-| Topic         | Examples             |
-| ------------- | -------------------- |
-| Prefix tree   | Fast prefix lookup   |
-| Insert/search | Word dictionary      |
-| StartsWith    | Autocomplete         |
-| DFS with trie | Word search problems |
-
-Common problems:
-
-```text
-Implement Trie
-Word Search II
-Replace Words
-Design Add and Search Words Data Structure
-Autocomplete System
-```
-
----
-
-## 12. Graphs
-
-Very important.
-
-Know:
-
-| Topic                | Examples                          |
-| -------------------- | --------------------------------- |
-| Graph representation | Adjacency list, matrix            |
-| BFS                  | Shortest path in unweighted graph |
-| DFS                  | Connected components              |
-| Cycle detection      | Directed and undirected           |
-| Topological sort     | Dependency ordering               |
-| Union-Find           | Connected components              |
-| Dijkstra             | Shortest path with weights        |
-
-Common problems:
-
-```text
-Number of Islands
-Clone Graph
-Course Schedule
-Pacific Atlantic Water Flow
-Rotting Oranges
-Network Delay Time
-Redundant Connection
-Evaluate Division
-```
-
----
-
-## 13. Union-Find / Disjoint Set
-
-Important for graph connectivity problems.
-
-Know:
-
-| Topic              | Examples         |
-| ------------------ | ---------------- |
-| Find               | Find parent/root |
-| Union              | Merge components |
-| Path compression   | Optimization     |
-| Union by rank/size | Optimization     |
-| Cycle detection    | Undirected graph |
-
-Common problems:
-
-```text
-Number of Connected Components
-Redundant Connection
-Accounts Merge
-Friend Circles / Number of Provinces
-Graph Valid Tree
-```
-
----
-
-# Algorithms
-
-## 14. Sorting
-
-Must know.
-
-Know:
-
-| Algorithm      |     Average Time | Notes                       |
-| -------------- | ---------------: | --------------------------- |
-| Bubble sort    |          `O(n²)` | Mostly for basics           |
-| Selection sort |          `O(n²)` | Simple but inefficient      |
-| Insertion sort |          `O(n²)` | Good for nearly sorted data |
-| Merge sort     |     `O(n log n)` | Stable, uses extra space    |
-| Quick sort     | `O(n log n)` avg | Worst case `O(n²)`          |
-| Heap sort      |     `O(n log n)` | In-place, not stable        |
-| Counting sort  |       `O(n + k)` | When value range is small   |
-
-Common problems:
-
-```text
-Merge Intervals
-Sort Colors
-Kth Largest Element
-Meeting Rooms
-Insert Interval
-```
-
----
-
-## 15. Binary Search
-
-Extremely important.
-
-Know:
-
-| Topic                | Examples                       |
-| -------------------- | ------------------------------ |
-| Normal binary search | Find target                    |
-| Lower bound          | First value >= target          |
-| Upper bound          | First value > target           |
-| Search answer space  | Minimum capacity, minimum days |
-| Rotated sorted array | Modified binary search         |
-
-Common problems:
-
-```text
-Binary Search
-Search in Rotated Sorted Array
-Find Minimum in Rotated Sorted Array
-First Bad Version
-Find First and Last Position
-Median of Two Sorted Arrays
-Koko Eating Bananas
-Capacity to Ship Packages
-```
-
----
-
-## 16. Recursion
-
-Very important.
-
-Know:
-
-| Topic          | Examples                           |
-| -------------- | ---------------------------------- |
-| Base case      | Stop condition                     |
-| Recursive case | Smaller subproblem                 |
-| Call stack     | Memory usage                       |
-| Tree recursion | DFS                                |
-| Backtracking   | Generate combinations/permutations |
-
-Common problems:
-
-```text
-Factorial
-Fibonacci
-Generate Parentheses
-Subsets
-Permutations
-Combination Sum
-Tree Traversals
-```
-
----
-
-## 17. Backtracking
-
-Important for medium/hard problems.
-
-Know:
-
-| Topic                       | Examples            |
-| --------------------------- | ------------------- |
-| Choose / explore / unchoose | Standard pattern    |
-| Pruning                     | Avoid useless paths |
-| State tracking              | Current path        |
-| Constraint checking         | Valid choices       |
-
-Common problems:
-
-```text
-Subsets
-Permutations
-Combination Sum
-Generate Parentheses
-Word Search
-N-Queens
-Palindrome Partitioning
-```
-
----
-
-## 18. Dynamic Programming
-
-Very important for senior-level interviews.
-
-Know:
-
-| Topic               | Examples                      |
-| ------------------- | ----------------------------- |
-| Memoization         | Top-down DP                   |
-| Tabulation          | Bottom-up DP                  |
-| 1D DP               | Climbing stairs, house robber |
-| 2D DP               | Grid paths, edit distance     |
-| Knapsack            | Pick/not pick decisions       |
-| Longest subsequence | LIS, LCS                      |
-| State transition    | Core DP skill                 |
-
-Common problems:
-
-```text
-Climbing Stairs
-House Robber
-Coin Change
-Longest Increasing Subsequence
-Longest Common Subsequence
-Edit Distance
-Unique Paths
-Word Break
-Partition Equal Subset Sum
-```
-
----
-
-## 19. Greedy Algorithms
-
-Important.
-
-Know:
-
-| Topic                | Examples              |
-| -------------------- | --------------------- |
-| Local optimal choice | Choose best now       |
-| Sorting + greedy     | Intervals, scheduling |
-| Heap + greedy        | Top K, scheduling     |
-| Proof intuition      | Why greedy works      |
-
-Common problems:
-
-```text
-Jump Game
-Gas Station
-Non-overlapping Intervals
-Meeting Rooms
-Task Scheduler
-Partition Labels
-Minimum Number of Arrows to Burst Balloons
-```
-
----
-
-## 20. Sliding Window
-
-Extremely common.
-
-Know:
-
-| Topic                | Examples             |
-| -------------------- | -------------------- |
-| Fixed-size window    | Max sum of size K    |
-| Variable-size window | Longest substring    |
-| Frequency map window | Anagrams, min window |
-| Shrinking condition  | Keep window valid    |
-
-Common problems:
-
-```text
-Maximum Average Subarray
-Longest Substring Without Repeating Characters
-Minimum Window Substring
-Permutation in String
-Find All Anagrams in a String
-Longest Repeating Character Replacement
-```
-
----
-
-## 21. Two Pointers
-
-Extremely common.
-
-Know:
-
-| Topic          | Examples             |
-| -------------- | -------------------- |
-| Opposite ends  | Pair sum, palindrome |
-| Same direction | Remove duplicates    |
-| Fast/slow      | Linked list cycle    |
-| Merge style    | Merge sorted arrays  |
-
-Common problems:
-
-```text
-Two Sum II
-3Sum
-Container With Most Water
-Valid Palindrome
-Remove Duplicates from Sorted Array
-Linked List Cycle
-Merge Sorted Array
-```
-
----
-
-## 22. Prefix Sum
-
-Very useful.
-
-Know:
-
-| Topic                 | Examples              |
-| --------------------- | --------------------- |
-| Running sum           | Sum from start        |
-| Range sum query       | `sum[i:j]`            |
-| Hash map + prefix sum | Subarray sum problems |
-| 2D prefix sum         | Matrix range sum      |
-
-Common problems:
-
-```text
-Range Sum Query
-Subarray Sum Equals K
-Continuous Subarray Sum
-Product of Array Except Self
-Maximum Size Subarray Sum Equals K
-```
-
----
-
-## 23. Bit Manipulation
-
-Useful, but lower priority unless company asks.
-
-Know:
-
-| Topic          | Examples         |
-| -------------- | ---------------- |
-| AND, OR, XOR   | Basic operations |
-| Check odd/even | `n & 1`          |
-| Single number  | XOR trick        |
-| Bit mask       | Subsets          |
-| Count bits     | Hamming weight   |
-
-Common problems:
-
-```text
-Single Number
-Number of 1 Bits
-Counting Bits
-Missing Number
-Reverse Bits
-Power of Two
-Subsets using Bitmask
-```
-
----
-
-## 24. Intervals
-
-Very common in practical interviews.
-
-Know:
-
-| Topic             | Examples                  |
-| ----------------- | ------------------------- |
-| Sort by start/end | Standard first step       |
-| Merge overlaps    | Merge intervals           |
-| Insert interval   | Maintain sorted intervals |
-| Meeting rooms     | Overlap detection         |
-| Sweep line        | Count active intervals    |
-
-Common problems:
-
-```text
-Merge Intervals
-Insert Interval
-Meeting Rooms
-Meeting Rooms II
-Non-overlapping Intervals
-Employee Free Time
-Minimum Number of Arrows
-```
-
----
-
-## 25. Matrix / Grid Problems
-
-Important.
-
-Know:
-
-| Topic            | Examples           |
-| ---------------- | ------------------ |
-| BFS on grid      | Shortest path      |
-| DFS on grid      | Islands            |
-| Boundary checks  | Valid cell         |
-| Visited tracking | Avoid loops        |
-| Direction arrays | Up/down/left/right |
-
-Common problems:
-
-```text
-Number of Islands
-Max Area of Island
-Rotting Oranges
-Word Search
-Pacific Atlantic Water Flow
-Shortest Path in Binary Matrix
-Set Matrix Zeroes
-Spiral Matrix
-```
-
----
-
-# Priority Order
-
-If you have limited time, study in this order:
-
-## Must Know
-
-```text
-1. Arrays
-2. Strings
-3. Hash Map / Hash Set
-4. Two Pointers
-5. Sliding Window
-6. Binary Search
-7. Stack
-8. Queue
-9. Trees
-10. Graph BFS / DFS
-```
-
-## Should Know
-
-```text
-11. Heap / Priority Queue
-12. Recursion
-13. Backtracking
-14. Dynamic Programming
-15. Greedy
-16. Prefix Sum
-17. Intervals
-18. Linked List
-```
-
-## Good to Know
-
-```text
-19. Trie
-20. Union-Find
-21. Bit Manipulation
-22. Advanced DP
-23. Dijkstra
-24. Topological Sort
-25. Segment Tree / Fenwick Tree
-```
-
----
-
-# For Engineering Manager / Senior Engineer Interviews
-
-For your profile, do not only prepare coding. You should also prepare:
-
-```text
-System design
-Distributed systems
-Kubernetes fundamentals
-API design
-Database design
-Concurrency
-Operational excellence
-Incident handling
-Trade-off discussion
-Code quality
-Testing strategy
-```
-
-For coding rounds, focus on:
-
-```text
-Arrays
-Hash maps
-Sliding window
-Binary search
-Trees
-Graphs
-Heaps
-Dynamic programming basics
-Concurrency problems in Go
-```
-
-For platform/Kubernetes roles, also revise:
-
-```text
-Queues
-Rate limiting
-Leader election
-Work queues
-Retries
-Backoff
-Caching
-Idempotency
-Event-driven systems
-Graph traversal
-Dependency resolution
-Scheduling algorithms
-```
-
----
-
-# Suggested 6-Week Preparation Plan
-
-## Week 1
-
-```text
-Arrays
-Strings
-Hash Map
-Two Pointers
-Sliding Window
-```
-
-## Week 2
-
-```text
-Binary Search
-Sorting
-Intervals
-Prefix Sum
-Stack
-Queue
-```
-
-## Week 3
-
-```text
-Linked List
-Trees
-BST
-Heap
-Recursion
-```
-
-## Week 4
-
-```text
-Graphs
-BFS
-DFS
-Topological Sort
-Union-Find
-```
-
-## Week 5
-
-```text
-Dynamic Programming
-Greedy
-Backtracking
-Trie
-Bit Manipulation
-```
-
-## Week 6
-
-```text
-Mock interviews
-Timed LeetCode medium problems
-System design
-Behavioral stories
-Go concurrency
-```
-
----
-
-# Minimum Problem Count
-
-A realistic target:
-
-```text
-Easy: 40–50
-Medium: 80–120
-Hard: 10–20
-Total: 130–190 problems
-```
-
-For your level, prioritize **medium problems**. Hard problems are useful, but system design and senior-level tradeoff discussion will matter more.
+> **Baby analogy:** Pack the same school bag before every interview so the important tools are never left at home.

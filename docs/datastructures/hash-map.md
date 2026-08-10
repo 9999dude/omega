@@ -1,831 +1,266 @@
-# Hash Map and Hash Set — Explained Simply
+# Hash Maps and Hash Sets — A Compact Interview Guide
 
-## 1. The simplest definition
+A hash map turns a key into a bucket location so values can usually be found without scanning every stored item. A hash set stores keys only for membership.
 
-A **Hash Map** stores a relationship:
+- [Mental model](#mental-model)
+- [Representation and core operations](#representation-and-core-operations)
+- [Interview patterns and complexity](#interview-patterns-and-complexity)
+- [Problem-solving checklist and common mistakes](#problem-solving-checklist-and-common-mistakes)
+- [Top 10 Hash Map Interview Questions](#top-10-hash-map-interview-questions)
+- [Interview checklist and next steps](#interview-checklist-and-next-steps)
 
-```text
-key → value
-```
-
-Examples:
-
-```text
-"name" → "Abhishek"
-"userID" → 4821
-"apple" → 5
-```
-
-A **Hash Set** only remembers whether something exists:
-
-```text
-"apple" exists
-"banana" exists
-"orange" does not exist
-```
-
-The main benefit is fast lookup:
-
-```text
-Average lookup: O(1)
-```
+> **Baby analogy:** Imagine a wall of labeled cubbies. The guide shows where every piece belongs before you start moving the pieces.
 
 ---
-
-# 2. Baby mental model
-
-## Hash Map: labelled drawers
-
-Imagine a cabinet with labelled drawers:
-
-```text
-"apple"  → drawer containing 5
-"banana" → drawer containing 3
-"orange" → drawer containing 7
-```
-
-When someone asks:
-
-> How many apples do we have?
-
-You do not search every drawer.
-
-You directly open the drawer labelled `"apple"`.
-
-That is the mental model for a hash map.
-
----
-
-## Hash Set: a guest list
-
-Imagine a party guest list:
-
-```text
-Abhishek
-John
-Sarah
-```
-
-When someone arrives, you only ask:
-
-> Is this name already on the list?
-
-You do not need additional information about that person.
-
-That is a hash set.
-
-```text
-Hash Map: name → information
-Hash Set: name exists or does not exist
-```
-
----
-
-# 3. Why do we need them?
-
-Suppose you have an array:
-
-```text
-[8, 3, 11, 20, 7, 15, 2]
-```
-
-You want to know whether `15` exists.
-
-With an unsorted array, you may need to inspect every element:
-
-```text
-8 → no
-3 → no
-11 → no
-20 → no
-7 → no
-15 → yes
-```
-
-Worst-case complexity:
-
-```text
-O(n)
-```
-
-With a hash set:
-
-```text
-set[15]
-```
-
-Average complexity:
-
-```text
-O(1)
-```
-
-## Comparison
-
-| Operation               | Array/List |  Hash Map/Set |
-| ----------------------- | ---------: | ------------: |
-| Find an arbitrary value |       O(n) |  Average O(1) |
-| Insert                  | Often O(1) |  Average O(1) |
-| Delete by value         |       O(n) |  Average O(1) |
-| Preserve order          |        Yes |    Usually no |
-| Access by position      |       O(1) | Not supported |
-
-Hash maps trade additional memory for faster lookup.
-
----
-
-# 4. How does a Hash Map work?
-
-A hash map does not literally create a drawer named `"apple"`.
-
-Internally, it normally has an array of buckets.
-
-A **hash function** converts a key into a number.
-
-```mermaid
-flowchart LR
-    A["Key: apple"] --> B["Hash function"]
-    B --> C["Hash number: 93821"]
-    C --> D["Bucket index calculation"]
-    D --> E["Bucket 5"]
-    E --> F["Stored value: 10"]
-```
-
-A simplified bucket calculation is:
-
-```text
-bucketIndex = hash(key) % numberOfBuckets
-```
-
-For example:
-
-```text
-hash("apple") = 93821
-numberOfBuckets = 8
-
-bucketIndex = 93821 % 8
-            = 5
-```
-
-Therefore:
-
-```text
-"apple" → bucket 5
-```
-
-These hash numbers are only examples. Real hash functions use more sophisticated calculations.
-
----
-
-## Complete lookup process
-
-Suppose we run:
-
-```go
-value := inventory["apple"]
-```
-
-Conceptually, the hash map does this:
-
-```mermaid
-flowchart TD
-    A["Receive key: apple"] --> B["Calculate hash of apple"]
-    B --> C["Convert hash into bucket index"]
-    C --> D["Go directly to that bucket"]
-    D --> E{"Is apple in this bucket?"}
-    E -->|Yes| F["Return its value"]
-    E -->|No| G["Key does not exist"]
-```
-
-This direct bucket access is why lookup is usually close to `O(1)`.
-
----
-
-# 5. What is a collision?
-
-Different keys can produce the same bucket index.
-
-For example:
-
-```text
-hash("apple") % 8 = 5
-hash("grape") % 8 = 5
-```
-
-Both keys want bucket `5`.
-
-This is called a **hash collision**.
-
-```mermaid
-flowchart LR
-    A["apple"] --> C["Hash function"]
-    B["grape"] --> C
-    C --> D["Bucket 5"]
-    D --> E["apple → 10"]
-    D --> F["grape → 6"]
-```
-
-The hash map must keep both keys and compare them when searching the bucket.
-
-Common collision-handling strategies include:
-
-1. **Separate chaining**: Store multiple entries inside the same bucket.
-2. **Open addressing**: Find another available bucket.
-
-The exact implementation depends on the language and runtime.
-
----
-
-## Why can the worst case become O(n)?
-
-Imagine every key lands in the same bucket:
-
-```text
-Bucket 5:
-apple
-banana
-orange
-grape
-mango
-watermelon
-```
-
-Now finding `"watermelon"` may require scanning every entry in that bucket.
-
-```text
-Worst case: O(n)
-```
-
-Therefore:
-
-```text
-Average lookup: O(1)
-Worst-case lookup: O(n)
-```
-
-A good hash function and appropriate resizing make the worst case uncommon.
-
----
-
-# 6. Load factor
-
-The **load factor** measures how full the hash table is.
-
-```text
-loadFactor = numberOfStoredEntries / numberOfBuckets
-```
-
-Example:
-
-```text
-Stored entries = 6
-Buckets = 8
-
-Load factor = 6 / 8
-            = 0.75
-```
-
-As the table becomes crowded:
-
-* Collisions become more frequent.
-* Lookup becomes slower.
-* The hash map may allocate more buckets and redistribute entries.
-
-This redistribution is called **rehashing** or **resizing**.
-
-A single resize can be expensive, but over many insertions, insertion is generally considered amortized `O(1)`.
-
----
-
-# 7. Hash Map vs Hash Set
-
-| Feature        | Hash Map                          | Hash Set                        |
-| -------------- | --------------------------------- | ------------------------------- |
-| Stores         | Key and value                     | Unique values only              |
-| Example        | `"apple" → 5`                     | `"apple"`                       |
-| Main question  | “What value belongs to this key?” | “Does this value exist?”        |
-| Duplicate keys | No                                | No duplicate elements           |
-| Common use     | Counting, mapping, caching        | Membership, duplicate detection |
-
-Conceptually, a hash set can be implemented using a hash map:
-
-```text
-"apple" → nothing
-"banana" → nothing
-```
-
-In Go, it is commonly represented as:
-
-```go
-set := make(map[int]struct{})
-```
-
-`struct{}` occupies no storage for fields.
-
----
-
-# 8. Hash Map and Hash Set in Go
-
-## Create a Hash Map
-
-```go
-ages := make(map[string]int)
-
-ages["Alice"] = 30
-ages["Bob"] = 35
-```
-
-Or:
-
-```go
-ages := map[string]int{
-    "Alice": 30,
-    "Bob":   35,
-}
-```
-
----
-
-## Read a value
-
-```go
-age := ages["Alice"]
-fmt.Println(age)
-```
-
----
-
-## Check whether a key exists
-
-This is important because a missing key returns the value type’s zero value.
-
-```go
-age, exists := ages["Alice"]
-
-if exists {
-    fmt.Println("Age:", age)
-}
-```
-
-For example, both of these can produce `0`:
-
-```text
-"John" exists and has value 0
-"Sarah" does not exist
-```
-
-Use the second return value to distinguish them:
-
-```go
-value, exists := numbers["Sarah"]
-```
-
----
-
-## Delete an entry
-
-```go
-delete(ages, "Alice")
-```
-
----
-
-## Iterate through a map
-
-```go
-for name, age := range ages {
-    fmt.Println(name, age)
-}
-```
-
-Do not depend on Go map iteration order.
-
----
-
-## Create a Hash Set
-
-```go
-seen := make(map[int]struct{})
-
-seen[10] = struct{}{}
-seen[20] = struct{}{}
-```
-
-Check membership:
-
-```go
-_, exists := seen[10]
-```
-
-A slightly simpler alternative is:
-
-```go
-seen := make(map[int]bool)
-```
-
-But `map[int]struct{}` more clearly communicates that only membership matters.
-
----
-
-# 9. Complexity
-
-Let `n` be the number of elements.
-
-| Operation                     | Average |        Worst case |
-| ----------------------------- | ------: | ----------------: |
-| Insert                        |    O(1) |              O(n) |
-| Lookup                        |    O(1) |              O(n) |
-| Delete                        |    O(1) |              O(n) |
-| Iterate over all entries      |    O(n) |              O(n) |
-| Build a map from `n` elements |    O(n) | Potentially O(n²) |
-| Memory                        |    O(n) |              O(n) |
-
-## Important string-key nuance
-
-Hashing an integer can generally be treated as constant time.
-
-Hashing a string requires reading its characters.
-
-For a string of length `k`:
-
-```text
-Hashing cost may be O(k)
-```
-
-In interviews, map operations are often described as `O(1)` when keys are fixed-size integers or the key size is treated as bounded.
-
----
-
-# 10. The interview decision tree
-
-```mermaid
-flowchart TD
-    A["What information do I need?"] --> B{"Only need to know whether an item exists?"}
-    B -->|Yes| C["Use Hash Set"]
-    B -->|No| D{"Need to associate a key with information?"}
-    D -->|Yes| E["Use Hash Map"]
-    D -->|No| F["Consider another data structure"]
-
-    C --> C1["Duplicate detection"]
-    C --> C2["Fast membership"]
-    C --> C3["Sequence lookup"]
-
-    E --> E1["Frequency counting"]
-    E --> E2["Value to index"]
-    E --> E3["Grouping"]
-    E --> E4["Prefix-sum counting"]
-```
-
-## Recognition rules
-
-When the problem says:
-
-> Have I seen this before?
-
-Think:
-
-```text
-Hash Set
-```
-
-When it says:
-
-> How many times have I seen this?
-
-Think:
-
-```text
-Hash Map: item → count
-```
-
-When it says:
-
-> Where did I see this?
-
-Think:
-
-```text
-Hash Map: item → index
-```
-
-When it says:
-
-> Which items belong together?
-
-Think:
-
-```text
-Hash Map: signature → group
-```
-
-When it says:
-
-> Find a contiguous subarray with a certain sum.
-
-Think:
-
-```text
-Prefix sum + Hash Map
-```
-
----
-
-# 11. Core interview patterns
-
-## Pattern 1: Membership
-
-Question:
-
-> Does this item exist?
-
-```go
-set := make(map[int]struct{})
-
-set[10] = struct{}{}
-
-_, exists := set[10]
-```
-
-Used in:
-
-* Contains Duplicate
-* Intersection of Two Arrays
-* Happy Number
-* Longest Consecutive Sequence
-
----
-
-## Pattern 2: Frequency counting
-
-Question:
-
-> How many times does each item appear?
-
-```go
-frequency := make(map[int]int)
-
-for _, number := range numbers {
-    frequency[number]++
-}
-```
-
-Example:
-
-```text
-Input: [4, 2, 4, 1, 2, 4]
-
-Map:
-4 → 3
-2 → 2
-1 → 1
-```
-
-Used in:
-
-* Valid Anagram
-* First Unique Character
-* Top K Frequent Elements
-* Majority Element
-
----
-
-## Pattern 3: Value to index
-
-Question:
-
-> At which position did this value appear?
-
-```go
-indexByValue := make(map[int]int)
-
-for index, value := range numbers {
-    indexByValue[value] = index
-}
-```
-
-Used in:
-
-* Two Sum
-* Nearby Duplicate
-* Index-based pairing problems
-
----
-
-## Pattern 4: Grouping by a signature
-
-Question:
-
-> Which items have the same defining property?
-
-```text
-signature → list of items
-```
-
-For anagrams:
-
-```text
-character frequency → words
-```
-
-Used in:
-
-* Group Anagrams
-* Grouping equivalent strings
-* Categorization problems
-
----
-
-## Pattern 5: Prefix sum to frequency
-
-Question:
-
-> How many contiguous subarrays have a given sum?
-
-```text
-prefixSum → how many times it has appeared
-```
-
-Used in:
-
-* Subarray Sum Equals K
-* Binary Subarrays With Sum
-* Contiguous Array
-
----
-
-## Pattern 6: Set plus sequence starting point
-
-Question:
-
-> What is the longest consecutive sequence?
-
-Store every number in a set.
-
-Only begin counting when the previous number does not exist.
-
-```text
-n is a sequence start when n - 1 is absent
-```
-
----
-
-# 12. Problem 1: Contains Duplicate
-
-## Problem
-
-Given an integer array, return `true` when any value appears at least twice.
-
-```text
-Input:  [1, 2, 3, 1]
-Output: true
-```
-
-## Brute force
-
-Compare every element with every other element:
-
-```text
-O(n²)
-```
-
-## Hash Set solution
-
-As you scan the array:
-
-1. Check whether the number is already in the set.
-2. If yes, you found a duplicate.
-3. Otherwise, add it.
-
-```mermaid
-flowchart TD
-    A["Read next number"] --> B{"Already in set?"}
-    B -->|Yes| C["Return true"]
-    B -->|No| D["Add number to set"]
-    D --> E{"More numbers?"}
-    E -->|Yes| A
-    E -->|No| F["Return false"]
-```
-
-## Go solution
-
-```go
-func containsDuplicate(nums []int) bool {
-    seen := make(map[int]struct{}, len(nums))
-
-    for _, number := range nums {
-        if _, exists := seen[number]; exists {
-            return true
-        }
-
-        seen[number] = struct{}{}
-    }
-
-    return false
-}
-```
-
-## Complexity
-
-```text
-Time:  O(n) average
-Space: O(n)
-```
 
 ## Mental model
 
-> Before putting an item into the box, check whether the box already contains it.
+The key identifies an entry, the hash chooses a bucket, and equality finds the exact key inside that bucket. Map values hold associated data; set values are empty state.
+
+| Real system | How the topic appears |
+| --- | --- |
+| Caches | Keys identify cached objects |
+| Databases | Hash indexes map keys to records |
+| Compilers | Symbol names map to declarations |
+| Monitoring | Labels map to counts or latest values |
+
+```mermaid
+flowchart TD
+    T["Hash maps and sets"]
+    T --> R0["Map key"]
+    T --> R1["Map value"]
+    T --> R2["Hash set key"]
+    T --> R3["Bucket"]
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. The label is the key, the cubby number comes from the hash, and the object inside is the value.
 
 ---
 
-# 13. Problem 2: Two Sum
+## Representation and core operations
 
-## Problem
+Separate the key from the value and state what each map means. Frequency maps, index maps, and prefix-count maps store different values.
 
-Return the indices of two numbers whose sum equals the target.
+| Representation | Role |
+| --- | --- |
+| Map key | Identity used for hashing and equality |
+| Map value | Data associated with the key |
+| Hash set key | Member identity |
+| Bucket | Entries sharing a hash location |
 
-```text
-Input:  nums = [2, 7, 11, 15], target = 9
-Output: [0, 1]
-```
-
-Because:
-
-```text
-2 + 7 = 9
-```
-
----
-
-## Brute force
-
-Try every pair:
-
-```text
-2 + 7
-2 + 11
-2 + 15
-7 + 11
-...
-```
-
-Complexity:
-
-```text
-O(n²)
-```
-
----
-
-## Hash Map insight
-
-For every number:
-
-```text
-needed = target - currentNumber
-```
-
-When current number is `7`:
-
-```text
-needed = 9 - 7
-       = 2
-```
-
-Ask:
-
-> Have I previously seen `2`?
-
-Store:
-
-```text
-number → index
-```
+| Operation | Typical cost | Meaning |
+| --- | --- | --- |
+| Lookup | Average O(1) | Hash key and inspect a bucket |
+| Insert or update | Average O(1) | Write by key |
+| Delete | Average O(1) | Remove matching key |
+| Iterate | O(n) | Visit every entry |
+| Resize | O(n) occasionally | Rehash entries into more buckets |
 
 ```mermaid
 flowchart LR
-    A["Current number"] --> B["Calculate target - current"]
-    B --> C{"Complement already in map?"}
-    C -->|Yes| D["Return previous index and current index"]
-    C -->|No| E["Store current number → index"]
+    A0["Lookup"]
+    A0 --> A1["Insert or update"]
+    A1 --> A2["Delete"]
+    A2 --> A3["Iterate"]
+    A3 --> A4["Resize"]
 ```
 
-## Walkthrough
-
-```text
-nums = [2, 7, 11, 15]
-target = 9
-```
-
-| Current | Needed | Map before checking | Result          |
-| ------: | -----: | ------------------- | --------------- |
-|       2 |      7 | `{}`                | Store `2 → 0`   |
-|       7 |      2 | `{2: 0}`            | Found index `0` |
+> **Baby analogy:** Imagine a wall of labeled cubbies. A good label sends you near the right cubby immediately; collisions mean checking a few objects in the same cubby.
 
 ---
 
-## Go solution
+## Interview patterns and complexity
+
+| Question clue | Pattern | Practice problems in this guide |
+| --- | --- | --- |
+| Existence or duplicate | Hash set | [Contains Duplicate](#contains-duplicate), [Longest Consecutive Sequence](#longest-consecutive-sequence) |
+| Count occurrences | Frequency map | [First Unique Character](#first-unique-character), [Build a Frequency Map](#build-a-frequency-map) |
+| Find earlier partner | Value-to-index map | [Two Sum](#two-sum) |
+| Group equivalent items | Canonical-key map | [Group Anagrams](#group-anagrams) |
+| Count range totals | Prefix-sum frequency map | [Subarray Sum Equals K](#subarray-sum-equals-k) |
+| Explain implementation behavior | Lookup, collision, and load-factor mechanics | [Safe Map Lookup](#safe-map-lookup-in-go), [Resolve a Hash Collision](#resolve-a-hash-collision), [Calculate Load Factor](#calculate-load-factor) |
+
+| Work | Complexity | Reason |
+| --- | --- | --- |
+| Expected lookup | O(1) | Good distribution keeps buckets short |
+| Worst-case lookup | O(n) | Many keys may collide |
+| Storage | O(n) | One entry per distinct key |
+| Group output | O(n) plus output | Every item enters a group |
+
+```mermaid
+flowchart TD
+    Q{"What relationship does the question ask for?"}
+    Q -->|"Existence or duplicate"| P0["Hash set"]
+    Q -->|"Count occurrences"| P1["Frequency map"]
+    Q -->|"Find earlier partner"| P2["Value-to-index map"]
+    Q -->|"Group equivalent items"| P3["Canonical-key map"]
+    Q -->|"Count range totals"| P4["Prefix-sum frequency map"]
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. Use an empty cubby marker for membership, a counter for frequency, or a note with an earlier index.
+
+---
+
+## Problem-solving checklist and common mistakes
+
+Before coding:
+
+1. State exactly what the indexes, keys, pointers, states, or worklist elements represent.
+2. Write the empty-input and smallest-input boundary behavior.
+3. Choose the invariant that remains true after every step.
+4. Trace one normal example and one edge case.
+5. State whether output storage is included in space complexity.
+
+Common mistakes:
+- Assuming Go map iteration order is stable.
+- Ignoring the comma-ok result for a missing key.
+- Inserting the current Two Sum value before checking its complement.
+- Forgetting the initial prefix frequency zero maps to one.
+- Using a mutable or noncomparable Go value as a key.
+- Calling expected O(1) behavior a worst-case guarantee.
+
+```mermaid
+flowchart LR
+    A["Clarify input and output"] --> B["Choose the invariant"]
+    B --> C["Handle boundaries"]
+    C --> D["Trace a small example"]
+    D --> E["State time and space"]
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. Never assume cubbies are visited alphabetically, and always check whether a requested label exists.
+
+---
+
+## Top 10 Hash Map Interview Questions
+
+These are the single authoritative implementations in this guide. Each solution keeps the required question, answer, output, boundary, variable-role, logic, and complexity comments.
+
+```mermaid
+flowchart LR
+    Q0["Contains Duplicate"]
+    Q0 --> Q1["Two Sum"]
+    Q1 --> Q2["Group Anagrams"]
+    Q2 --> Q3["Subarray Sum Equals K"]
+    Q3 --> Q4["Longest Consecutive Sequence"]
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. These ten puzzles are practice cards; each card teaches one reusable move.
+
+### Contains Duplicate
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>nums</strong> , <strong>seen</strong>"]
+    B["Boundary checks<br/>Empty and one-element slices return <strong>false</strong> because no duplicate pair can exist."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Check whether each value is already a key in <strong>seen</strong>."]
+        S1["Return immediately for a duplicate; otherwise add the value and continue."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return <strong>true</strong> when any input value appears more than once; otherwise return <strong>false</strong>."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Ingestion pipelines reject repeated identifiers.
+- Reservation systems detect duplicate seat selections.
 
 ```go
+// Exact question: How can a hash set detect a duplicate without repeatedly scanning earlier elements?
+//
+// Example: Input nums = [1, 2, 3, 1] -> output true when the second 1 is found in seen.
+//
+// Possible answer: Record every visited number in a set and stop when a number is already present.
+//
+// Output format: Return `true` when any input value appears more than once; otherwise return `false`.
+//
+// Inline descriptions:
+// - Each membership lookup replaces a linear search through all previously visited values.
+//
+// Boundary checks:
+// - Empty and one-element slices return `false` because no duplicate pair can exist.
+//
+// Key variables:
+// - `nums` is a slice whose indexes are input positions and whose elements are integer values.
+// - `seen` is a set represented by map keys; its empty struct values carry no additional data.
+//
+// Logic:
+// 1. Check whether each value is already a key in `seen`.
+// 2. Return immediately for a duplicate; otherwise add the value and continue.
+func containsDuplicate(nums []int) bool {
+	seen := make(map[int]struct{}, len(nums))
+	for _, value := range nums {
+		if _, exists := seen[value]; exists {
+			return true
+		}
+		seen[value] = struct{}{}
+	}
+	return false
+}
+
+// time complexity: O(n) -> average-case hashing performs one lookup and at most one insertion for each of the `n` elements.
+// space complexity: O(n) -> the set can contain every distinct input value.
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Contains Duplicate" is one small game played with the same pieces and rules.
+
+### Two Sum
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>nums</strong> , <strong>target</strong> , <strong>indexByValue</strong> , <strong>complement</strong>"]
+    B["Boundary checks<br/>No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Map each seen value to its index and look up the current value's <strong>complement</strong> before inserting the current entry"]
+    end
+
+    B --> S0
+    S0 --> O["Return the []int value from <strong>twoSum</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Finance systems reconcile two transactions to a target.
+- Catalog systems pair two prices that fit a budget.
+
+```go
+// Exact question: Given an integer slice and a target, return indexes of two distinct values whose sum equals the target, or nil when none exist.
+//
+// Example: Input nums = [2, 7, 11, 15] and target = 9 -> output [0, 1].
+//
+// Possible answer: Map each seen value to its index and look up the current value's complement before inserting the current entry.
+//
+// Output format: Return the `[]int` value from `twoSum`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+// - `indexByValue` maps each previously seen number key to its earlier input index.
+// - `complement` holds the intermediate value produced by `target - number`.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Create or use a slice so indexes identify positions and elements store their data or state.
+// 3. Iterate through the required elements or states in the order shown.
 func twoSum(nums []int, target int) []int {
     indexByValue := make(map[int]int, len(nums))
 
@@ -841,101 +276,64 @@ func twoSum(nums []int, target int) []int {
 
     return nil
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-## Why check before inserting?
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Two Sum" is one small game played with the same pieces and rules.
 
-Consider:
-
-```text
-nums = [3, 2]
-target = 6
-```
-
-If you insert `3` before checking, the algorithm might incorrectly use the same `3` twice.
-
-Correct sequence:
-
-```text
-Check complement first
-Then insert current number
-```
-
-## Complexity
-
-```text
-Time:  O(n) average
-Space: O(n)
-```
-
-## Mental model
-
-> I have one puzzle piece. Which other piece do I need, and have I seen it already?
-
----
-
-# 14. Problem 3: Group Anagrams
-
-## Problem
-
-Group words containing the same characters.
-
-```text
-Input:
-["eat", "tea", "tan", "ate", "nat", "bat"]
-
-Output:
-[
-  ["eat", "tea", "ate"],
-  ["tan", "nat"],
-  ["bat"]
-]
-```
-
-Anagrams have identical character frequencies:
-
-```text
-eat:
-a → 1
-e → 1
-t → 1
-
-tea:
-a → 1
-e → 1
-t → 1
-```
-
----
-
-## Hash Map structure
-
-```text
-character-count signature → words
-```
+### Group Anagrams
 
 ```mermaid
-flowchart LR
-    A["eat"] --> D["Count signature"]
-    B["tea"] --> D
-    C["ate"] --> D
-    D --> E["Same Hash Map key"]
-    E --> F["eat, tea, ate"]
+flowchart TD
+    I["Inputs and starting state: <strong>words</strong> , <strong>groups</strong> , <strong>result</strong>"]
+    B["Boundary checks<br/>No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Sort each word's characters into a canonical signature and"]
+        S1["append the original word to the group stored under that signature"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the [][]string value from <strong>groupAnagrams</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-For lowercase English letters, create an array of 26 counts.
+**Where it is used in real life:**
 
-```text
-[a-count, b-count, c-count, ..., z-count]
-```
-
-Arrays are comparable in Go, so `[26]int` can be used as a map key.
-
----
-
-## Go solution
+- Search systems group terms with the same letter signature.
+- Word games cluster rearrangements of the same letters.
 
 ```go
+// Exact question: Given a string slice, group strings that contain the same characters with the same multiplicities.
+//
+// Example: Input words = [eat, tea, tan, ate, nat, bat] -> groups [eat, tea, ate], [tan, nat], and [bat], in any group order.
+//
+// Possible answer: Sort each word's characters into a canonical signature and append the original word to the group stored under that signature.
+//
+// Output format: Return the `[][]string` value from `groupAnagrams`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `words` is a slice: the index identifies an element or state, and the stored item has type string.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `words` is a slice: the index identifies an element or state, and the stored item has type string.
+// - `groups` maps each comparable `[26]int` frequency-signature key to its anagram word slice.
+// - `result` contains the grouped word slices; group order is unspecified because map iteration is unordered.
+// - `signature[letter-'a']` stores the current word's count for one lowercase English letter.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Create or use a slice so indexes identify positions and elements store their data or state.
+// 3. Iterate through the required elements or states in the order shown.
 func groupAnagrams(words []string) [][]string {
     groups := make(map[[26]int][]string)
 
@@ -957,173 +355,66 @@ func groupAnagrams(words []string) [][]string {
 
     return result
 }
+
+// time complexity: O(n * k) -> the algorithm combines work across each dimension or choice represented in the product.
+// space complexity: O(n * k) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-## Complexity
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Group Anagrams" is one small game played with the same pieces and rules.
 
-Let:
-
-* `n` = number of words
-* `k` = average word length
-
-```text
-Time:  O(n × k)
-Space: O(n × k)
-```
-
-An alternative is to sort every word:
-
-```text
-Time: O(n × k log k)
-```
-
-Frequency counting avoids sorting.
-
-## Mental model
-
-> Give each word a fingerprint. Words with the same fingerprint belong in the same box.
-
----
-
-# 15. Problem 4: Subarray Sum Equals K
-
-This is one of the most important hash-map interview patterns.
-
-## Problem
-
-Count the number of contiguous subarrays whose sum equals `k`.
-
-```text
-Input: nums = [1, 1, 1], k = 2
-Output: 2
-```
-
-The matching subarrays are:
-
-```text
-[1, 1] at indices 0–1
-[1, 1] at indices 1–2
-```
-
----
-
-## Prefix sum
-
-A prefix sum is the sum from the beginning up to the current position.
-
-For:
-
-```text
-[1, 2, 3]
-```
-
-Prefix sums are:
-
-```text
-1
-1 + 2 = 3
-1 + 2 + 3 = 6
-```
-
-```text
-[1, 3, 6]
-```
-
----
-
-## Important equation
-
-Suppose:
-
-```text
-currentPrefix - previousPrefix = k
-```
-
-Rearrange:
-
-```text
-previousPrefix = currentPrefix - k
-```
-
-Therefore, at every position, ask:
-
-> How many times have I previously seen `currentPrefix - k`?
-
-Store:
-
-```text
-prefixSum → frequency
-```
+### Subarray Sum Equals K
 
 ```mermaid
 flowchart TD
-    A["Add current number to prefix sum"] --> B["needed = prefix sum - k"]
-    B --> C["Find how many times needed appeared"]
-    C --> D["Add that frequency to answer"]
-    D --> E["Record current prefix sum"]
+    I["Inputs and starting state: <strong>nums</strong> , <strong>target</strong> , <strong>prefixFrequency</strong> , <strong>prefixSum</strong>"]
+    B["Boundary checks<br/>No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Track the running prefix sum and count earlier prefixes equal to current-<strong>k</strong>"]
+        S1["each such prefix starts one valid subarray"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>subarraySum</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Why initialize `0 → 1`?
-
-Suppose:
-
-```text
-nums = [3]
-k = 3
-```
-
-Current prefix sum:
-
-```text
-3
-```
-
-Needed previous prefix:
-
-```text
-3 - 3 = 0
-```
-
-The imaginary prefix before the array begins has sum `0`.
-
-Therefore:
+- Metrics systems count intervals with an exact cumulative change.
+- Finance tools count contiguous transaction ranges matching a total.
 
 ```go
-prefixFrequency[0] = 1
-```
-
-Without this initialization, subarrays beginning at index `0` would be missed.
-
----
-
-## Walkthrough
-
-```text
-nums = [1, 1, 1]
-k = 2
-```
-
-Initial state:
-
-```text
-frequency = {0: 1}
-prefix = 0
-count = 0
-```
-
-| Number | Prefix | Needed `prefix-k` | Existing frequency | Count |
-| -----: | -----: | ----------------: | -----------------: | ----: |
-|      1 |      1 |                -1 |                  0 |     0 |
-|      1 |      2 |                 0 |                  1 |     1 |
-|      1 |      3 |                 1 |                  1 |     2 |
-
----
-
-## Go solution
-
-```go
+// Exact question: Given an integer slice and `k`, return the number of contiguous subarrays whose values sum to `k`.
+//
+// Example: Input nums = [1, 1, 1] and k = 2 -> output 2 contiguous subarrays.
+//
+// Possible answer: Track the running prefix sum and count earlier prefixes equal to `current-k`; each such prefix starts one valid subarray.
+//
+// Output format: Return an `int` value from `subarraySum`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+//
+// Boundary checks:
+// - No explicit boundary branch appears in this fragment; its caller or surrounding example supplies valid inputs.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `target` is the int input used by this example.
+// - `prefixFrequency` maps each earlier prefix-sum key to the number of boundaries having that sum.
+// - `prefixSum` is the sum from the input start through the current index.
+// - `result` holds the answer computed for the current operation.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Create or use a slice so indexes identify positions and elements store their data or state.
+// 3. Iterate through the required elements or states in the order shown.
 func subarraySum(nums []int, target int) int {
     prefixFrequency := map[int]int{
         0: 1,
@@ -1143,94 +434,67 @@ func subarraySum(nums []int, target int) int {
 
     return result
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-## Complexity
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Subarray Sum Equals K" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n) average
-Space: O(n)
-```
-
-## Mental model
-
-> My current running total is too large by exactly `k`. Have I seen the smaller running total before?
-
----
-
-# 16. Problem 5: Longest Consecutive Sequence
-
-## Problem
-
-Find the length of the longest consecutive sequence.
-
-```text
-Input:
-[100, 4, 200, 1, 3, 2]
-
-Output:
-4
-```
-
-Because:
-
-```text
-1, 2, 3, 4
-```
-
----
-
-## Obvious solution: sort
-
-```text
-[1, 2, 3, 4, 100, 200]
-```
-
-Complexity:
-
-```text
-O(n log n)
-```
-
-But the interview usually asks for `O(n)`.
-
----
-
-## Hash Set insight
-
-Put every number into a set.
-
-For each number, only start counting if:
-
-```text
-number - 1 does not exist
-```
-
-Why?
-
-```text
-1 has no 0 → sequence start
-2 has 1 → not a start
-3 has 2 → not a start
-4 has 3 → not a start
-```
-
-This prevents recounting the same sequence repeatedly.
+### Longest Consecutive Sequence
 
 ```mermaid
 flowchart TD
-    A["Take number n"] --> B{"Does n - 1 exist?"}
-    B -->|Yes| C["Skip: n is not a sequence start"]
-    B -->|No| D["Start sequence at n"]
-    D --> E["Check n+1, n+2, n+3..."]
-    E --> F["Update maximum length"]
+    I["Inputs and starting state: <strong>nums</strong> , <strong>numbers</strong> , <strong>longest</strong> , <strong>current</strong>"]
+    B["Boundary checks<br/><strong>hasPrevious</strong> decides whether the branch or loop should continue for the <strong>current</strong> input.<br/>!hasNext decides whether the branch or loop should continue for the <strong>current</strong> input."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Put values in a set and expand only from values with no"]
+        S1["predecessor, so every consecutive run is counted from its first value"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>longestConsecutive</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Go solution
+- Event processors find the longest uninterrupted sequence of IDs.
+- Inventory tools identify the longest run of consecutive serial numbers.
 
 ```go
+// Exact question: Given an unsorted integer slice, return the length of the longest run of consecutive values in O(n) expected time.
+//
+// Example: Input nums = [100, 4, 200, 1, 3, 2] -> output 4 for the run 1, 2, 3, 4.
+//
+// Possible answer: Put values in a set and expand only from values with no predecessor, so every consecutive run is counted from its first value.
+//
+// Output format: Return an `int` value from `longestConsecutive`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+//
+// Boundary checks:
+// - `hasPrevious` decides whether the branch or loop should continue for the current input.
+// - `!hasNext` decides whether the branch or loop should continue for the current input.
+// - `length > longest` decides whether the branch or loop should continue for the current input.
+//
+// Key variables:
+// - `nums` is a slice: the index identifies an element or state, and the stored item has type int.
+// - `numbers` is a set: integer keys are present values and empty `struct{}` values carry no extra data.
+// - `longest` holds the intermediate value produced by `0`.
+// - `current` holds the value for the state currently being calculated.
+// - `length` holds the intermediate value produced by `1`.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Create or use a slice so indexes identify positions and elements store their data or state.
+// 3. Iterate through the required elements or states in the order shown.
 func longestConsecutive(nums []int) int {
     numbers := make(map[int]struct{}, len(nums))
 
@@ -1266,103 +530,62 @@ func longestConsecutive(nums []int) int {
 
     return longest
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(n) -> the auxiliary slice, map, table, queue, or returned collection can grow with `n`.
 ```
 
-## Why is this O(n) despite the inner loop?
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Longest Consecutive Sequence" is one small game played with the same pieces and rules.
 
-At first, it appears to be:
-
-```text
-loop inside loop = O(n²)
-```
-
-But sequence traversal begins only from sequence starting points.
-
-For:
-
-```text
-1, 2, 3, 4
-```
-
-The full sequence is traversed only from `1`.
-
-It is not traversed again from `2`, `3`, or `4`.
-
-Each number participates in a small constant number of operations.
-
-Therefore:
-
-```text
-Time: O(n) average
-```
-
-## Complexity
-
-```text
-Time:  O(n) average
-Space: O(n)
-```
-
-## Mental model
-
-> Do not board a train from the middle. Find the first station and travel forward.
-
----
-
-# 17. Problem 6: First Unique Character
-
-## Problem
-
-Return the index of the first character that appears exactly once.
-
-```text
-Input:  "leetcode"
-Output: 0
-```
-
-`'l'` appears once.
-
-```text
-Input:  "loveleetcode"
-Output: 2
-```
-
-`'v'` is the first unique character.
-
----
-
-## Approach
-
-Make two passes:
-
-### Pass 1
-
-Count every character.
-
-```text
-character → frequency
-```
-
-### Pass 2
-
-Return the first character whose frequency is `1`.
+### First Unique Character
 
 ```mermaid
-flowchart LR
-    A["First pass"] --> B["Count every character"]
-    B --> C["Second pass"]
-    C --> D{"Frequency equals 1?"}
-    D -->|Yes| E["Return index"]
-    D -->|No| F["Continue"]
+flowchart TD
+    I["Inputs and starting state: <strong>text</strong> , <strong>frequency</strong>"]
+    B["Boundary checks<br/><strong>frequency</strong>[<strong>text</strong>[index]] equals 1 handles the smallest valid state or recursive base case."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Count each byte in one pass"]
+        S1["scan again and return the first index whose byte count is one"]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return an <strong>int</strong> value from <strong>firstUniqueCharacter</strong>; the function does not print the answer."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
----
+**Where it is used in real life:**
 
-## Go solution
-
-For lowercase ASCII input:
+- Stream processors find the first nonrepeated token.
+- Data cleanup selects the first identifier occurring exactly once.
 
 ```go
+// Exact question: Given a string, return the byte index of its first non-repeating character, or `-1` when every character repeats.
+//
+// Example: Input text = leetcode -> output byte index 0 because l occurs once.
+//
+// Possible answer: Count each byte in one pass, then scan again and return the first index whose byte count is one.
+//
+// Output format: Return an `int` value from `firstUniqueCharacter`; the function does not print the answer.
+//
+// Inline descriptions:
+// - `text` is the string input used by this example.
+//
+// Boundary checks:
+// - `frequency[text[index]] == 1` handles the smallest valid state or recursive base case.
+//
+// Key variables:
+// - `text` is the string input used by this example.
+// - `frequency` maps each byte key to its total occurrence count in the string.
+//
+// Logic:
+// 1. Create or use a map to associate each lookup key with its stored value.
+// 2. Iterate through the required elements or states in the order shown.
+// 3. Return the value produced after the state updates are complete.
 func firstUniqueCharacter(text string) int {
     frequency := make(map[byte]int)
 
@@ -1378,425 +601,300 @@ func firstUniqueCharacter(text string) int {
 
     return -1
 }
+
+// time complexity: O(n) -> the algorithm visits each of the `n` input elements or states once.
+// space complexity: O(k) -> the auxiliary storage grows according to this bound.
 ```
 
-## Complexity
+> **Baby analogy:** Imagine a wall of labeled cubbies. "First Unique Character" is one small game played with the same pieces and rules.
 
-```text
-Time:  O(n)
-Space: O(k)
-```
-
-Here, `k` is the number of distinct characters.
-
-For lowercase English letters, `k ≤ 26`, so the extra space can be considered `O(1)`.
-
-## Mental model
-
-> First count everybody. Then walk through the original line and find the first person standing alone.
-
----
-
-# 18. Common mistakes
-
-## Mistake 1: Assuming map order
-
-This is unsafe:
-
-```go
-for key := range myMap {
-    // Do not expect a fixed order.
-}
-```
-
-A hash map is generally not a sorted collection.
-
----
-
-## Mistake 2: Ignoring missing-key behaviour
-
-```go
-count := frequency[key]
-```
-
-This returns `0` when:
-
-* The key is missing.
-* The key exists and its value is zero.
-
-Use:
-
-```go
-value, exists := frequency[key]
-```
-
-when the distinction matters.
-
----
-
-## Mistake 3: Inserting too early in Two Sum
-
-Incorrect order:
-
-```go
-indexByValue[number] = index
-// Then check complement
-```
-
-Correct order:
-
-```go
-// Check complement
-// Then insert current number
-```
-
----
-
-## Mistake 4: Forgetting `0 → 1` in prefix-sum problems
-
-```go
-prefixFrequency := map[int]int{
-    0: 1,
-}
-```
-
-This handles subarrays beginning at index `0`.
-
----
-
-## Mistake 5: Using a map when order is required
-
-Use a different or additional data structure when the problem requires:
-
-* Sorted keys
-* Insertion order
-* Minimum or maximum element
-* Access by position
-
-Possible alternatives include:
-
-* Sorted array
-* Balanced tree
-* Heap
-* Queue
-* Linked list
-
----
-
-## Mistake 6: Saying Hash Map is always O(1)
-
-The accurate interview answer is:
-
-> Lookup, insertion and deletion are average `O(1)`, but collisions can degrade them to `O(n)` in the worst case.
-
----
-
-# 19. How to calculate complexity in Hash Map problems
-
-## Example: Contains Duplicate
-
-```go
-for _, number := range nums {
-    if _, exists := seen[number]; exists {
-        return true
-    }
-    seen[number] = struct{}{}
-}
-```
-
-There are `n` iterations.
-
-Each map lookup and insertion is average `O(1)`:
-
-```text
-n × O(1) = O(n)
-```
-
-Space:
-
-```text
-At most n values in the set = O(n)
-```
-
----
-
-## Example: Two Sum
-
-One loop over `n` numbers:
-
-```text
-O(n)
-```
-
-Each iteration performs:
-
-* One subtraction: `O(1)`
-* One map lookup: average `O(1)`
-* One map insertion: average `O(1)`
-
-Total:
-
-```text
-O(n)
-```
-
----
-
-## Example: Group Anagrams
-
-Suppose there are `n` words and each word has length `k`.
-
-Every character of every word is examined:
-
-```text
-n × k
-```
-
-Therefore:
-
-```text
-O(nk)
-```
-
----
-
-## Example: Longest Consecutive Sequence
-
-Although there is an inner loop, each sequence is expanded only once from its starting point.
-
-Therefore:
-
-```text
-O(n)
-```
-
-Do not mechanically conclude that every nested loop is `O(n²)`. Ask how many total times the inner operation executes across the whole algorithm.
-
----
-
-# 20. Most common Hash Map and Hash Set interview questions
-
-## Essential
-
-| Problem                      | Primary pattern             |
-| ---------------------------- | --------------------------- |
-| Contains Duplicate           | Hash Set membership         |
-| Two Sum                      | Value → index               |
-| Valid Anagram                | Frequency counting          |
-| Group Anagrams               | Signature → group           |
-| First Unique Character       | Frequency counting          |
-| Intersection of Two Arrays   | Hash Set membership         |
-| Longest Consecutive Sequence | Set and sequence start      |
-| Subarray Sum Equals K        | Prefix sum → frequency      |
-| Isomorphic Strings           | Bidirectional mapping       |
-| Happy Number                 | Cycle detection using a set |
-
-## Frequently asked intermediate problems
-
-| Problem                                        | Pattern                        |
-| ---------------------------------------------- | ------------------------------ |
-| Top K Frequent Elements                        | Frequency map + buckets/heap   |
-| Longest Substring Without Repeating Characters | Sliding window + map/set       |
-| Find All Anagrams in a String                  | Sliding window + frequency     |
-| Contiguous Array                               | Prefix balance + first index   |
-| Four Sum II                                    | Pair sum frequency             |
-| Copy List With Random Pointer                  | Old node → new node            |
-| LRU Cache                                      | Hash map + doubly linked list  |
-| Design HashMap                                 | Hashing and collision handling |
-
----
-
-# 21. Mock interview questions
-
-## Conceptual questions
-
-### 1. What is the difference between a Hash Map and a Hash Set?
-
-A hash map stores key-value pairs:
-
-```text
-key → value
-```
-
-A hash set stores unique values and supports membership checking.
-
----
-
-### 2. Why is lookup average O(1)?
-
-The key is hashed into a bucket index, allowing the implementation to access the probable location directly instead of scanning every element.
-
----
-
-### 3. Why is lookup worst-case O(n)?
-
-Many keys may collide into the same bucket, requiring a scan through multiple entries.
-
----
-
-### 4. What is a collision?
-
-A collision occurs when different keys map to the same bucket or hash-table position.
-
----
-
-### 5. What makes a good hash function?
-
-A good hash function should:
-
-* Be deterministic for a given execution and use case.
-* Distribute keys relatively evenly.
-* Be fast to calculate.
-* Minimize harmful collision patterns.
-
----
-
-### 6. What is load factor?
-
-```text
-number of entries / number of buckets
-```
-
-A high load factor generally increases collisions and may trigger resizing.
-
----
-
-### 7. Can a Hash Map contain duplicate keys?
-
-No. Assigning the same key again normally replaces its previous value.
-
-```go
-scores["Alice"] = 10
-scores["Alice"] = 20
-```
-
-Final value:
-
-```text
-"Alice" → 20
-```
-
----
-
-### 8. Can a Hash Set contain duplicates?
-
-No. Adding the same element multiple times still leaves one logical element.
-
----
-
-### 9. How would you implement a set in Go?
-
-```go
-set := make(map[string]struct{})
-```
-
----
-
-### 10. When should you not use a Hash Map?
-
-Avoid relying on a hash map alone when you need:
-
-* Sorted order
-* Stable iteration order
-* Index-based access
-* Efficient smallest/largest lookup
-* Range queries
-
----
-
-# 22. Coding mock questions
-
-## Easy
-
-1. Given an array, determine whether any value appears twice.
-2. Determine whether two strings are anagrams.
-3. Return the intersection of two arrays.
-4. Find the first non-repeating character.
-5. Determine whether a ransom note can be built from magazine letters.
-
-## Medium
-
-1. Return two indices whose values sum to a target.
-2. Group anagrams.
-3. Find the longest substring without repeated characters.
-4. Count subarrays whose sum equals `k`.
-5. Find the longest consecutive sequence.
-6. Return the `k` most frequent elements.
-7. Determine whether two strings are isomorphic.
-8. Find all anagram starting positions in a string.
-
-## Advanced
-
-1. Design an LRU cache.
-2. Design a custom Hash Map.
-3. Find the longest substring containing at most `k` distinct characters.
-4. Count four-number combinations producing zero.
-5. Find subarrays whose sum is divisible by `k`.
-6. Maintain frequencies while processing a data stream.
-
----
-
-# 23. Interview answer template
-
-When solving a hash-map problem, explain it in this order:
-
-## Step 1: State the brute force
-
-> The brute-force approach compares every pair, giving `O(n²)` time.
-
-## Step 2: Identify repeated work
-
-> We repeatedly search whether a value has already appeared.
-
-## Step 3: Introduce the map or set
-
-> I can store previously seen values in a hash map, making each lookup average `O(1)`.
-
-## Step 4: Define what is stored
-
-> The map stores each number as the key and its index as the value.
-
-## Step 5: Explain the algorithm
-
-> For every number, I calculate its complement, check whether the complement exists, and then store the current number.
-
-## Step 6: Give complexity
-
-> The algorithm performs one pass, so average time is `O(n)` and space is `O(n)`.
-
-That explanation is often as important as the code.
-
----
-
-# 24. Final mental model
+### Build a Frequency Map
 
 ```mermaid
 flowchart TD
-    A["Hashing problem"] --> B{"What question am I repeatedly asking?"}
+    I["Inputs and starting state: <strong>nums</strong> , <strong>frequency</strong>"]
+    B["Boundary checks<br/>An empty input returns an initialized empty map."]
+    I --> B
 
-    B -->|"Have I seen it?"| C["Hash Set"]
-    B -->|"How many times?"| D["Map: value → frequency"]
-    B -->|"Where did I see it?"| E["Map: value → index"]
-    B -->|"Which group?"| F["Map: signature → list"]
-    B -->|"How many earlier prefixes match?"| G["Map: prefix sum → frequency"]
-    B -->|"Can sequence neighbors be found quickly?"| H["Hash Set"]
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Increment the map entry for every input value."]
+        S1["Return the completed <strong>frequency</strong> table."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return a map from each distinct integer to its occurrence count."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-Memorize these six statements:
+**Where it is used in real life:**
 
-```text
-Existence      → Hash Set
-Frequency      → value → count
-Location       → value → index
-Pair finding   → complement → index
-Grouping       → signature → list
-Subarray count → prefix sum → frequency
+- Analytics counts events by category.
+- Search indexing counts term occurrences.
+
+```go
+// Exact question: Given an integer slice, how can we build the frequency map used by many common interview problems?
+//
+// Example: Input nums = [1, 2, 2, 3, 3, 3] -> output map[1:1 2:2 3:3].
+//
+// Possible answer: Visit each value once and increment the count stored under that value's key.
+//
+// Output format: Return a map from each distinct integer to its occurrence count.
+//
+// Inline descriptions:
+// - Go returns zero for a missing map key, so the first increment naturally changes it from zero to one.
+//
+// Boundary checks:
+// - An empty input returns an initialized empty map.
+//
+// Key variables:
+// - `nums` is a slice whose indexes are input positions and whose elements are values to count.
+// - `frequency` is a map whose keys are distinct input values and whose values are occurrence counts.
+//
+// Logic:
+// 1. Increment the map entry for every input value.
+// 2. Return the completed frequency table.
+func frequencyMap(nums []int) map[int]int {
+	frequency := make(map[int]int, len(nums))
+	for _, value := range nums {
+		frequency[value]++
+	}
+	return frequency
+}
+
+// time complexity: O(n) -> average-case hashing processes all `n` input elements once.
+// space complexity: O(n) -> the map can contain up to `n` distinct keys.
 ```
 
-And remember the central trade-off:
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Build a Frequency Map" is one small game played with the same pieces and rules.
 
-```text
-Use extra memory to avoid repeated searching.
+### Safe Map Lookup in Go
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>values</strong> , <strong>key</strong>"]
+    B["Boundary checks<br/>Looking up any <strong>key</strong> in a nil or empty map safely returns 0, false."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Ask the map for exactly one <strong>key</strong> and return both lookup results."]
+    end
+
+    B --> S0
+    S0 --> O["Return the associated value and whether the <strong>key</strong> was found."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
 ```
 
-That is the core idea behind most Hash Map and Hash Set interview problems.
+**Where it is used in real life:**
+
+- Configuration loaders distinguish a missing key from a stored zero.
+- Feature-flag systems distinguish disabled values from absent definitions.
+
+```go
+// Exact question: What operation demonstrates average O(1) hash-map lookup in Go?
+//
+// Example: Input values = {retries: 0} and key = retries -> output 0, true; a missing key returns 0, false.
+//
+// Possible answer: Perform one two-value map lookup using the requested key.
+//
+// Output format: Return the associated value and whether the key was found.
+//
+// Inline descriptions:
+// - The second lookup result distinguishes a missing key from a key mapped to the zero value.
+//
+// Boundary checks:
+// - Looking up any key in a nil or empty map safely returns `0, false`.
+//
+// Key variables:
+// - `values` is a map whose string keys identify records and whose int values hold their data.
+// - `key` is the record identifier being queried.
+//
+// Logic:
+// 1. Ask the map for exactly one key and return both lookup results.
+func lookupValue(values map[string]int, key string) (int, bool) {
+	value, exists := values[key]
+	return value, exists
+}
+
+// time complexity: O(1) -> average-case hashing selects one short bucket; the collision-heavy worst case is O(n).
+// space complexity: O(1) -> the lookup allocates no collection proportional to the map size.
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Safe Map Lookup in Go" is one small game played with the same pieces and rules.
+
+### Resolve a Hash Collision
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>bucket</strong> , <strong>key</strong>"]
+    B["Boundary checks<br/>An empty <strong>bucket</strong> and a <strong>bucket</strong> without the requested <strong>key</strong> both return 0, false."]
+    I --> B
+
+    subgraph PROCESS["Loop: process the remaining input state"]
+        direction TD
+        S0["Scan the collided entries and compare their complete keys."]
+        S1["Return only the value belonging to the matching <strong>key</strong>."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the matching value and <strong>true</strong>, or return 0, false when the <strong>key</strong> is absent."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Hash-table implementations search entries sharing one bucket.
+- Storage engines resolve different keys with the same hash location.
+
+```go
+// Exact question: How can two different keys be stored safely when they collide in the same bucket?
+//
+// Example: Input bucket = [{ab, 10}, {ba, 20}] and key = ba -> output 20, true after comparing complete keys.
+//
+// Possible answer: Keep every colliding key-value entry in the bucket and compare keys during lookup.
+//
+// Output format: Return the matching value and `true`, or return `0, false` when the key is absent.
+//
+// Inline descriptions:
+// - This example models separate chaining with a slice of entries inside one bucket.
+//
+// Boundary checks:
+// - An empty bucket and a bucket without the requested key both return `0, false`.
+//
+// Key variables:
+// - `bucket` is a slice whose indexes are collision-chain positions and whose elements hold keys and values.
+// - `key` is the exact lookup key; equal bucket indexes alone do not prove equal keys.
+//
+// Logic:
+// 1. Scan the collided entries and compare their complete keys.
+// 2. Return only the value belonging to the matching key.
+type bucketEntry struct {
+	key   string
+	value int
+}
+
+func findInBucket(bucket []bucketEntry, key string) (int, bool) {
+	for _, entry := range bucket {
+		if entry.key == key {
+			return entry.value, true
+		}
+	}
+	return 0, false
+}
+
+// time complexity: O(c) -> `c` is the number of colliding entries in this bucket.
+// space complexity: O(1) -> the lookup uses no storage that grows with the bucket.
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Resolve a Hash Collision" is one small game played with the same pieces and rules.
+
+### Calculate Load Factor
+
+```mermaid
+flowchart TD
+    I["Inputs and starting state: <strong>float64</strong> , <strong>entries</strong> , <strong>buckets</strong>"]
+    B["Boundary checks<br/>Return 0 when <strong>buckets</strong> is zero or negative so the function never divides by zero.<br/>Treat a negative entry count as invalid and return 0."]
+    I --> B
+
+    subgraph PROCESS["Core algorithm steps"]
+        direction TD
+        S0["Reject invalid counts."]
+        S1["Divide stored <strong>entries</strong> by bucket capacity."]
+        S0 --> S1
+    end
+
+    B --> S0
+    S1 --> O["Return the load factor as a floating-point value, such as 0.75."]
+
+    style PROCESS fill:transparent,stroke:#a89984,stroke-width:2px,stroke-dasharray:2 4
+```
+
+**Where it is used in real life:**
+
+- Hash-table libraries decide when to resize.
+- Capacity monitoring predicts collision growth from bucket occupancy.
+
+```go
+// Exact question: How do we calculate a hash table's load factor?
+//
+// Example: Input entries = 6 and buckets = 8 -> output 0.75.
+//
+// Possible answer: Divide the number of stored entries by the number of available buckets.
+//
+// Output format: Return the load factor as a floating-point value, such as `0.75`.
+//
+// Inline descriptions:
+// - Converting both integers to `float64` prevents integer division from discarding the fraction.
+//
+// Boundary checks:
+// - Return `0` when `buckets` is zero or negative so the function never divides by zero.
+// - Treat a negative entry count as invalid and return `0`.
+//
+// Key variables:
+// - `entries` is the number of key-value pairs currently stored.
+// - `buckets` is the number of hash-table locations available.
+//
+// Logic:
+// 1. Reject invalid counts.
+// 2. Divide stored entries by bucket capacity.
+func loadFactor(entries, buckets int) float64 {
+	if entries < 0 || buckets <= 0 {
+		return 0
+	}
+	return float64(entries) / float64(buckets)
+}
+
+// time complexity: O(1) -> the calculation performs a fixed number of checks and arithmetic operations.
+// space complexity: O(1) -> only scalar parameters and the returned number are used.
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. "Calculate Load Factor" is one small game played with the same pieces and rules.
+
+---
+
+## Interview checklist and next steps
+
+Use this answer order during an interview:
+
+1. Restate the input, output, and constraints.
+2. Name the pattern and the invariant.
+3. Explain the data structure roles before coding.
+4. Handle boundary cases explicitly.
+5. Walk through a small example.
+6. Give time and space complexity with variable definitions.
+
+Recommended practice order:
+1. [Contains Duplicate](#contains-duplicate)
+2. [Two Sum](#two-sum)
+3. [Group Anagrams](#group-anagrams)
+4. [Subarray Sum Equals K](#subarray-sum-equals-k)
+5. [Longest Consecutive Sequence](#longest-consecutive-sequence)
+6. [First Unique Character](#first-unique-character)
+7. [Build a Frequency Map](#build-a-frequency-map)
+8. [Safe Map Lookup in Go](#safe-map-lookup-in-go)
+9. [Resolve a Hash Collision](#resolve-a-hash-collision)
+10. [Calculate Load Factor](#calculate-load-factor)
+
+Continue with: Valid Anagram, Isomorphic Strings, Happy Number, LRU Cache, Design HashMap.
+
+```mermaid
+flowchart LR
+    Q0["Contains Duplicate"]
+    Q0 --> Q1["Two Sum"]
+    Q1 --> Q2["Group Anagrams"]
+    Q2 --> Q3["Subarray Sum Equals K"]
+    Q3 --> Q4["Longest Consecutive Sequence"]
+    Q4 --> Q5["First Unique Character"]
+    Q5 --> Q6["Build a Frequency Map"]
+    Q6 --> Q7["Safe Map Lookup in Go"]
+    Q7 --> Q8["Resolve a Hash Collision"]
+    Q8 --> Q9["Calculate Load Factor"]
+```
+
+> **Baby analogy:** Imagine a wall of labeled cubbies. Pack the same checklist every time so no important interview step is forgotten.
