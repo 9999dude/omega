@@ -420,7 +420,7 @@ func maxSubArray(numbers []int) int {
     best := numbers[0]
 
     for i := 1; i < len(numbers); i++ {
-        // Either discard the harmful earlier sum or extend it with the current value.
+        // Either discard the earlier sum or extend it with the current value.
         current = max(numbers[i], current+numbers[i])
         best = max(best, current)
     }
@@ -512,7 +512,13 @@ func productExceptSelf(numbers []int) []int {
     prefixProduct := 1
 
     for i := 0; i < len(numbers); i++ {
-        // Write before multiplying by numbers[i], so this slot excludes its own value.
+        // Write before multiplying by numbers[i], so this slot excludes its own value. -> This is the critcal step
+        // | `i` | Stored in `result[i]` | Updated `prefixProduct` |
+        // |---:|---:|---:|
+        // | 0 | `1` | `1 × 1 = 1` |
+        // | 1 | `1` | `1 × 2 = 2` |
+        // | 2 | `2` | `2 × 3 = 6` |
+        // | 3 | `6` | `6 × 4 = 24` |
         result[i] = prefixProduct
         prefixProduct *= numbers[i]
     }
@@ -521,6 +527,13 @@ func productExceptSelf(numbers []int) []int {
 
     for i := len(numbers) - 1; i >= 0; i-- {
         // suffixProduct still contains only values strictly to the right of i.
+        // -> This is the critcal step
+        // | `i` | Existing left product | Right product | New `result[i]` |
+        // |---:|---:|---:|---:|
+        // | 3 | `6` | `1` | `6 × 1 = 6` |
+        // | 2 | `2` | `4` | `2 × 4 = 8` |
+        // | 1 | `1` | `12` | `1 × 12 = 12` |
+        // | 0 | `1` | `24` | `1 × 24 = 24` |
         result[i] *= suffixProduct
         suffixProduct *= numbers[i]
     }
